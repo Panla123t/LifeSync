@@ -144,13 +144,9 @@ export default function NutritionPage() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <LanguageToggle />
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white p-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>{t.nutrition.addMeal}</span>
-          </button>
+          <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
+            <Utensils className="h-6 w-6" />
+          </div>
         </div>
       </div>
 
@@ -334,6 +330,25 @@ export default function NutritionPage() {
             })}
           </div>
         )}
+      </div>
+
+      {/* Floating Add Meal Button (Above BottomNav) */}
+      <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none">
+        <div className="max-w-md mx-auto px-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setShowForm((prev) => !prev);
+              if (!showForm) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="pointer-events-auto shadow-[0_8px_25px_rgba(16,185,129,0.35)] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white py-3 px-5 rounded-full flex items-center gap-2 font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border border-emerald-400/30"
+          >
+            <Plus className={`h-4 w-4 transition-transform duration-200 ${showForm ? 'rotate-45' : ''}`} />
+            <span>{showForm ? t.common.cancel : t.nutrition.addMeal}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

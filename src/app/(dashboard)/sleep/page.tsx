@@ -144,13 +144,9 @@ export default function SleepPage() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <LanguageToggle />
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white p-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>{t.sleep.recordSleep}</span>
-          </button>
+          <div className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-2xl shadow-xs">
+            <Moon className="h-6 w-6" />
+          </div>
         </div>
       </div>
 
@@ -346,6 +342,25 @@ export default function SleepPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Floating Record Sleep Button (Above BottomNav) */}
+      <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none">
+        <div className="max-w-md mx-auto px-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setShowForm((prev) => !prev);
+              if (!showForm) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="pointer-events-auto shadow-[0_8px_25px_rgba(99,102,241,0.35)] bg-gradient-to-r from-indigo-600 to-slate-900 hover:from-indigo-700 hover:to-slate-950 active:scale-95 text-white py-3 px-5 rounded-full flex items-center gap-2 font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border border-indigo-400/30"
+          >
+            <Plus className={`h-4 w-4 transition-transform duration-200 ${showForm ? 'rotate-45' : ''}`} />
+            <span>{showForm ? t.common.cancel : t.sleep.recordSleep}</span>
+          </button>
+        </div>
       </div>
     </div>
   );
