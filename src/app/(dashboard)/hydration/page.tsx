@@ -2,21 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { Droplets, Plus, Trash2, Trophy, Clock } from 'lucide-react';
 import type { WaterLog } from '@/types/database';
 
 export default function HydrationPage() {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState<WaterLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [customAmount, setCustomAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const dailyGoal = 2000; // 2000 ml default neutral recommendation
+  const dailyGoal = 2000;
 
   const supabase = createClient();
 
   const fetchLogs = async () => {
     try {
-      // Get logs for today (from midnight)
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
 
@@ -58,7 +60,6 @@ export default function HydrationPage() {
         setCustomAmount('');
         await fetchLogs();
 
-        // Award points server-side or complete quest if first water log
         if (logs.length === 0) {
           await supabase.from('point_transactions').insert({
             user_id: user.id,
@@ -85,19 +86,22 @@ export default function HydrationPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Hydration</h1>
-          <p className="text-xs text-slate-500">Every sip counts towards your daily balance</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.hydration.title}</h1>
+          <p className="text-xs text-slate-500">{t.hydration.subtitle}</p>
         </div>
-        <div className="bg-sky-50 text-sky-600 p-2.5 rounded-2xl">
-          <Droplets className="h-6 w-6" />
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <div className="bg-sky-50 text-sky-600 p-2.5 rounded-2xl">
+            <Droplets className="h-6 w-6" />
+          </div>
         </div>
       </div>
 
       {/* Daily Progress Card */}
       <div className="bg-gradient-to-br from-sky-500 to-blue-600 text-white rounded-3xl p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-sky-100 uppercase tracking-wider">Today&apos;s Intake</span>
-          <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full font-medium">Goal: {dailyGoal} ml</span>
+          <span className="text-xs font-semibold text-sky-100 uppercase tracking-wider">{t.hydration.todaysIntake}</span>
+          <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full font-medium">{t.hydration.goal}: {dailyGoal} ml</span>
         </div>
 
         <div className="flex items-baseline gap-2">
@@ -114,10 +118,10 @@ export default function HydrationPage() {
         </div>
 
         <div className="flex justify-between items-center text-xs text-sky-100 font-medium">
-          <span>{percentage}% reached</span>
+          <span>{percentage}% {t.hydration.reached}</span>
           {percentage >= 100 && (
             <span className="flex items-center gap-1 text-white font-bold">
-              <Trophy className="h-3.5 w-3.5" /> Daily Target Met!
+              <Trophy className="h-3.5 w-3.5" /> {t.hydration.targetMet}
             </span>
           )}
         </div>
@@ -125,7 +129,7 @@ export default function HydrationPage() {
 
       {/* Quick Add Buttons */}
       <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">
-        <h2 className="text-sm font-bold text-slate-800">Quick Add Water</h2>
+        <h2 className="text-sm font-bold text-slate-800">{t.hydration.quickAdd}</h2>
         <div className="grid grid-cols-3 gap-3">
           {[100, 250, 500].map((amount) => (
             <button
@@ -157,7 +161,7 @@ export default function HydrationPage() {
               type="number"
               min="1"
               max="3000"
-              placeholder="Custom amount (ml)"
+              placeholder={t.hydration.customAmount}
               value={customAmount}
               onChange={(e) => setCustomAmount(e.target.value)}
               className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -167,7 +171,7 @@ export default function HydrationPage() {
               disabled={submitting || !customAmount}
               className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl text-sm font-semibold transition-colors disabled:opacity-50"
             >
-              Add
+              {t.hydration.add}
             </button>
           </form>
         </div>
@@ -175,14 +179,14 @@ export default function HydrationPage() {
 
       {/* Today's Log History */}
       <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-3">
-        <h2 className="text-sm font-bold text-slate-800">Today&apos;s Logs</h2>
+        <h2 className="text-sm font-bold text-slate-800">{t.hydration.todaysLogs}</h2>
         {loading ? (
-          <p className="text-xs text-slate-400 py-3 text-center">Loading your records...</p>
+          <p className="text-xs text-slate-400 py-3 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
           <div className="text-center py-6 space-y-1">
             <Droplets className="h-8 w-8 mx-auto text-slate-300" />
-            <p className="text-xs font-medium text-slate-600">No water logged yet today</p>
-            <p className="text-[11px] text-slate-400">Tap a button above to record your first glass!</p>
+            <p className="text-xs font-medium text-slate-600">{t.hydration.noLogs}</p>
+            <p className="text-[11px] text-slate-400">{t.hydration.noLogsHint}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
@@ -203,7 +207,7 @@ export default function HydrationPage() {
                 <button
                   onClick={() => deleteLog(log.id)}
                   className="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg transition-colors"
-                  title="Delete log"
+                  title={t.common.delete}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

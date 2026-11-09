@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { 
   Droplets, 
   Utensils, 
@@ -17,6 +19,7 @@ import {
 import type { Quest, UserQuest } from '@/types/database';
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
   const [userName, setUserName] = useState<string>('Friend');
   const [waterTotal, setWaterTotal] = useState<number>(0);
   const [mealsCount, setMealsCount] = useState<number>(0);
@@ -130,41 +133,41 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Greeting & Life Points Header */}
+      {/* Top Greeting & Language + Points Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            Hello, {userName} 👋
+            {t.dashboard.greeting}, {userName} 👋
           </h1>
-          <p className="text-xs text-slate-500">Here is your wellness snapshot for today</p>
+          <p className="text-xs text-slate-500">{t.dashboard.snapshot}</p>
         </div>
 
-        {/* Life Points Badge */}
-        <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200/60 text-amber-800 px-3 py-1.5 rounded-2xl shadow-xs">
-          <Flame className="h-4 w-4 text-amber-500 fill-amber-500" />
-          <span className="text-xs font-extrabold">{points} pts</span>
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200/60 text-amber-800 px-3 py-1.5 rounded-2xl shadow-xs">
+            <Flame className="h-4 w-4 text-amber-500 fill-amber-500" />
+            <span className="text-xs font-extrabold">{points} {t.common.pts}</span>
+          </div>
         </div>
       </div>
 
-      {/* AI Daily Insight Pill / Card */}
+      {/* AI Daily Insight Card */}
       <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-3xl p-5 shadow-sm space-y-2 relative overflow-hidden">
         <div className="flex items-center gap-2 text-xs font-semibold text-emerald-100">
           <Sparkles className="h-4 w-4" />
-          <span>LifeSync Daily Insight</span>
+          <span>{t.dashboard.aiInsightTitle}</span>
         </div>
         <p className="text-sm font-medium leading-relaxed text-emerald-50">
-          {waterTotal < 500
-            ? 'Starting the day with a glass of water can help maintain energy and focus!'
-            : 'Great job maintaining your hydration today! Remember to keep a balanced sleep schedule tonight.'}
+          {waterTotal < 500 ? t.dashboard.aiInsightWaterLow : t.dashboard.aiInsightGood}
         </p>
         <span className="text-[10px] text-emerald-200/80 block">
-          *Wellness observation based on your recorded habits.
+          {t.dashboard.aiDisclaimer}
         </span>
       </div>
 
       {/* 3 Core Habits Summary Grid */}
       <div className="space-y-3">
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Today&apos;s Habits</h2>
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.dashboard.todaysHabits}</h2>
         <div className="grid grid-cols-3 gap-3">
           {/* Nutrition Card */}
           <Link
@@ -175,10 +178,10 @@ export default function DashboardPage() {
               <Utensils className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-xs text-slate-500">Nutrition</div>
-              <div className="text-lg font-bold text-slate-900">{mealsCount} meals</div>
+              <div className="text-xs text-slate-500">{t.nav.meals}</div>
+              <div className="text-base font-bold text-slate-900">{mealsCount} {t.dashboard.mealsLogged}</div>
               <div className="text-[10px] text-emerald-600 font-medium mt-1 flex items-center">
-                Log food &rarr;
+                {t.dashboard.logFood} &rarr;
               </div>
             </div>
           </Link>
@@ -192,10 +195,10 @@ export default function DashboardPage() {
               <Droplets className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-xs text-slate-500">Hydration</div>
-              <div className="text-lg font-bold text-slate-900">{waterTotal} ml</div>
+              <div className="text-xs text-slate-500">{t.nav.water}</div>
+              <div className="text-base font-bold text-slate-900">{waterTotal} ml</div>
               <div className="text-[10px] text-sky-600 font-medium mt-1">
-                {waterPercent}% of goal
+                {waterPercent}% {t.dashboard.ofGoal}
               </div>
             </div>
           </Link>
@@ -209,10 +212,10 @@ export default function DashboardPage() {
               <Moon className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-xs text-slate-500">Sleep</div>
-              <div className="text-lg font-bold text-slate-900">{sleepHours}</div>
+              <div className="text-xs text-slate-500">{t.nav.sleep}</div>
+              <div className="text-base font-bold text-slate-900">{sleepHours}</div>
               <div className="text-[10px] text-indigo-600 font-medium mt-1">
-                Latest log &rarr;
+                {t.dashboard.latestLog} &rarr;
               </div>
             </div>
           </Link>
@@ -226,10 +229,10 @@ export default function DashboardPage() {
             <div className="bg-amber-100 p-1.5 rounded-xl text-amber-700">
               <Trophy className="h-4 w-4" />
             </div>
-            <h2 className="text-sm font-bold text-slate-800">Daily Quests</h2>
+            <h2 className="text-sm font-bold text-slate-800">{t.dashboard.dailyQuests}</h2>
           </div>
           <span className="text-xs text-slate-400">
-            {completedQuestIds.length}/{quests.length} completed
+            {completedQuestIds.length}/{quests.length} {t.dashboard.completed}
           </span>
         </div>
 
@@ -260,7 +263,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="text-right flex-shrink-0 ml-2">
-                  <span className="text-xs font-extrabold text-amber-600">+{q.points} pt</span>
+                  <span className="text-xs font-extrabold text-amber-600">+{q.points} {t.common.pts}</span>
                 </div>
               </div>
             );
@@ -271,14 +274,14 @@ export default function DashboardPage() {
       {/* LINE Connection Banner */}
       <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-4 flex items-center justify-between">
         <div className="space-y-0.5">
-          <div className="text-xs font-bold text-emerald-900">Never miss a habit</div>
-          <div className="text-[11px] text-emerald-700">Connect LINE Official Account for gentle reminders.</div>
+          <div className="text-xs font-bold text-emerald-900">{t.dashboard.lineBannerTitle}</div>
+          <div className="text-[11px] text-emerald-700">{t.dashboard.lineBannerDesc}</div>
         </div>
         <Link
           href="/settings"
           className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1"
         >
-          Connect <ChevronRight className="h-3 w-3" />
+          {t.dashboard.connect} <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
     </div>

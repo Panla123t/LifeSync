@@ -4,10 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { Activity, Mail, Lock, User, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +24,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError(t.auth.passwordMin);
       setLoading(false);
       return;
     }
@@ -48,7 +51,6 @@ export default function RegisterPage() {
       }
 
       if (data.user) {
-        // Create initial profile record
         await supabase.from('profiles').upsert({
           id: data.user.id,
           display_name: displayName || 'Health Explorer',
@@ -57,7 +59,6 @@ export default function RegisterPage() {
           updated_at: new Date().toISOString(),
         });
 
-        // Initialize user notification defaults
         await supabase.from('notification_settings').upsert({
           user_id: data.user.id,
           hydration_enabled: true,
@@ -65,14 +66,12 @@ export default function RegisterPage() {
           daily_summary_enabled: false,
         });
 
-        // If session was established immediately, redirect to dashboard
         if (data.session) {
           router.push('/dashboard');
           router.refresh();
           return;
         }
 
-        // Email confirmation is required by Supabase auth configuration
         setSuccess(true);
       }
     } catch {
@@ -84,18 +83,22 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+      <div className="absolute top-4 right-4">
+        <LanguageToggle />
+      </div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center items-center gap-2">
           <div className="bg-emerald-500 text-white p-2.5 rounded-2xl shadow-sm">
             <Activity className="h-7 w-7" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900">LifeSync</span>
+          <span className="text-2xl font-bold tracking-tight text-slate-900">{t.common.appName}</span>
         </div>
         <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-slate-900">
-          Create your account
+          {t.auth.createAccount}
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600">
-          Start your personalized wellness journey today
+          {t.auth.startJourney}
         </p>
       </div>
 
@@ -106,15 +109,15 @@ export default function RegisterPage() {
               <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
                 <CheckCircle2 className="h-7 w-7" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">Registration Successful!</h3>
+              <h3 className="text-lg font-bold text-slate-900">{t.auth.regSuccessTitle}</h3>
               <p className="text-sm text-slate-600">
-                Check your email inbox to verify your account, then sign in to start tracking.
+                {t.auth.regSuccessDesc}
               </p>
               <Link
                 href="/login"
                 className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-2xl hover:bg-emerald-700 text-sm"
               >
-                Go to Sign In
+                {t.common.signIn}
               </Link>
             </div>
           ) : (
@@ -128,7 +131,7 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Your Name
+                  {t.auth.yourName}
                 </label>
                 <div className="relative rounded-2xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -139,7 +142,7 @@ export default function RegisterPage() {
                     required
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Alex"
+                    placeholder={t.auth.namePlaceholder}
                     className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                   />
                 </div>
@@ -147,7 +150,7 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Email address
+                  {t.auth.email}
                 </label>
                 <div className="relative rounded-2xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -166,7 +169,7 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Password
+                  {t.auth.password}
                 </label>
                 <div className="relative rounded-2xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -177,7 +180,7 @@ export default function RegisterPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder={t.auth.passwordMin}
                     className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                   />
                 </div>
@@ -188,7 +191,7 @@ export default function RegisterPage() {
                 disabled={loading}
                 className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-colors"
               >
-                {loading ? 'Creating account...' : 'Create Account'}
+                {loading ? t.common.loading : t.auth.createBtn}
                 {!loading && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>
@@ -196,9 +199,9 @@ export default function RegisterPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-slate-600">
-              Already have an account?{' '}
+              {t.auth.haveAccount}{' '}
               <Link href="/login" className="font-semibold text-emerald-600 hover:text-emerald-500">
-                Sign in
+                {t.auth.signInBtn}
               </Link>
             </p>
           </div>

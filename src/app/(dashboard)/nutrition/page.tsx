@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { Utensils, Plus, Trash2, Tag, Clock } from 'lucide-react';
 import type { FoodLog, MealType } from '@/types/database';
 
 export default function NutritionPage() {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -69,7 +72,6 @@ export default function NutritionPage() {
         setShowForm(false);
         await fetchLogs();
 
-        // Award points if first meal today
         if (logs.length === 0) {
           await supabase.from('point_transactions').insert({
             user_id: user.id,
@@ -104,30 +106,42 @@ export default function NutritionPage() {
     }
   };
 
+  const getMealLabel = (type: MealType) => {
+    switch (type) {
+      case 'breakfast': return t.nutrition.breakfast;
+      case 'lunch': return t.nutrition.lunch;
+      case 'dinner': return t.nutrition.dinner;
+      case 'snack': return t.nutrition.snack;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Nutrition</h1>
-          <p className="text-xs text-slate-500">Mindful food logging for sustainable energy</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.nutrition.title}</h1>
+          <p className="text-xs text-slate-500">{t.nutrition.subtitle}</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-2xl shadow-xs transition-colors flex items-center gap-1.5 text-xs font-semibold"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Add Meal</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-2xl shadow-xs transition-colors flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <Plus className="h-4 w-4" />
+            <span>{t.nutrition.addMeal}</span>
+          </button>
+        </div>
       </div>
 
       {/* Add Meal Sheet / Card */}
       {showForm && (
         <div className="bg-white rounded-3xl p-5 border border-emerald-100 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-slate-800">Record a Meal</h2>
+          <h2 className="text-sm font-bold text-slate-800">{t.nutrition.recordMeal}</h2>
           <form onSubmit={handleAddMeal} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Meal Type</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">{t.nutrition.mealType}</label>
               <div className="grid grid-cols-4 gap-2">
                 {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((type) => (
                   <button
@@ -140,18 +154,18 @@ export default function NutritionPage() {
                         : 'bg-slate-50 text-slate-600 border-slate-200'
                     }`}
                   >
-                    {type}
+                    {getMealLabel(type)}
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Food / Dish Name</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">{t.nutrition.foodName}</label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Chicken Rice with cucumbers"
+                placeholder={t.nutrition.foodNamePlaceholder}
                 value={foodName}
                 onChange={(e) => setFoodName(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -160,10 +174,10 @@ export default function NutritionPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Portion (Optional)</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.nutrition.portion}</label>
                 <input
                   type="text"
-                  placeholder="1 bowl / 1 plate"
+                  placeholder={t.nutrition.portionPlaceholder}
                   value={portion}
                   onChange={(e) => setPortion(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -171,7 +185,7 @@ export default function NutritionPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Calories (Est. kcal)</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.nutrition.calories}</label>
                 <input
                   type="number"
                   placeholder="e.g. 550"
@@ -188,14 +202,14 @@ export default function NutritionPage() {
                 onClick={() => setShowForm(false)}
                 className="flex-1 py-2.5 border border-slate-200 rounded-2xl text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 type="submit"
                 disabled={submitting || !foodName.trim()}
                 className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-semibold transition-colors disabled:opacity-50"
               >
-                {submitting ? 'Saving...' : 'Save Meal'}
+                {submitting ? t.common.saving : t.common.save}
               </button>
             </div>
           </form>
@@ -205,17 +219,17 @@ export default function NutritionPage() {
       {/* Today's Meals List */}
       <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-800">Today&apos;s Meals</h2>
-          <span className="text-xs text-slate-400">{logs.length} logged</span>
+          <h2 className="text-sm font-bold text-slate-800">{t.nutrition.todaysMeals}</h2>
+          <span className="text-xs text-slate-400">{logs.length} {t.dashboard.mealsLogged}</span>
         </div>
 
         {loading ? (
-          <p className="text-xs text-slate-400 py-3 text-center">Loading meals...</p>
+          <p className="text-xs text-slate-400 py-3 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
           <div className="text-center py-6 space-y-1">
             <Utensils className="h-8 w-8 mx-auto text-slate-300" />
-            <p className="text-xs font-medium text-slate-600">No meals logged yet today</p>
-            <p className="text-[11px] text-slate-400">Keep track of your fuel by recording your first meal!</p>
+            <p className="text-xs font-medium text-slate-600">{t.nutrition.noMeals}</p>
+            <p className="text-[11px] text-slate-400">{t.nutrition.noMealsHint}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
@@ -224,7 +238,7 @@ export default function NutritionPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${getMealBadgeColor(log.meal_type)}`}>
-                      {log.meal_type}
+                      {getMealLabel(log.meal_type)}
                     </span>
                     <h3 className="text-sm font-bold text-slate-900">{log.food_name}</h3>
                   </div>
@@ -249,7 +263,7 @@ export default function NutritionPage() {
                 <button
                   onClick={() => deleteMeal(log.id)}
                   className="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg transition-colors"
-                  title="Delete meal"
+                  title={t.common.delete}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

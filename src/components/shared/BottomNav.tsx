@@ -3,17 +3,19 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Utensils, Droplets, Moon, Trophy, Settings } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   const navItems = [
-    { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-    { href: '/nutrition', label: 'Meals', icon: Utensils },
-    { href: '/hydration', label: 'Water', icon: Droplets },
-    { href: '/sleep', label: 'Sleep', icon: Moon },
-    { href: '/quests', label: 'Quests', icon: Trophy },
-    { href: '/settings', label: 'Settings', icon: Settings },
+    { href: '/dashboard', label: t.nav.home, icon: LayoutDashboard },
+    { href: '/nutrition', label: t.nav.meals, icon: Utensils },
+    { href: '/hydration', label: t.nav.water, icon: Droplets },
+    { href: '/sleep', label: t.nav.sleep, icon: Moon },
+    { href: '/quests', label: t.nav.quests, icon: Trophy },
+    { href: '/settings', label: t.nav.settings, icon: Settings },
   ];
 
   return (

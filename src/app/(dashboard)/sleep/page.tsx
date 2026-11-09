@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { Moon, Plus, Trash2, Clock, Bed, SunMedium } from 'lucide-react';
 import type { SleepLog } from '@/types/database';
 
 export default function SleepPage() {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState<SleepLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -63,14 +66,14 @@ export default function SleepPage() {
     const wakeDateTime = new Date(`${wakeDate}T${wakeTime}:00`);
 
     if (wakeDateTime <= bedDateTime) {
-      setFormError('Wake time must be after bedtime.');
+      setFormError(t.sleep.errorWakeBeforeBed);
       return;
     }
 
     const durationMinutes = calculateDurationMinutes(bedDateTime, wakeDateTime);
 
     if (durationMinutes > 24 * 60) {
-      setFormError('Sleep duration cannot exceed 24 hours in a single log.');
+      setFormError(t.sleep.errorDurationMax);
       return;
     }
 
@@ -92,7 +95,6 @@ export default function SleepPage() {
         setShowForm(false);
         await fetchLogs();
 
-        // Award points if first sleep log recorded
         if (logs.length === 0) {
           await supabase.from('point_transactions').insert({
             user_id: user.id,
@@ -127,23 +129,26 @@ export default function SleepPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Sleep Routine</h1>
-          <p className="text-xs text-slate-500">Rest well to restore your body and mind</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.sleep.title}</h1>
+          <p className="text-xs text-slate-500">{t.sleep.subtitle}</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-2xl shadow-xs transition-colors flex items-center gap-1.5 text-xs font-semibold"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Record Sleep</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-2xl shadow-xs transition-colors flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <Plus className="h-4 w-4" />
+            <span>{t.sleep.recordSleep}</span>
+          </button>
+        </div>
       </div>
 
       {/* Latest Sleep Summary Card */}
       {latestLog && (
         <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-indigo-200 uppercase tracking-wider">Latest Sleep</span>
+            <span className="text-xs font-semibold text-indigo-200 uppercase tracking-wider">{t.sleep.latestSleep}</span>
             <span className="text-xs bg-indigo-500/20 text-indigo-200 px-2.5 py-1 rounded-full border border-indigo-400/20">
               {new Date(latestLog.wake_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
             </span>
@@ -151,17 +156,17 @@ export default function SleepPage() {
 
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-extrabold">{formatHoursMinutes(latestLog.duration_minutes)}</span>
-            <span className="text-xs text-indigo-300">duration</span>
+            <span className="text-xs text-indigo-300">{t.sleep.duration}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-2 border-t border-indigo-800/40 text-xs text-indigo-200">
             <div className="flex items-center gap-2">
               <Bed className="h-4 w-4 text-indigo-400" />
-              <span>Slept: {new Date(latestLog.bedtime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>{t.sleep.slept}: {new Date(latestLog.bedtime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             <div className="flex items-center gap-2">
               <SunMedium className="h-4 w-4 text-amber-400" />
-              <span>Woke: {new Date(latestLog.wake_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>{t.sleep.woke}: {new Date(latestLog.wake_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           </div>
         </div>
@@ -170,7 +175,7 @@ export default function SleepPage() {
       {/* Add Sleep Form */}
       {showForm && (
         <div className="bg-white rounded-3xl p-5 border border-indigo-100 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-slate-800">Record Sleep Period</h2>
+          <h2 className="text-sm font-bold text-slate-800">{t.sleep.recordSleep}</h2>
           {formError && (
             <div className="p-3 rounded-2xl bg-rose-50 border border-rose-100 text-rose-700 text-xs">
               {formError}
@@ -178,7 +183,7 @@ export default function SleepPage() {
           )}
           <form onSubmit={handleAddSleep} className="space-y-4">
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-600">Bedtime</label>
+              <label className="block text-xs font-semibold text-slate-600">{t.sleep.bedtime}</label>
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="date"
@@ -198,7 +203,7 @@ export default function SleepPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-600">Wake-up Time</label>
+              <label className="block text-xs font-semibold text-slate-600">{t.sleep.wakeTime}</label>
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="date"
@@ -218,10 +223,10 @@ export default function SleepPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Notes (Optional)</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">{t.sleep.notes}</label>
               <input
                 type="text"
-                placeholder="e.g. Felt restful, read before bed"
+                placeholder={t.sleep.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -234,14 +239,14 @@ export default function SleepPage() {
                 onClick={() => setShowForm(false)}
                 className="flex-1 py-2.5 border border-slate-200 rounded-2xl text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
                 className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-semibold transition-colors disabled:opacity-50"
               >
-                {submitting ? 'Saving...' : 'Save Sleep'}
+                {submitting ? t.common.saving : t.common.save}
               </button>
             </div>
           </form>
@@ -250,14 +255,14 @@ export default function SleepPage() {
 
       {/* Sleep Logs History */}
       <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">
-        <h2 className="text-sm font-bold text-slate-800">Recent Sleep Records</h2>
+        <h2 className="text-sm font-bold text-slate-800">{t.sleep.recentLogs}</h2>
         {loading ? (
-          <p className="text-xs text-slate-400 py-3 text-center">Loading sleep logs...</p>
+          <p className="text-xs text-slate-400 py-3 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
           <div className="text-center py-6 space-y-1">
             <Moon className="h-8 w-8 mx-auto text-slate-300" />
-            <p className="text-xs font-medium text-slate-600">No sleep records yet</p>
-            <p className="text-[11px] text-slate-400">Record when you slept and woke up to observe your consistency!</p>
+            <p className="text-xs font-medium text-slate-600">{t.sleep.noLogs}</p>
+            <p className="text-[11px] text-slate-400">{t.sleep.noLogsHint}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
@@ -287,7 +292,7 @@ export default function SleepPage() {
                 <button
                   onClick={() => deleteSleep(log.id)}
                   className="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg transition-colors"
-                  title="Delete sleep record"
+                  title={t.common.delete}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
