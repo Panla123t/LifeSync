@@ -559,10 +559,10 @@ export default function SleepPage() {
                 setSleepType('night');
                 setShowForm(true);
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold text-xs hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors cursor-pointer active:scale-95 border border-indigo-200/50 dark:border-indigo-800/40"
+              aria-label={t.sleep.recordSleep}
+              className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all flex items-center justify-center mx-auto cursor-pointer active:scale-95 border border-indigo-200/50 dark:border-indigo-800/40 shadow-xs"
             >
-              <Plus className="h-3.5 w-3.5" />
-              <span>{t.sleep.recordSleep}</span>
+              <Plus className="h-5 w-5 stroke-[2.5]" />
             </button>
           </div>
         ) : (
@@ -620,33 +620,19 @@ export default function SleepPage() {
         )}
       </div>
 
-      {/* Floating Action Dock (Above BottomNav) */}
+      {/* Floating Centered Add Sleep Button (Above BottomNav) */}
       <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none">
-        <div className="max-w-md mx-auto px-4 flex justify-end gap-2.5">
-          {/* Add Nap Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setSleepType('nap');
-              setShowForm(true);
-            }}
-            className="pointer-events-auto shadow-[0_8px_20px_rgba(245,158,11,0.35)] bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white py-3 px-4 rounded-full flex items-center gap-1.5 font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border border-amber-300/30"
-          >
-            <Zap className="h-4 w-4" />
-            <span>{locale === 'th' ? 'งีบหลับ' : 'Add Nap'}</span>
-          </button>
-
-          {/* Record Night Sleep Button */}
+        <div className="max-w-md mx-auto px-4 flex justify-center">
           <button
             type="button"
             onClick={() => {
               setSleepType('night');
               setShowForm(true);
             }}
-            className="pointer-events-auto shadow-[0_8px_25px_rgba(99,102,241,0.35)] bg-gradient-to-r from-indigo-600 to-slate-900 hover:from-indigo-700 hover:to-slate-950 active:scale-95 text-white py-3 px-4 sm:px-5 rounded-full flex items-center gap-2 font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border border-indigo-400/30"
+            aria-label={t.sleep.recordSleep}
+            className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-90 text-white shadow-[0_10px_25px_rgba(99,102,241,0.45)] border-2 border-white/50 dark:border-slate-800/60 flex items-center justify-center transition-all duration-200 cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
-            <span>{t.sleep.recordSleep}</span>
+            <Plus className="h-7 w-7 stroke-[2.5]" />
           </button>
         </div>
       </div>

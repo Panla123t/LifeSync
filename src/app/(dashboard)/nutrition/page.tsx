@@ -502,10 +502,10 @@ export default function NutritionPage() {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 font-bold text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer active:scale-95 border border-emerald-200/50 dark:border-emerald-800/40"
+              aria-label={t.nutrition.addMeal}
+              className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all flex items-center justify-center mx-auto cursor-pointer active:scale-95 border border-emerald-200/50 dark:border-emerald-800/40 shadow-xs"
             >
-              <Plus className="h-3.5 w-3.5" />
-              <span>{t.nutrition.addMeal}</span>
+              <Plus className="h-5 w-5 stroke-[2.5]" />
             </button>
           </div>
         ) : (
@@ -556,16 +556,16 @@ export default function NutritionPage() {
         )}
       </div>
 
-      {/* Floating Add Meal Button (Above BottomNav) */}
+      {/* Floating Centered Add Meal Button (Above BottomNav) */}
       <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none">
-        <div className="max-w-md mx-auto px-4 flex justify-end">
+        <div className="max-w-md mx-auto px-4 flex justify-center">
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="pointer-events-auto shadow-[0_8px_25px_rgba(16,185,129,0.35)] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white py-3 px-5 rounded-full flex items-center gap-2 font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border border-emerald-400/30"
+            aria-label={t.nutrition.addMeal}
+            className="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 active:scale-90 text-white shadow-[0_10px_25px_rgba(16,185,129,0.45)] border-2 border-white/50 dark:border-slate-800/60 flex items-center justify-center transition-all duration-200 cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
-            <span>{t.nutrition.addMeal}</span>
+            <Plus className="h-7 w-7 stroke-[2.5]" />
           </button>
         </div>
       </div>
