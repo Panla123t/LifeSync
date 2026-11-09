@@ -70,6 +70,7 @@ export default function FloatingGlassModal({
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {/* Ambient Glass Flares clipped to modal shape so they never trigger scrollbars */}
         <div className="absolute inset-0 overflow-hidden rounded-[inherit] pointer-events-none">

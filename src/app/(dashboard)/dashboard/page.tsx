@@ -17,9 +17,16 @@ import {
   CheckCircle2,
   Circle,
   Plus,
-  ArrowUpRight
+  ArrowUpRight,
+  BarChart3,
+  Calendar
 } from 'lucide-react';
 import type { Quest, UserQuest } from '@/types/database';
+import WeeklyAnalytics, { 
+  DailyHydration, 
+  DailySleep, 
+  DailyNutrition 
+} from '@/components/analytics/WeeklyAnalytics';
 
 export default function DashboardPage() {
   const { t, locale } = useLanguage();
@@ -35,6 +42,10 @@ export default function DashboardPage() {
   const [quickAddingWater, setQuickAddingWater] = useState(false);
   const [todayFormatted, setTodayFormatted] = useState<string>('');
   const [waterGoal, setWaterGoal] = useState<number>(2000);
+  const [dashboardView, setDashboardView] = useState<'today' | 'weekly'>('today');
+  const [weeklyHydration, setWeeklyHydration] = useState<DailyHydration[]>([]);
+  const [weeklySleep, setWeeklySleep] = useState<DailySleep[]>([]);
+  const [weeklyNutrition, setWeeklyNutrition] = useState<DailyNutrition[]>([]);
 
   const supabase = createClient();
 
@@ -127,6 +138,113 @@ export default function DashboardPage() {
       if (userQuests) {
         setCompletedQuestIds(userQuests.map((uq: { quest_id: string }) => uq.quest_id));
       }
+
+      // 8. Aggregate 7-Day Weekly Analytics Data
+      const dayNamesTh = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+      const dayNamesEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      const past7Days: { dateStr: string; dayLabel: string }[] = [];
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().slice(0, 10);
+        const dayLabel = locale === 'th' ? dayNamesTh[d.getDay()] : dayNamesEn[d.getDay()];
+        past7Days.push({ dateStr, dayLabel });
+      }
+
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+      const sevenDaysAgoIso = sevenDaysAgo.toISOString();
+
+      const [weekWaterRes, weekSleepRes, weekFoodRes] = await Promise.all([
+        supabase
+          .from('water_logs')
+          .select('amount_ml, logged_at')
+          .eq('user_id', user.id)
+          .gte('logged_at', sevenDaysAgoIso),
+        supabase
+          .from('sleep_logs')
+          .select('duration_minutes, wake_time, bedtime, notes')
+          .eq('user_id', user.id)
+          .gte('wake_time', sevenDaysAgoIso),
+        supabase
+          .from('food_logs')
+          .select('calories_estimate, logged_at')
+          .eq('user_id', user.id)
+          .gte('logged_at', sevenDaysAgoIso),
+      ]);
+
+      const weekWater = weekWaterRes.data || [];
+      const weekSleep = weekSleepRes.data || [];
+      const weekFood = weekFoodRes.data || [];
+
+      // Hydration 7 days
+      const aggHydration: DailyHydration[] = past7Days.map((d) => {
+        const amount = weekWater
+          .filter((w) => w.logged_at && w.logged_at.slice(0, 10) === d.dateStr)
+          .reduce((sum, w) => sum + (w.amount_ml || 0), 0);
+        return {
+          date: d.dateStr,
+          dayLabel: d.dayLabel,
+          amount_ml: amount,
+        };
+      });
+      setWeeklyHydration(aggHydration);
+
+      // Sleep 7 days (night sleep vs power naps)
+      const aggSleep: DailySleep[] = past7Days.map((d) => {
+        const daySleeps = weekSleep.filter(
+          (s) => (s.wake_time && s.wake_time.slice(0, 10) === d.dateStr) ||
+                 (s.bedtime && s.bedtime.slice(0, 10) === d.dateStr)
+        );
+
+        let nightMins = 0;
+        let napMins = 0;
+
+        for (const s of daySleeps) {
+          const isNap = 
+            (s.notes && (s.notes.includes('งีบ') || s.notes.toLowerCase().includes('nap') || s.notes.includes('⚡'))) ||
+            (s.duration_minutes <= 60 && s.notes && s.notes.includes('งีบ'));
+          if (isNap) {
+            napMins += s.duration_minutes || 0;
+          } else {
+            nightMins += s.duration_minutes || 0;
+          }
+        }
+
+        const night_hours = Number((nightMins / 60).toFixed(1));
+        const nap_hours = Number((napMins / 60).toFixed(1));
+        const total_hours = Number(((nightMins + napMins) / 60).toFixed(1));
+
+        return {
+          date: d.dateStr,
+          dayLabel: d.dayLabel,
+          night_hours,
+          nap_hours,
+          total_hours,
+          nap_minutes: napMins,
+        };
+      });
+      setWeeklySleep(aggSleep);
+
+      // Nutrition 7 days
+      const aggNutrition: DailyNutrition[] = past7Days.map((d) => {
+        const dayFoods = weekFood.filter(
+          (f) => f.logged_at && f.logged_at.slice(0, 10) === d.dateStr
+        );
+        const calories = dayFoods.reduce(
+          (sum, f) => sum + (Number(f.calories_estimate) || 0), 0
+        );
+        return {
+          date: d.dateStr,
+          dayLabel: d.dayLabel,
+          calories,
+          meals_count: dayFoods.length,
+        };
+      });
+      setWeeklyNutrition(aggNutrition);
     } finally {
       setLoading(false);
     }
@@ -165,6 +283,12 @@ export default function DashboardPage() {
 
       if (!error) {
         setWaterTotal((prev) => prev + amount);
+        setWeeklyHydration((prev) => {
+          const todayStr = new Date().toISOString().slice(0, 10);
+          return prev.map((item) =>
+            item.date === todayStr ? { ...item, amount_ml: item.amount_ml + amount } : item
+          );
+        });
         if (waterTotal === 0) {
           await supabase.from('point_transactions').insert({
             user_id: user.id,
@@ -213,146 +337,184 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* AI Daily Insight Card (Coach Tone) */}
-      <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white rounded-[28px] p-5 shadow-[0_8px_25px_rgba(16,185,129,0.25)] space-y-2.5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mr-6 -mt-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-100">
-            <div className="p-1.5 rounded-xl bg-white/20 backdrop-blur-md">
-              <Sparkles className="h-4 w-4 text-amber-200" />
+      {/* View Switcher: Today Overview vs 7-Day Visual Analytics */}
+      <div className="flex p-1 bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
+        <button
+          type="button"
+          onClick={() => setDashboardView('today')}
+          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            dashboardView === 'today'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <span>☀️ {t.analytics.viewToday}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setDashboardView('weekly')}
+          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            dashboardView === 'weekly'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <BarChart3 className="h-3.5 w-3.5" />
+          <span>📊 {t.analytics.viewWeekly}</span>
+        </button>
+      </div>
+
+      {dashboardView === 'weekly' ? (
+        <WeeklyAnalytics
+          hydrationData={weeklyHydration}
+          sleepData={weeklySleep}
+          nutritionData={weeklyNutrition}
+          waterGoal={waterGoal}
+        />
+      ) : (
+        <>
+          {/* AI Daily Insight Card (Coach Tone) */}
+          <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white rounded-[28px] p-5 shadow-[0_8px_25px_rgba(16,185,129,0.25)] space-y-2.5 relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mr-6 -mt-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-100">
+                <div className="p-1.5 rounded-xl bg-white/20 backdrop-blur-md">
+                  <Sparkles className="h-4 w-4 text-amber-200" />
+                </div>
+                <span>{t.dashboard.aiInsightTitle}</span>
+              </div>
+              <span className="text-[10px] bg-white/15 px-2 py-0.5 rounded-full text-emerald-100 font-medium">
+                AI Coach
+              </span>
             </div>
-            <span>{t.dashboard.aiInsightTitle}</span>
-          </div>
-          <span className="text-[10px] bg-white/15 px-2 py-0.5 rounded-full text-emerald-100 font-medium">
-            AI Coach
-          </span>
-        </div>
 
-        <p className="text-sm font-medium leading-relaxed text-emerald-50">
-          {waterTotal < 500 ? t.dashboard.aiInsightWaterLow : t.dashboard.aiInsightGood}
-        </p>
+            <p className="text-sm font-medium leading-relaxed text-emerald-50">
+              {waterTotal < 500 ? t.dashboard.aiInsightWaterLow : t.dashboard.aiInsightGood}
+            </p>
 
-        <div className="pt-1 flex items-center justify-between text-[10px] text-emerald-200/80">
-          <span>{t.dashboard.aiDisclaimer}</span>
-          <span className="flex items-center gap-0.5 text-white/90 font-medium">
-            LifeSync AI
-          </span>
-        </div>
-      </div>
-
-      {/* 3 Core Habits Summary */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            {t.dashboard.todaysHabits}
-          </h2>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-            {locale === 'th' ? 'แตะการ์ดเพื่อดูรายละเอียด' : 'Tap to expand'}
-          </span>
-        </div>
-
-        {/* Nutrition Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-amber-200 dark:hover:border-amber-800/60 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <Link href="/nutrition" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                <Utensils className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.meals}</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {mealsCount} {t.dashboard.mealsLogged} {locale === 'th' ? 'วันนี้' : 'today'}
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              href="/nutrition"
-              className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-            >
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
+            <div className="pt-1 flex items-center justify-between text-[10px] text-emerald-200/80">
+              <span>{t.dashboard.aiDisclaimer}</span>
+              <span className="flex items-center gap-0.5 text-white/90 font-medium">
+                LifeSync AI
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800 text-xs">
-            <span className="text-slate-500 dark:text-slate-400">
-              {mealsCount === 0 
-                ? (locale === 'th' ? 'ยังไม่ได้บันทึกมื้ออาหาร' : 'No meals recorded yet')
-                : (locale === 'th' ? 'บันทึกอาหารแล้ว' : 'Meals tracked')}
-            </span>
-            <Link
-              href="/nutrition"
-              className="text-amber-600 dark:text-amber-400 font-bold hover:underline flex items-center gap-1 text-[11px]"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>{t.dashboard.logFood}</span>
-            </Link>
-          </div>
-        </div>
+          {/* 3 Core Habits Summary */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                {t.dashboard.todaysHabits}
+              </h2>
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                {locale === 'th' ? 'แตะการ์ดเพื่อดูรายละเอียด' : 'Tap to expand'}
+              </span>
+            </div>
 
-        {/* Hydration Card with 1-Tap Quick Drink */}
-        <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-sky-200 dark:hover:border-sky-800/60 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <Link href="/hydration" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-sky-500/10 dark:bg-sky-400/15 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-                <Droplets className="h-5 w-5" />
+            {/* Nutrition Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-amber-200 dark:hover:border-amber-800/60 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <Link href="/nutrition" className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <Utensils className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.meals}</h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      {mealsCount} {t.dashboard.mealsLogged} {locale === 'th' ? 'วันนี้' : 'today'}
+                    </p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/nutrition"
+                  className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                >
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.water}</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {waterTotal} / {waterGoal} ml ({waterPercent}%)
-                </p>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800 text-xs">
+                <span className="text-slate-500 dark:text-slate-400">
+                  {mealsCount === 0 
+                    ? (locale === 'th' ? 'ยังไม่ได้บันทึกมื้ออาหาร' : 'No meals recorded yet')
+                    : (locale === 'th' ? 'บันทึกอาหารแล้ว' : 'Meals tracked')}
+                </span>
+                <Link
+                  href="/nutrition"
+                  className="text-amber-600 dark:text-amber-400 font-bold hover:underline flex items-center gap-1 text-[11px]"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{t.dashboard.logFood}</span>
+                </Link>
               </div>
-            </Link>
+            </div>
 
-            <button
-              type="button"
-              disabled={quickAddingWater}
-              onClick={() => handleQuickAddWater(250)}
-              className="flex items-center gap-1 text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 active:scale-95 px-3 py-1.5 rounded-xl border border-sky-200/60 dark:border-sky-800/60 transition-all disabled:opacity-50 cursor-pointer"
-              title="Quick Add 250ml"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>+250 ml</span>
-            </button>
-          </div>
+            {/* Hydration Card with 1-Tap Quick Drink */}
+            <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-sky-200 dark:hover:border-sky-800/60 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <Link href="/hydration" className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-sky-500/10 dark:bg-sky-400/15 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+                    <Droplets className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.water}</h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      {waterTotal} / {waterGoal} ml ({waterPercent}%)
+                    </p>
+                  </div>
+                </Link>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-sky-400 to-sky-600 h-full rounded-full transition-all duration-700"
-              style={{ width: `${waterPercent}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Sleep Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-indigo-200 dark:hover:border-indigo-800/60 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <Link href="/sleep" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 dark:bg-indigo-400/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <Moon className="h-5 w-5" />
+                <button
+                  type="button"
+                  disabled={quickAddingWater}
+                  onClick={() => handleQuickAddWater(250)}
+                  className="flex items-center gap-1 text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 active:scale-95 px-3 py-1.5 rounded-xl border border-sky-200/60 dark:border-sky-800/60 transition-all disabled:opacity-50 cursor-pointer"
+                  title="Quick Add 250ml"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>+250 ml</span>
+                </button>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.sleep}</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {sleepDurationMins > 0 
-                    ? `${t.dashboard.latestLog}: ${sleepHours}` 
-                    : (locale === 'th' ? 'ยังไม่ได้บันทึกเวลานอน' : 'No sleep logged')}
-                </p>
-              </div>
-            </Link>
 
-            <Link
-              href="/sleep"
-              className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-            >
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-sky-400 to-sky-600 h-full rounded-full transition-all duration-700"
+                  style={{ width: `${waterPercent}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Sleep Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-indigo-200 dark:hover:border-indigo-800/60 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <Link href="/sleep" className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 dark:bg-indigo-400/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <Moon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.sleep}</h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      {sleepDurationMins > 0 
+                        ? `${t.dashboard.latestLog}: ${sleepHours}` 
+                        : (locale === 'th' ? 'ยังไม่ได้บันทึกเวลานอน' : 'No sleep logged')}
+                    </p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/sleep"
+                  className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Daily Quests Section */}
       <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">

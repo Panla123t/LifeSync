@@ -112,6 +112,22 @@ export interface TranslationSchema {
     napPresets: string;
     napHint: string;
   };
+  analytics: {
+    title: string;
+    subtitle: string;
+    viewToday: string;
+    viewWeekly: string;
+    tabWater: string;
+    tabSleep: string;
+    tabNutrition: string;
+    weeklyAvg: string;
+    bestDay: string;
+    goalMet: string;
+    daysCount: string;
+    goalLine: string;
+    napTotal: string;
+    emptyHint: string;
+  };
   quests: {
     title: string;
     subtitle: string;
@@ -279,6 +295,22 @@ export const translations: Record<Locale, TranslationSchema> = {
       napPresets: 'แตะเพื่อบันทึกการงีบด่วน',
       napHint: 'การงีบสั้นๆ 15-30 นาที ช่วยฟื้นฟูสมาธิ ความคิดสร้างสรรค์ และพลังงานในระหว่างวัน',
     },
+    analytics: {
+      title: 'สถิติและแนวโน้ม 7 วัน',
+      subtitle: 'ติดตามความสม่ำเสมอของสุขภาพตลอดทั้งสัปดาห์',
+      viewToday: 'รายวัน',
+      viewWeekly: '7 วัน',
+      tabWater: 'การดื่มน้ำ',
+      tabSleep: 'การนอนหลับ',
+      tabNutrition: 'พลังงานอาหาร',
+      weeklyAvg: 'ค่าเฉลี่ยรายวัน',
+      bestDay: 'วันที่ทำได้สูงสุด',
+      goalMet: 'บรรลุเป้าหมาย',
+      daysCount: 'วัน',
+      goalLine: 'เป้าหมาย',
+      napTotal: 'งีบหลับรวม',
+      emptyHint: 'เริ่มบันทึกข้อมูลเพื่อดูสถิติและแนวโน้มกราฟสุขภาพของคุณ',
+    },
     quests: {
       title: 'รางวัลและภารกิจ',
       subtitle: 'สร้างวินัยและความสม่ำเสมอในแบบที่ทำได้จริง',
@@ -443,6 +475,22 @@ export const translations: Record<Locale, TranslationSchema> = {
       napDuration: 'Nap Duration (minutes)',
       napPresets: 'Quick Power Nap Presets',
       napHint: 'A 15-30 minute power nap restores focus, alertness, and afternoon energy',
+    },
+    analytics: {
+      title: '7-Day Trends & Analytics',
+      subtitle: 'Observe your weekly habit consistency over time',
+      viewToday: 'Daily',
+      viewWeekly: '7 Days',
+      tabWater: 'Hydration',
+      tabSleep: 'Sleep',
+      tabNutrition: 'Nutrition',
+      weeklyAvg: 'Daily Average',
+      bestDay: 'Best Day',
+      goalMet: 'Goal Reached',
+      daysCount: 'days',
+      goalLine: 'Goal',
+      napTotal: 'Total Naps',
+      emptyHint: 'Start logging habits to see your weekly visual trends',
     },
     quests: {
       title: 'Life Rewards',
