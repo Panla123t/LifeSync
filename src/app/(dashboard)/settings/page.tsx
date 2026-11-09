@@ -15,9 +15,16 @@ import {
   Globe,
   Sun,
   Moon,
-  ExternalLink
+  ExternalLink,
+  Copy,
+  Check,
+  Send,
+  RefreshCw,
+  Sparkles,
+  Unlink
 } from 'lucide-react';
 import type { NotificationSettings, Profile } from '@/types/database';
+import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -32,6 +39,18 @@ export default function SettingsPage() {
   const [sleepEnabled, setSleepEnabled] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState(false);
+
+  // LINE Connection State
+  const [showLineModal, setShowLineModal] = useState(false);
+  const [lineToken, setLineToken] = useState<string | null>(null);
+  const [lineExpiresAt, setLineExpiresAt] = useState<string | null>(null);
+  const [lineOaUrl, setLineOaUrl] = useState<string>('https://line.me/R/ti/p/@lifesync');
+  const [loadingToken, setLoadingToken] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(false);
+  const [checkingLineStatus, setCheckingLineStatus] = useState(false);
+  const [sendingTestReminder, setSendingTestReminder] = useState(false);
+  const [lineActionFeedback, setLineActionFeedback] = useState<string | null>(null);
+  const [unlinkingLine, setUnlinkingLine] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -90,6 +109,102 @@ export default function SettingsPage() {
       setTimeout(() => setSavedMessage(false), 3000);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleOpenConnectModal = async () => {
+    setShowLineModal(true);
+    setLoadingToken(true);
+    setCopiedToken(false);
+    setLineActionFeedback(null);
+    try {
+      const res = await fetch('/api/line/link-token', { method: 'POST' });
+      const data = await res.json();
+      if (data.token) {
+        setLineToken(data.token);
+        setLineExpiresAt(data.expires_at);
+        if (data.line_oa_url) setLineOaUrl(data.line_oa_url);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingToken(false);
+    }
+  };
+
+  const handleCopyToken = () => {
+    if (!lineToken) return;
+    navigator.clipboard.writeText(lineToken);
+    setCopiedToken(true);
+    setTimeout(() => setCopiedToken(false), 2500);
+  };
+
+  const handleCheckLineStatus = async () => {
+    setCheckingLineStatus(true);
+    try {
+      const res = await fetch('/api/line/link-token');
+      const data = await res.json();
+      if (data.is_linked) {
+        setNotifSettings((prev) => prev ? { 
+          ...prev, 
+          line_user_id: data.line_user_id, 
+          line_linked_at: data.linked_at 
+        } : {
+          user_id: '',
+          line_user_id: data.line_user_id,
+          line_linked_at: data.linked_at,
+          hydration_enabled: true,
+          sleep_enabled: true,
+          daily_summary_enabled: false,
+          reminder_preferences: {},
+          updated_at: new Date().toISOString(),
+        });
+        setLineActionFeedback(locale === 'th' ? '🎉 เชื่อมต่อกับ LINE เรียบร้อยแล้ว!' : '🎉 Connected to LINE successfully!');
+        setTimeout(() => {
+          setShowLineModal(false);
+          setLineActionFeedback(null);
+        }, 1800);
+      } else {
+        setLineActionFeedback(locale === 'th' ? 'ยังไม่พบการเชื่อมต่อ กรุณาส่งรหัสในแชท LINE ก่อนนะครับ' : 'Not linked yet. Please send the code in LINE chat first');
+      }
+    } finally {
+      setCheckingLineStatus(false);
+    }
+  };
+
+  const handleSendTestReminder = async () => {
+    setSendingTestReminder(true);
+    setLineActionFeedback(null);
+    try {
+      const res = await fetch('/api/line/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'hydration' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLineActionFeedback(data.message || (locale === 'th' ? 'ส่งการแจ้งเตือนทดสอบแล้ว! กรุณาตรวจสอบใน LINE' : 'Test reminder sent! Check your LINE chat'));
+        setTimeout(() => setLineActionFeedback(null), 4500);
+      } else {
+        setLineActionFeedback(data.error || 'Failed to send reminder');
+      }
+    } finally {
+      setSendingTestReminder(false);
+    }
+  };
+
+  const handleUnlinkLine = async () => {
+    if (!confirm(locale === 'th' ? 'คุณต้องการยกเลิกการเชื่อมต่อกับ LINE หรือไม่?' : 'Are you sure you want to disconnect LINE?')) return;
+    setUnlinkingLine(true);
+    try {
+      const res = await fetch('/api/line/link-token', { method: 'DELETE' });
+      if (res.ok) {
+        setNotifSettings((prev) => prev ? { ...prev, line_user_id: null, line_linked_at: null } : null);
+        setLineActionFeedback(locale === 'th' ? 'ยกเลิกการเชื่อมต่อเรียบร้อยแล้ว' : 'Disconnected successfully');
+        setTimeout(() => setLineActionFeedback(null), 3000);
+      }
+    } finally {
+      setUnlinkingLine(false);
     }
   };
 
@@ -266,10 +381,14 @@ export default function SettingsPage() {
             <div className="w-8 h-8 rounded-xl bg-[#06C755] text-white flex items-center justify-center font-bold text-xs shadow-xs">
               LINE
             </div>
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.settings.lineTitle}</h2>
+            <div>
+              <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.settings.lineTitle}</h2>
+              <div className="text-[10px] text-slate-400">LINE Messaging API</div>
+            </div>
           </div>
           {notifSettings?.line_user_id ? (
-            <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-2.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Connected
             </span>
           ) : (
@@ -283,15 +402,54 @@ export default function SettingsPage() {
           {t.settings.lineDesc}
         </p>
 
+        {lineActionFeedback && (
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-2xl text-xs font-semibold animate-in fade-in">
+            {lineActionFeedback}
+          </div>
+        )}
+
         {notifSettings?.line_user_id ? (
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-800 rounded-2xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-            <span className="font-semibold">{t.settings.lineConnected}</span>
-            <span className="text-[11px] text-slate-400">ID: {notifSettings.line_user_id.slice(0, 8)}...</span>
+          <div className="space-y-2.5">
+            <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/60 rounded-2xl text-xs text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                <span className="font-semibold">{t.settings.lineConnected}</span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-mono">
+                {notifSettings.line_user_id.slice(0, 10)}...
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={sendingTestReminder}
+                onClick={handleSendTestReminder}
+                className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {sendingTestReminder ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                )}
+                <span>{t.settings.sendTestReminder}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={unlinkingLine}
+                onClick={handleUnlinkLine}
+                className="py-2.5 px-3 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-100/70 dark:hover:bg-rose-950/50 active:scale-95 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-900/40 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <Unlink className="h-3.5 w-3.5" />
+                <span>{t.settings.disconnectLine}</span>
+              </button>
+            </div>
           </div>
         ) : (
           <button
             type="button"
-            onClick={() => alert(locale === 'th' ? 'ระบบกำลังเตรียมสร้างโทเค็นเชื่อมต่อกับ LINE Official Account' : 'Generating secure linking token for LINE Official Account...')}
+            onClick={handleOpenConnectModal}
             className="w-full py-3 bg-[#06C755] hover:bg-[#05b04b] active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-[0_4px_14px_rgba(6,199,85,0.3)] flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>{t.settings.connectLine}</span>
@@ -299,6 +457,103 @@ export default function SettingsPage() {
           </button>
         )}
       </div>
+
+      {/* Floating Glass Modal for LINE OA Linking */}
+      <FloatingGlassModal
+        isOpen={showLineModal}
+        onClose={() => setShowLineModal(false)}
+        title={t.settings.linkModalTitle}
+        icon={
+          <div className="w-8 h-8 rounded-xl bg-[#06C755] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+            LINE
+          </div>
+        }
+        badge="Official Account"
+        glowColor="emerald"
+      >
+        <div className="space-y-4 pt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-center">
+            {t.settings.linkCodeHint}
+          </p>
+
+          {/* 6-Digit Code Display */}
+          <div className="p-4 rounded-3xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-center space-y-2">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {t.settings.linkCodeLabel}
+            </div>
+
+            {loadingToken ? (
+              <div className="py-2 flex items-center justify-center gap-2 text-xs text-slate-400">
+                <RefreshCw className="h-4 w-4 animate-spin text-emerald-500" />
+                <span>กำลังสร้างรหัสเชื่อมต่อ...</span>
+              </div>
+            ) : (
+              <div className="text-3xl font-black tracking-widest text-emerald-600 dark:text-emerald-400 font-mono py-1">
+                {lineToken || '------'}
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleCopyToken}
+                disabled={!lineToken}
+                className="py-1.5 px-3 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+              >
+                {copiedToken ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="text-emerald-600 dark:text-emerald-400">{t.settings.codeCopied}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>{t.settings.copyCode}</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenConnectModal}
+                className="p-2 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-slate-100 text-slate-400 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-slate-600 transition-all cursor-pointer"
+                title="สร้างรหัสใหม่"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {lineActionFeedback && (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-2xl text-xs font-semibold text-center animate-in fade-in">
+              {lineActionFeedback}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="space-y-2 pt-1">
+            <a
+              href={lineOaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 bg-[#06C755] hover:bg-[#05b04b] active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-[0_4px_14px_rgba(6,199,85,0.3)] flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>{t.settings.openLineOa}</span>
+              <ExternalLink className="h-4 w-4" />
+            </a>
+
+            <button
+              type="button"
+              disabled={checkingLineStatus}
+              onClick={handleCheckLineStatus}
+              className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              {checkingLineStatus && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+              <span>{t.settings.checkStatus}</span>
+            </button>
+          </div>
+        </div>
+      </FloatingGlassModal>
 
       {/* Privacy Notice & Disclaimer */}
       <div className="bg-slate-100/70 dark:bg-slate-900/60 rounded-[26px] p-4.5 text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5 border border-slate-200/50 dark:border-slate-800">

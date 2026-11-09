@@ -162,6 +162,17 @@ export interface TranslationSchema {
     lineDesc: string;
     lineConnected: string;
     connectLine: string;
+    disconnectLine: string;
+    sendTestReminder: string;
+    linkModalTitle: string;
+    linkModalSubtitle: string;
+    linkCodeLabel: string;
+    linkCodeHint: string;
+    openLineOa: string;
+    copyCode: string;
+    codeCopied: string;
+    expiresIn: string;
+    checkStatus: string;
   };
   auth: {
     welcomeBack: string;
@@ -345,6 +356,17 @@ export const translations: Record<Locale, TranslationSchema> = {
       lineDesc: 'เชื่อมต่อบัญชีเพื่อรับการเตือนดื่มน้ำและการทักทายยามเช้าผ่านแชท LINE ของคุณ',
       lineConnected: 'เชื่อมต่อกับ LINE เรียบร้อยแล้ว',
       connectLine: 'เชื่อมต่อ LINE',
+      disconnectLine: 'ยกเลิกการเชื่อมต่อ',
+      sendTestReminder: 'ทดสอบส่งการแจ้งเตือน',
+      linkModalTitle: 'เชื่อมต่อ LINE Official Account',
+      linkModalSubtitle: 'รับการแจ้งเตือนและบันทึกสุขภาพผ่านแชท LINE ได้ทันที',
+      linkCodeLabel: 'รหัสเชื่อมต่อ 6 หลักของคุณ',
+      linkCodeHint: 'เปิดห้องแชท LINE Official Account ของ LifeSync แล้วส่งรหัส 6 หลักนี้เพื่อเชื่อมต่อบัญชีอัตโนมัติ',
+      openLineOa: 'เปิดแชท LINE',
+      copyCode: 'คัดลอกรหัส',
+      codeCopied: 'คัดลอกรหัสเรียบร้อยแล้ว!',
+      expiresIn: 'รหัสหมดอายุใน',
+      checkStatus: 'ตรวจสอบสถานะ',
     },
     auth: {
       welcomeBack: 'ยินดีต้อนรับกลับมา',
@@ -526,6 +548,17 @@ export const translations: Record<Locale, TranslationSchema> = {
       lineDesc: 'Link your account to receive water reminders and morning sleep check-ins straight to your LINE chat.',
       lineConnected: 'Connected to LINE',
       connectLine: 'Connect with LINE',
+      disconnectLine: 'Disconnect',
+      sendTestReminder: 'Send Test Reminder',
+      linkModalTitle: 'Connect LINE Official Account',
+      linkModalSubtitle: 'Receive reminders and log your daily habits directly in LINE',
+      linkCodeLabel: 'Your 6-Digit Link Code',
+      linkCodeHint: 'Open the LifeSync LINE Official Account chat and send this 6-digit code to connect your account',
+      openLineOa: 'Open LINE Chat',
+      copyCode: 'Copy Code',
+      codeCopied: 'Code copied to clipboard!',
+      expiresIn: 'Expires in',
+      checkStatus: 'Check Status',
     },
     auth: {
       welcomeBack: 'Welcome back',
