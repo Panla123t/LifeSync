@@ -66,14 +66,16 @@ export default function FloatingGlassModal({
 
       {/* Floating Glass Window */}
       <div 
-        className={`relative z-10 w-full max-w-md max-h-[88vh] overflow-y-auto bg-white/85 dark:bg-slate-900/90 backdrop-blur-3xl border border-white/80 dark:border-slate-700/60 rounded-t-[36px] sm:rounded-[36px] p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ${ringStyles} animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-200`}
+        className={`relative z-10 w-full max-w-md max-h-[88vh] overflow-y-auto overflow-x-hidden no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden bg-white/85 dark:bg-slate-900/90 backdrop-blur-3xl border border-white/80 dark:border-slate-700/60 rounded-t-[36px] sm:rounded-[36px] p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ${ringStyles} animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-200`}
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Ambient Glass Flares */}
-        <div className={`absolute -top-12 -right-12 w-44 h-44 ${glowStyles} rounded-full blur-3xl pointer-events-none`} />
-        <div className={`absolute -bottom-12 -left-12 w-44 h-44 ${glowStyles} rounded-full blur-3xl pointer-events-none`} />
+        {/* Ambient Glass Flares clipped to modal shape so they never trigger scrollbars */}
+        <div className="absolute inset-0 overflow-hidden rounded-[inherit] pointer-events-none">
+          <div className={`absolute -top-12 -right-12 w-44 h-44 ${glowStyles} rounded-full blur-3xl`} />
+          <div className={`absolute -bottom-12 -left-12 w-44 h-44 ${glowStyles} rounded-full blur-3xl`} />
+        </div>
 
         {/* Mobile Drag Indicator */}
         <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />

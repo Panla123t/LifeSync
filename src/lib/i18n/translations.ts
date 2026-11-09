@@ -77,6 +77,16 @@ export interface TranslationSchema {
     todaysMeals: string;
     noMeals: string;
     noMealsHint: string;
+    aiScanTitle: string;
+    aiScanDesc: string;
+    takePhoto: string;
+    uploadPhoto: string;
+    analyzing: string;
+    analyzingHint: string;
+    aiSuggested: string;
+    retake: string;
+    remove: string;
+    orManualInput: string;
   };
   sleep: {
     title: string;
@@ -228,6 +238,16 @@ export const translations: Record<Locale, TranslationSchema> = {
       todaysMeals: 'มื้ออาหารวันนี้',
       noMeals: 'ยังไม่มีบันทึกอาหารสำหรับวันนี้',
       noMealsHint: 'บันทึกอาหารที่คุณรับประทานเพื่อติดตามพลังงานและสารอาหาร!',
+      aiScanTitle: 'ถ่ายภาพอาหารเพื่อประเมินแคลอรี่ด้วย AI',
+      aiScanDesc: 'เปิดกล้องหรืออัปโหลดรูปภาพอาหาร ระบบจะช่วยประเมินเมนูและแคลอรี่อัตโนมัติ',
+      takePhoto: 'เปิดกล้องถ่ายภาพ',
+      uploadPhoto: 'เลือกจากอัลบั้ม',
+      analyzing: 'AI กำลังวิเคราะห์รูปภาพอาหาร...',
+      analyzingHint: 'กำลังระบุเมนูอาหาร ส่วนประกอบ และคำนวณแคลอรี่โดยประมาณ',
+      aiSuggested: 'AI ประเมินผลให้เรียบร้อยแล้ว (คุณสามารถแก้ไขข้อมูลได้ตามต้องการ)',
+      retake: 'ถ่ายใหม่',
+      remove: 'ลบรูป',
+      orManualInput: 'หรือกรอกข้อมูลอาหารด้วยตนเอง',
     },
     sleep: {
       title: 'การนอนหลับ',
@@ -377,6 +397,16 @@ export const translations: Record<Locale, TranslationSchema> = {
       todaysMeals: "Today's Meals",
       noMeals: 'No meals logged yet today',
       noMealsHint: 'Keep track of your fuel by recording your first meal!',
+      aiScanTitle: 'Snap Meal Photo for AI Calorie Estimation',
+      aiScanDesc: 'Open camera or upload a dish photo to auto-estimate meal type and calories',
+      takePhoto: 'Take Photo',
+      uploadPhoto: 'Choose Photo',
+      analyzing: 'AI is analyzing your meal...',
+      analyzingHint: 'Identifying dish, ingredients, and estimating nutritional energy',
+      aiSuggested: 'AI estimation ready (feel free to adjust any fields before saving)',
+      retake: 'Retake',
+      remove: 'Remove',
+      orManualInput: 'Or enter details manually',
     },
     sleep: {
       title: 'Sleep Routine',
