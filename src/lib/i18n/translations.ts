@@ -105,6 +105,12 @@ export interface TranslationSchema {
     noLogsHint: string;
     errorWakeBeforeBed: string;
     errorDurationMax: string;
+    addNap: string;
+    nap: string;
+    nightSleep: string;
+    napDuration: string;
+    napPresets: string;
+    napHint: string;
   };
   quests: {
     title: string;
@@ -266,6 +272,12 @@ export const translations: Record<Locale, TranslationSchema> = {
       noLogsHint: 'บันทึกเวลาเข้านอนและเวลาตื่นเพื่อดูความสม่ำเสมอของตารางชีวิต!',
       errorWakeBeforeBed: 'เวลาตื่นนอนต้องอยู่หลังเวลาเข้านอน',
       errorDurationMax: 'ระยะเวลานอนไม่สามารถเกิน 24 ชั่วโมงต่อหนึ่งบันทึกได้',
+      addNap: 'บันทึกการงีบหลับ',
+      nap: 'งีบหลับระหว่างวัน',
+      nightSleep: 'การนอนหลัก',
+      napDuration: 'ระยะเวลางีบหลับ (นาที)',
+      napPresets: 'แตะเพื่อบันทึกการงีบด่วน',
+      napHint: 'การงีบสั้นๆ 15-30 นาที ช่วยฟื้นฟูสมาธิ ความคิดสร้างสรรค์ และพลังงานในระหว่างวัน',
     },
     quests: {
       title: 'รางวัลและภารกิจ',
@@ -425,6 +437,12 @@ export const translations: Record<Locale, TranslationSchema> = {
       noLogsHint: 'Record when you slept and woke up to observe your consistency!',
       errorWakeBeforeBed: 'Wake time must be after bedtime.',
       errorDurationMax: 'Sleep duration cannot exceed 24 hours in a single log.',
+      addNap: 'Add Nap',
+      nap: 'Power Nap',
+      nightSleep: 'Night Sleep',
+      napDuration: 'Nap Duration (minutes)',
+      napPresets: 'Quick Power Nap Presets',
+      napHint: 'A 15-30 minute power nap restores focus, alertness, and afternoon energy',
     },
     quests: {
       title: 'Life Rewards',
