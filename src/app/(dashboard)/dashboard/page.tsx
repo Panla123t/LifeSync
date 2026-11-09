@@ -34,9 +34,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [quickAddingWater, setQuickAddingWater] = useState(false);
   const [todayFormatted, setTodayFormatted] = useState<string>('');
+  const [waterGoal, setWaterGoal] = useState<number>(2000);
 
   const supabase = createClient();
-  const waterGoal = 2000;
 
   const loadDashboard = async () => {
     try {
@@ -140,6 +140,13 @@ export default function DashboardPage() {
         month: 'short',
       }).format(new Date())
     );
+    const savedGoal = localStorage.getItem('lifesync_water_goal');
+    if (savedGoal) {
+      const parsed = parseInt(savedGoal, 10);
+      if (!isNaN(parsed) && parsed >= 500 && parsed <= 8000) {
+        setWaterGoal(parsed);
+      }
+    }
     loadDashboard();
   }, [locale]);
 
