@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
+import ThemeToggle from '@/components/shared/ThemeToggle';
 import { 
   Moon, 
   Plus, 
@@ -11,9 +12,7 @@ import {
   Clock, 
   Bed, 
   SunMedium, 
-  Sparkles,
-  Heart,
-  AlarmClock
+  Sparkles
 } from 'lucide-react';
 import type { SleepLog } from '@/types/database';
 
@@ -139,14 +138,15 @@ export default function SleepPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{t.sleep.title}</h1>
-          <p className="text-xs text-slate-500">{t.sleep.subtitle}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.sleep.title}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t.sleep.subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <LanguageToggle />
           <button
             onClick={() => setShowForm(!showForm)}
-            className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white p-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 text-xs font-bold"
+            className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white p-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>{t.sleep.recordSleep}</span>
@@ -210,17 +210,17 @@ export default function SleepPage() {
 
       {/* Add Sleep Form */}
       {showForm && (
-        <div className="bg-white rounded-[28px] p-5 border border-indigo-200/80 shadow-[0_8px_30px_rgba(99,102,241,0.08)] space-y-4 animate-in fade-in duration-200">
-          <h2 className="text-sm font-bold text-slate-800">{t.sleep.recordSleep}</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-indigo-200/80 dark:border-indigo-800/60 shadow-[0_8px_30px_rgba(99,102,241,0.08)] space-y-4 animate-in fade-in duration-200">
+          <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.sleep.recordSleep}</h2>
           {formError && (
-            <div className="p-3 rounded-2xl bg-rose-50 border border-rose-100 text-rose-700 text-xs">
+            <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs">
               {formError}
             </div>
           )}
           <form onSubmit={handleAddSleep} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                <Bed className="h-3.5 w-3.5 text-indigo-600" />
+              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <Bed className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                 <span>{t.sleep.bedtime}</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -229,20 +229,20 @@ export default function SleepPage() {
                   required
                   value={bedtimeDate}
                   onChange={(e) => setBedtimeDate(e.target.value)}
-                  className="px-3 py-2.5 text-xs border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <input
                   type="time"
                   required
                   value={bedtimeTime}
                   onChange={(e) => setBedtimeTime(e.target.value)}
-                  className="px-3 py-2.5 text-xs border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-600 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <SunMedium className="h-3.5 w-3.5 text-amber-500" />
                 <span>{t.sleep.wakeTime}</span>
               </label>
@@ -252,26 +252,26 @@ export default function SleepPage() {
                   required
                   value={wakeDate}
                   onChange={(e) => setWakeDate(e.target.value)}
-                  className="px-3 py-2.5 text-xs border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <input
                   type="time"
                   required
                   value={wakeTime}
                   onChange={(e) => setWakeTime(e.target.value)}
-                  className="px-3 py-2.5 text-xs border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">{t.sleep.notes}</label>
+              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">{t.sleep.notes}</label>
               <input
                 type="text"
                 placeholder={t.sleep.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-4 py-2.5 text-xs border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
@@ -279,14 +279,14 @@ export default function SleepPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="flex-1 py-2.5 border border-slate-200 rounded-2xl text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors"
+                className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 {t.common.cancel}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-xs"
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-xs cursor-pointer"
               >
                 {submitting ? t.common.saving : t.common.save}
               </button>
@@ -296,40 +296,40 @@ export default function SleepPage() {
       )}
 
       {/* Sleep Logs History */}
-      <div className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
-        <h2 className="text-sm font-bold text-slate-800">{t.sleep.recentLogs}</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
+        <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.sleep.recentLogs}</h2>
         {loading ? (
           <p className="text-xs text-slate-400 py-4 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
           <div className="text-center py-8 space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-400 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-400 flex items-center justify-center mx-auto">
               <Moon className="h-6 w-6" />
             </div>
-            <p className="text-xs font-bold text-slate-700">{t.sleep.noLogs}</p>
-            <p className="text-[11px] text-slate-400">{t.sleep.noLogsHint}</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.sleep.noLogs}</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">{t.sleep.noLogsHint}</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {logs.map((log) => (
-              <div key={log.id} className="py-3.5 flex items-center justify-between hover:bg-slate-50/50 px-1 rounded-xl transition-colors">
+              <div key={log.id} className="py-3.5 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 px-1 rounded-xl transition-colors">
                 <div className="space-y-1">
-                  <div className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <div className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>{formatHoursMinutes(log.duration_minutes)}</span>
-                    <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
                       {new Date(log.wake_time).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1 text-[11px]">
-                      <Clock className="h-3 w-3 text-slate-400" />
+                      <Clock className="h-3 w-3 text-slate-400 dark:text-slate-500" />
                       {new Date(log.bedtime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &rarr;{' '}
                       {new Date(log.wake_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
 
                   {log.notes && (
-                    <p className="text-[11px] text-slate-500 italic bg-slate-50 px-2 py-1 rounded-md mt-1">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800/60 px-2 py-1 rounded-md mt-1">
                       &ldquo;{log.notes}&rdquo;
                     </p>
                   )}
@@ -337,7 +337,7 @@ export default function SleepPage() {
 
                 <button
                   onClick={() => deleteSleep(log.id)}
-                  className="text-slate-300 hover:text-rose-500 p-2 rounded-xl hover:bg-rose-50 transition-colors"
+                  className="text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                   title={t.common.delete}
                 >
                   <Trash2 className="h-4 w-4" />

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Prompt } from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { ThemeProvider } from "@/lib/theme/ThemeContext";
 import "./globals.css";
 
 const promptFont = Prompt({
@@ -11,7 +12,10 @@ const promptFont = Prompt({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#059669",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#059669" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0f19" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -31,12 +35,33 @@ export default function RootLayout({
   return (
     <html
       lang="th"
+      suppressHydrationWarning
       className={`${promptFont.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+      <head>
+        {/* Anti-flash script for dark theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const storedTheme = localStorage.getItem('lifesync_theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-full flex flex-col font-sans selection:bg-emerald-500 selection:text-white bg-[#F8FAF8] dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 transition-colors duration-200">
+        <ThemeProvider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

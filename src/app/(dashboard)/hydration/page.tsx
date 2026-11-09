@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
+import ThemeToggle from '@/components/shared/ThemeToggle';
 import { 
   Droplets, 
   Plus, 
@@ -12,8 +13,7 @@ import {
   Clock, 
   GlassWater, 
   Sparkles,
-  CupSoda,
-  CheckCircle2
+  CupSoda
 } from 'lucide-react';
 import type { WaterLog } from '@/types/database';
 
@@ -96,12 +96,13 @@ export default function HydrationPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{t.hydration.title}</h1>
-          <p className="text-xs text-slate-500">{t.hydration.subtitle}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.hydration.title}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t.hydration.subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <LanguageToggle />
-          <div className="bg-sky-50 text-sky-600 p-2.5 rounded-2xl shadow-xs">
+          <div className="bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 p-2.5 rounded-2xl shadow-xs">
             <Droplets className="h-6 w-6" />
           </div>
         </div>
@@ -109,7 +110,6 @@ export default function HydrationPage() {
 
       {/* Aesthetic Hydration Visualizer Card */}
       <div className="bg-gradient-to-br from-sky-500 via-sky-600 to-blue-600 text-white rounded-[32px] p-6 shadow-[0_12px_30px_rgba(14,165,233,0.3)] space-y-5 relative overflow-hidden">
-        {/* Soft floating glow circles */}
         <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-36 h-36 bg-sky-300/20 rounded-full blur-2xl pointer-events-none" />
 
@@ -154,10 +154,10 @@ export default function HydrationPage() {
       </div>
 
       {/* Quick Add Buttons with Cup Visuals */}
-      <div className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-800">{t.hydration.quickAdd}</h2>
-          <span className="text-[11px] text-sky-600 font-medium">1-Tap Logging</span>
+          <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.hydration.quickAdd}</h2>
+          <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium">1-Tap Logging</span>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -173,13 +173,13 @@ export default function HydrationPage() {
                 type="button"
                 disabled={submitting}
                 onClick={() => addWater(item.ml)}
-                className="group py-3.5 px-3 rounded-2xl border border-sky-100 bg-gradient-to-b from-sky-50/70 to-sky-50/30 hover:to-sky-100/70 active:scale-95 transition-all flex flex-col items-center justify-center text-sky-700 font-bold text-sm shadow-xs disabled:opacity-50"
+                className="group py-3.5 px-3 rounded-2xl border border-sky-100 dark:border-sky-900/40 bg-gradient-to-b from-sky-50/70 to-sky-50/30 dark:from-sky-950/40 dark:to-sky-900/20 hover:to-sky-100/70 dark:hover:to-sky-900/40 active:scale-95 transition-all flex flex-col items-center justify-center text-sky-700 dark:text-sky-300 font-bold text-sm shadow-xs disabled:opacity-50 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-xl bg-white text-sky-600 flex items-center justify-center mb-1.5 shadow-2xs group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-1.5 shadow-2xs group-hover:scale-110 transition-transform">
                   <Icon className="h-4 w-4" />
                 </div>
-                <span className="text-xs text-sky-800">+{item.ml} ml</span>
-                <span className="text-[10px] text-sky-500/80 font-normal mt-0.5">{item.label}</span>
+                <span className="text-xs text-sky-800 dark:text-sky-200">+{item.ml} ml</span>
+                <span className="text-[10px] text-sky-500/80 dark:text-sky-400/80 font-normal mt-0.5">{item.label}</span>
               </button>
             );
           })}
@@ -204,12 +204,12 @@ export default function HydrationPage() {
               placeholder={t.hydration.customAmount}
               value={customAmount}
               onChange={(e) => setCustomAmount(e.target.value)}
-              className="flex-1 px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="flex-1 px-4 py-2.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
             <button
               type="submit"
               disabled={submitting || !customAmount}
-              className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-xs disabled:opacity-50"
+              className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
             >
               {t.hydration.add}
             </button>
@@ -218,33 +218,33 @@ export default function HydrationPage() {
       </div>
 
       {/* Today's Log History */}
-      <div className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3.5">
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-800">{t.hydration.todaysLogs}</h2>
-          <span className="text-xs text-slate-400">{logs.length} {locale === 'th' ? 'รายการ' : 'entries'}</span>
+          <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.hydration.todaysLogs}</h2>
+          <span className="text-xs text-slate-400 dark:text-slate-500">{logs.length} {locale === 'th' ? 'รายการ' : 'entries'}</span>
         </div>
 
         {loading ? (
           <p className="text-xs text-slate-400 py-4 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
           <div className="text-center py-8 space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-400 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/50 text-sky-400 flex items-center justify-center mx-auto">
               <Droplets className="h-6 w-6" />
             </div>
-            <p className="text-xs font-bold text-slate-700">{t.hydration.noLogs}</p>
-            <p className="text-[11px] text-slate-400">{t.hydration.noLogsHint}</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.hydration.noLogs}</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">{t.hydration.noLogsHint}</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {logs.map((log) => (
-              <div key={log.id} className="py-3 flex items-center justify-between hover:bg-slate-50/50 px-1 rounded-xl transition-colors">
+              <div key={log.id} className="py-3 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 px-1 rounded-xl transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                  <div className="w-9 h-9 rounded-2xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
                     <Droplets className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-extrabold text-slate-800">{log.amount_ml} ml</div>
-                    <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                    <div className="text-sm font-extrabold text-slate-800 dark:text-white">{log.amount_ml} ml</div>
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
                       <Clock className="h-3 w-3" />
                       {new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
@@ -252,7 +252,7 @@ export default function HydrationPage() {
                 </div>
                 <button
                   onClick={() => deleteLog(log.id)}
-                  className="text-slate-300 hover:text-rose-500 p-2 rounded-xl hover:bg-rose-50 transition-colors"
+                  className="text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                   title={t.common.delete}
                 >
                   <Trash2 className="h-4 w-4" />

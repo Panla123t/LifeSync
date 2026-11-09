@@ -116,6 +116,9 @@ export interface TranslationSchema {
     language: string;
     thai: string;
     english: string;
+    theme: string;
+    lightMode: string;
+    darkMode: string;
     notifPrefs: string;
     hydrationReminders: string;
     hydrationRemindersDesc: string;
@@ -264,6 +267,9 @@ export const translations: Record<Locale, TranslationSchema> = {
       language: 'ภาษา (Language)',
       thai: 'ไทย (Thai)',
       english: 'English',
+      theme: 'ธีมการแสดงผล (Theme)',
+      lightMode: 'สว่าง (Light)',
+      darkMode: 'มืด (Dark)',
       notifPrefs: 'การแจ้งเตือน',
       hydrationReminders: 'เตือนดื่มน้ำ',
       hydrationRemindersDesc: 'รับการแจ้งเตือนดื่มน้ำเบาๆ ตลอดวัน',
@@ -410,6 +416,9 @@ export const translations: Record<Locale, TranslationSchema> = {
       language: 'Language',
       thai: 'ไทย (Thai)',
       english: 'English',
+      theme: 'Appearance (Theme)',
+      lightMode: 'Light',
+      darkMode: 'Dark',
       notifPrefs: 'Notification Preferences',
       hydrationReminders: 'Hydration Reminders',
       hydrationRemindersDesc: 'Periodic gentle nudges to drink water',

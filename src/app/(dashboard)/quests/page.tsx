@@ -4,16 +4,14 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
+import ThemeToggle from '@/components/shared/ThemeToggle';
 import { 
   Trophy, 
   Flame, 
   CheckCircle2, 
   Circle, 
   Award, 
-  Sparkles, 
-  Star,
-  Zap,
-  ShieldCheck
+  Star 
 } from 'lucide-react';
 import type { Quest, UserQuest } from '@/types/database';
 
@@ -68,7 +66,6 @@ export default function QuestsPage() {
     loadQuests();
   }, []);
 
-  // Compute dynamic user level
   const userLevel = Math.floor(totalPoints / 50) + 1;
   const currentLevelPoints = totalPoints % 50;
   const levelProgressPercent = Math.min(100, Math.round((currentLevelPoints / 50) * 100));
@@ -78,12 +75,13 @@ export default function QuestsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{t.quests.title}</h1>
-          <p className="text-xs text-slate-500">{t.quests.subtitle}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.quests.title}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t.quests.subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <LanguageToggle />
-          <div className="bg-amber-50 text-amber-600 p-2.5 rounded-2xl shadow-xs">
+          <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
             <Trophy className="h-6 w-6" />
           </div>
         </div>
@@ -129,15 +127,15 @@ export default function QuestsPage() {
       </div>
 
       {/* Quests List */}
-      <div className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-slate-800">{t.quests.todaysQuests}</h2>
-            <p className="text-[11px] text-slate-400">
+            <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.quests.todaysQuests}</h2>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
               {locale === 'th' ? 'รีเซ็ตทุกเที่ยงคืนตามเวลาท้องถิ่น' : 'Resets daily at midnight'}
             </p>
           </div>
-          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full">
             {completedQuestIds.length} / {quests.length} {t.dashboard.completed}
           </span>
         </div>
@@ -153,29 +151,29 @@ export default function QuestsPage() {
                   key={q.id}
                   className={`p-4 rounded-2xl border transition-all flex items-start justify-between ${
                     isDone
-                      ? 'bg-emerald-50/40 border-emerald-200/60'
-                      : 'bg-slate-50/70 border-slate-200/60 hover:border-emerald-200 hover:bg-white'
+                      ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/60 dark:border-emerald-800/40'
+                      : 'bg-slate-50/70 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-800 hover:border-emerald-200 dark:hover:border-emerald-700 hover:bg-white dark:hover:bg-slate-850'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     {isDone ? (
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
                     ) : (
-                      <Circle className="h-5 w-5 text-slate-300 mt-0.5 flex-shrink-0" />
+                      <Circle className="h-5 w-5 text-slate-300 dark:text-slate-600 flex-shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <h3 className={`text-xs font-bold ${isDone ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                      <h3 className={`text-xs font-bold ${isDone ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>
                         {q.title}
                       </h3>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{q.description}</p>
-                      <span className="inline-block mt-2 text-[10px] uppercase font-bold text-slate-500 px-2 py-0.5 bg-white border border-slate-200 rounded-md">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{q.description}</p>
+                      <span className="inline-block mt-2 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">
                         {q.category}
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right flex-shrink-0 ml-2">
-                    <span className="text-xs font-extrabold text-amber-700 bg-amber-50 border border-amber-200/50 px-2.5 py-1 rounded-xl shadow-2xs">
+                    <span className="text-xs font-extrabold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/50 dark:border-amber-800/50 px-2.5 py-1 rounded-xl shadow-2xs">
                       +{q.points} {t.common.pts}
                     </span>
                   </div>
@@ -187,11 +185,11 @@ export default function QuestsPage() {
       </div>
 
       {/* Gamification Principle Note */}
-      <div className="bg-slate-50 rounded-[26px] p-4.5 border border-slate-200/60 flex items-start gap-3 text-xs text-slate-600">
-        <Award className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      <div className="bg-slate-50 dark:bg-slate-900/60 rounded-[26px] p-4.5 border border-slate-200/60 dark:border-slate-800 flex items-start gap-3 text-xs text-slate-600 dark:text-slate-300">
+        <Award className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <div className="font-bold text-slate-800">{t.quests.healthyFirst}</div>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <div className="font-bold text-slate-800 dark:text-white">{t.quests.healthyFirst}</div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
             {t.quests.healthyFirstDesc}
           </p>
         </div>

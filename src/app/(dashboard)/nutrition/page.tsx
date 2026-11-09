@@ -4,17 +4,15 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
+import ThemeToggle from '@/components/shared/ThemeToggle';
 import { 
   Utensils, 
   Plus, 
   Trash2, 
   Tag, 
   Clock, 
-  Camera, 
-  Sparkles,
   Sun,
   Sunset,
-  Moon,
   Cookie,
   Flame
 } from 'lucide-react';
@@ -110,26 +108,26 @@ export default function NutritionPage() {
     breakfast: {
       label: t.nutrition.breakfast,
       icon: Sun,
-      color: 'text-amber-600',
-      badge: 'bg-amber-100/80 text-amber-900 border-amber-200/50',
+      color: 'text-amber-600 dark:text-amber-400',
+      badge: 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border-amber-200/50 dark:border-amber-800/40',
     },
     lunch: {
       label: t.nutrition.lunch,
       icon: Utensils,
-      color: 'text-emerald-600',
-      badge: 'bg-emerald-100/80 text-emerald-900 border-emerald-200/50',
+      color: 'text-emerald-600 dark:text-emerald-400',
+      badge: 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-800/40',
     },
     dinner: {
       label: t.nutrition.dinner,
       icon: Sunset,
-      color: 'text-indigo-600',
-      badge: 'bg-indigo-100/80 text-indigo-900 border-indigo-200/50',
+      color: 'text-indigo-600 dark:text-indigo-400',
+      badge: 'bg-indigo-100/80 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-300 border-indigo-200/50 dark:border-indigo-800/40',
     },
     snack: {
       label: t.nutrition.snack,
       icon: Cookie,
-      color: 'text-purple-600',
-      badge: 'bg-purple-100/80 text-purple-900 border-purple-200/50',
+      color: 'text-purple-600 dark:text-purple-400',
+      badge: 'bg-purple-100/80 dark:bg-purple-950/60 text-purple-900 dark:text-purple-300 border-purple-200/50 dark:border-purple-800/40',
     },
   };
 
@@ -140,14 +138,15 @@ export default function NutritionPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{t.nutrition.title}</h1>
-          <p className="text-xs text-slate-500">{t.nutrition.subtitle}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.nutrition.title}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t.nutrition.subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <LanguageToggle />
           <button
             onClick={() => setShowForm(!showForm)}
-            className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white p-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 text-xs font-bold"
+            className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white p-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>{t.nutrition.addMeal}</span>
@@ -180,10 +179,10 @@ export default function NutritionPage() {
 
       {/* Add Meal Form */}
       {showForm && (
-        <div className="bg-white rounded-[28px] p-5 border border-emerald-200/80 shadow-[0_8px_30px_rgba(16,185,129,0.08)] space-y-4 animate-in fade-in duration-200">
+        <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-emerald-200/80 dark:border-emerald-800/60 shadow-[0_8px_30px_rgba(16,185,129,0.08)] space-y-4 animate-in fade-in duration-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-800">{t.nutrition.recordMeal}</h2>
-            <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full">
+            <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.nutrition.recordMeal}</h2>
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full">
               Manual Log
             </span>
           </div>
@@ -191,7 +190,7 @@ export default function NutritionPage() {
           <form onSubmit={handleAddMeal} className="space-y-4">
             {/* Meal Type Tabs */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.nutrition.mealType}</label>
+              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">{t.nutrition.mealType}</label>
               <div className="grid grid-cols-4 gap-2">
                 {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((type) => {
                   const cfg = mealTypeConfigs[type];
@@ -202,10 +201,10 @@ export default function NutritionPage() {
                       key={type}
                       type="button"
                       onClick={() => setMealType(type)}
-                      className={`py-2 px-1 text-xs font-bold rounded-2xl border transition-all flex flex-col items-center gap-1 ${
+                      className={`py-2 px-1 text-xs font-bold rounded-2xl border transition-all flex flex-col items-center gap-1 cursor-pointer ${
                         isSelected
                           ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                          : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
                       <Icon className="h-3.5 w-3.5" />
@@ -217,37 +216,37 @@ export default function NutritionPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">{t.nutrition.foodName}</label>
+              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">{t.nutrition.foodName}</label>
               <input
                 type="text"
                 required
                 placeholder={t.nutrition.foodNamePlaceholder}
                 value={foodName}
                 onChange={(e) => setFoodName(e.target.value)}
-                className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">{t.nutrition.portion}</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">{t.nutrition.portion}</label>
                 <input
                   type="text"
                   placeholder={t.nutrition.portionPlaceholder}
                   value={portion}
                   onChange={(e) => setPortion(e.target.value)}
-                  className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">{t.nutrition.calories}</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">{t.nutrition.calories}</label>
                 <input
                   type="number"
                   placeholder="e.g. 550"
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
-                  className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
             </div>
@@ -256,14 +255,14 @@ export default function NutritionPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="flex-1 py-2.5 border border-slate-200 rounded-2xl text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors"
+                className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 {t.common.cancel}
               </button>
               <button
                 type="submit"
                 disabled={submitting || !foodName.trim()}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-xs"
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-xs cursor-pointer"
               >
                 {submitting ? t.common.saving : t.common.save}
               </button>
@@ -273,50 +272,50 @@ export default function NutritionPage() {
       )}
 
       {/* Today's Meals List */}
-      <div className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-800">{t.nutrition.todaysMeals}</h2>
-          <span className="text-xs text-slate-400">{logs.length} {t.dashboard.mealsLogged}</span>
+          <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.nutrition.todaysMeals}</h2>
+          <span className="text-xs text-slate-400 dark:text-slate-500">{logs.length} {t.dashboard.mealsLogged}</span>
         </div>
 
         {loading ? (
           <p className="text-xs text-slate-400 py-4 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
           <div className="text-center py-8 space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-500 flex items-center justify-center mx-auto">
               <Utensils className="h-6 w-6" />
             </div>
-            <p className="text-xs font-bold text-slate-700">{t.nutrition.noMeals}</p>
-            <p className="text-[11px] text-slate-400">{t.nutrition.noMealsHint}</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.nutrition.noMeals}</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">{t.nutrition.noMealsHint}</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {logs.map((log) => {
               const cfg = mealTypeConfigs[log.meal_type] || mealTypeConfigs.lunch;
               return (
-                <div key={log.id} className="py-3.5 flex items-start justify-between hover:bg-slate-50/50 px-1 rounded-xl transition-colors">
+                <div key={log.id} className="py-3.5 flex items-start justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 px-1 rounded-xl transition-colors">
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border capitalize ${cfg.badge}`}>
                         {cfg.label}
                       </span>
-                      <h3 className="text-sm font-bold text-slate-900">{log.food_name}</h3>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">{log.food_name}</h3>
                     </div>
 
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                       {log.portion_description && (
                         <span className="flex items-center gap-1 text-[11px]">
-                          <Tag className="h-3 w-3 text-slate-400" />
+                          <Tag className="h-3 w-3 text-slate-400 dark:text-slate-500" />
                           {log.portion_description}
                         </span>
                       )}
                       {log.calories_estimate && (
-                        <span className="font-semibold text-amber-700 flex items-center gap-1 text-[11px] bg-amber-50 px-2 py-0.5 rounded-md">
+                        <span className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1 text-[11px] bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md">
                           <Flame className="h-3 w-3" />
                           ~{Math.round(log.calories_estimate)} kcal
                         </span>
                       )}
-                      <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-0.5">
                         <Clock className="h-2.5 w-2.5" />
                         {new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
@@ -325,7 +324,7 @@ export default function NutritionPage() {
 
                   <button
                     onClick={() => deleteMeal(log.id)}
-                    className="text-slate-300 hover:text-rose-500 p-2 rounded-xl hover:bg-rose-50 transition-colors"
+                    className="text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                     title={t.common.delete}
                   >
                     <Trash2 className="h-4 w-4" />

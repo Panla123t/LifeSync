@@ -10,10 +10,10 @@ export default function LanguageToggle() {
     <button
       type="button"
       onClick={() => setLocale(locale === 'th' ? 'en' : 'th')}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 shadow-xs hover:bg-slate-50 transition-all active:scale-95"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95 cursor-pointer"
       title="Switch Language / เปลี่ยนภาษา"
     >
-      <Globe className="h-3.5 w-3.5 text-emerald-600" />
+      <Globe className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
       <span>{locale === 'th' ? 'TH | EN' : 'EN | TH'}</span>
     </button>
   );

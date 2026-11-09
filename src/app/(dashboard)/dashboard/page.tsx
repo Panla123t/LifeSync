@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
+import ThemeToggle from '@/components/shared/ThemeToggle';
 import { 
   Droplets, 
   Utensils, 
@@ -16,9 +17,7 @@ import {
   CheckCircle2,
   Circle,
   Plus,
-  ArrowUpRight,
-  Smile,
-  ShieldCheck
+  ArrowUpRight
 } from 'lucide-react';
 import type { Quest, UserQuest } from '@/types/database';
 
@@ -34,11 +33,10 @@ export default function DashboardPage() {
   const [completedQuestIds, setCompletedQuestIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [quickAddingWater, setQuickAddingWater] = useState(false);
+  const [todayFormatted, setTodayFormatted] = useState<string>('');
 
   const supabase = createClient();
   const waterGoal = 2000;
-
-  const [todayFormatted, setTodayFormatted] = useState<string>('');
 
   const loadDashboard = async () => {
     try {
@@ -160,7 +158,6 @@ export default function DashboardPage() {
 
       if (!error) {
         setWaterTotal((prev) => prev + amount);
-        // Award points if first log
         if (waterTotal === 0) {
           await supabase.from('point_transactions').insert({
             user_id: user.id,
@@ -187,20 +184,21 @@ export default function DashboardPage() {
             {userName.charAt(0).toUpperCase()}
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               {todayFormatted}
             </div>
-            <h1 className="text-lg font-bold text-slate-900 leading-tight">
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
               {t.dashboard.greeting}, {userName} ✨
             </h1>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <LanguageToggle />
           <Link
             href="/quests"
-            className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/60 text-amber-900 px-3 py-1.5 rounded-full shadow-xs active:scale-95 transition-all"
+            className="flex items-center gap-1.5 bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 text-amber-900 dark:text-amber-300 px-3 py-1.5 rounded-full shadow-xs active:scale-95 transition-all"
           >
             <Flame className="h-4 w-4 text-amber-500 fill-amber-500 animate-pulse" />
             <span className="text-xs font-extrabold">{points}</span>
@@ -239,24 +237,24 @@ export default function DashboardPage() {
       {/* 3 Core Habits Summary */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             {t.dashboard.todaysHabits}
           </h2>
-          <span className="text-[11px] text-emerald-600 font-semibold">
+          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
             {locale === 'th' ? 'แตะการ์ดเพื่อดูรายละเอียด' : 'Tap to expand'}
           </span>
         </div>
 
         {/* Nutrition Card */}
-        <div className="bg-white rounded-[26px] p-4.5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-amber-200 transition-all">
+        <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-amber-200 dark:hover:border-amber-800/60 transition-all">
           <div className="flex items-center justify-between mb-3">
             <Link href="/nutrition" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 <Utensils className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">{t.nav.meals}</h3>
-                <p className="text-xs text-slate-400">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.meals}</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
                   {mealsCount} {t.dashboard.mealsLogged} {locale === 'th' ? 'วันนี้' : 'today'}
                 </p>
               </div>
@@ -264,21 +262,21 @@ export default function DashboardPage() {
 
             <Link
               href="/nutrition"
-              className="p-2 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors"
+              className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
             >
               <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-xs">
-            <span className="text-slate-500">
+          <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800 text-xs">
+            <span className="text-slate-500 dark:text-slate-400">
               {mealsCount === 0 
                 ? (locale === 'th' ? 'ยังไม่ได้บันทึกมื้ออาหาร' : 'No meals recorded yet')
                 : (locale === 'th' ? 'บันทึกอาหารแล้ว' : 'Meals tracked')}
             </span>
             <Link
               href="/nutrition"
-              className="text-amber-600 font-bold hover:underline flex items-center gap-1 text-[11px]"
+              className="text-amber-600 dark:text-amber-400 font-bold hover:underline flex items-center gap-1 text-[11px]"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>{t.dashboard.logFood}</span>
@@ -287,26 +285,25 @@ export default function DashboardPage() {
         </div>
 
         {/* Hydration Card with 1-Tap Quick Drink */}
-        <div className="bg-white rounded-[26px] p-4.5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-sky-200 transition-all">
+        <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-sky-200 dark:hover:border-sky-800/60 transition-all">
           <div className="flex items-center justify-between mb-3">
             <Link href="/hydration" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-sky-500/10 text-sky-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-sky-500/10 dark:bg-sky-400/15 text-sky-600 dark:text-sky-400 flex items-center justify-center">
                 <Droplets className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">{t.nav.water}</h3>
-                <p className="text-xs text-slate-400">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.water}</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
                   {waterTotal} / {waterGoal} ml ({waterPercent}%)
                 </p>
               </div>
             </Link>
 
-            {/* Quick 1-Tap Drink Button on Dashboard */}
             <button
               type="button"
               disabled={quickAddingWater}
               onClick={() => handleQuickAddWater(250)}
-              className="flex items-center gap-1 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 active:scale-95 px-3 py-1.5 rounded-xl border border-sky-200/60 transition-all disabled:opacity-50"
+              className="flex items-center gap-1 text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 active:scale-95 px-3 py-1.5 rounded-xl border border-sky-200/60 dark:border-sky-800/60 transition-all disabled:opacity-50 cursor-pointer"
               title="Quick Add 250ml"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -315,7 +312,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
             <div
               className="bg-gradient-to-r from-sky-400 to-sky-600 h-full rounded-full transition-all duration-700"
               style={{ width: `${waterPercent}%` }}
@@ -324,15 +321,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Sleep Card */}
-        <div className="bg-white rounded-[26px] p-4.5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-indigo-200 transition-all">
+        <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-indigo-200 dark:hover:border-indigo-800/60 transition-all">
           <div className="flex items-center justify-between mb-2">
             <Link href="/sleep" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 dark:bg-indigo-400/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                 <Moon className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">{t.nav.sleep}</h3>
-                <p className="text-xs text-slate-400">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.nav.sleep}</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
                   {sleepDurationMins > 0 
                     ? `${t.dashboard.latestLog}: ${sleepHours}` 
                     : (locale === 'th' ? 'ยังไม่ได้บันทึกเวลานอน' : 'No sleep logged')}
@@ -342,7 +339,7 @@ export default function DashboardPage() {
 
             <Link
               href="/sleep"
-              className="p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors"
+              className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
               <ArrowUpRight className="h-4 w-4" />
             </Link>
@@ -351,17 +348,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Daily Quests Section */}
-      <div className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3.5">
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-amber-100/80 p-1.5 rounded-xl text-amber-700">
+            <div className="bg-amber-100/80 dark:bg-amber-950/50 p-1.5 rounded-xl text-amber-700 dark:text-amber-400">
               <Trophy className="h-4 w-4" />
             </div>
-            <h2 className="text-sm font-bold text-slate-800">{t.dashboard.dailyQuests}</h2>
+            <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.dashboard.dailyQuests}</h2>
           </div>
           <Link
             href="/quests"
-            className="text-xs font-semibold text-emerald-600 hover:underline"
+            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
           >
             {completedQuestIds.length}/{quests.length} {t.dashboard.completed} &rarr;
           </Link>
@@ -375,26 +372,26 @@ export default function DashboardPage() {
                 key={q.id}
                 className={`p-3 rounded-2xl border transition-all flex items-center justify-between ${
                   isCompleted
-                    ? 'bg-emerald-50/50 border-emerald-100 text-slate-500'
-                    : 'bg-slate-50/70 border-slate-100 text-slate-800'
+                    ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-800/40 text-slate-500 dark:text-slate-400'
+                    : 'bg-slate-50/70 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {isCompleted ? (
                     <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
                   ) : (
-                    <Circle className="h-5 w-5 text-slate-300 flex-shrink-0" />
+                    <Circle className="h-5 w-5 text-slate-300 dark:text-slate-600 flex-shrink-0" />
                   )}
                   <div>
-                    <h3 className={`text-xs font-bold ${isCompleted ? 'line-through text-slate-400' : ''}`}>
+                    <h3 className={`text-xs font-bold ${isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}>
                       {q.title}
                     </h3>
-                    <p className="text-[11px] text-slate-500">{q.description}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{q.description}</p>
                   </div>
                 </div>
 
                 <div className="text-right flex-shrink-0 ml-2">
-                  <span className="text-xs font-extrabold text-amber-600">+{q.points} {t.common.pts}</span>
+                  <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400">+{q.points} {t.common.pts}</span>
                 </div>
               </div>
             );
@@ -403,13 +400,13 @@ export default function DashboardPage() {
       </div>
 
       {/* LINE Connection Banner */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-[26px] p-4 flex items-center justify-between shadow-xs">
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 border border-emerald-200/60 dark:border-emerald-800/40 rounded-[26px] p-4 flex items-center justify-between shadow-xs">
         <div className="space-y-0.5 pr-2">
-          <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+          <div className="text-xs font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[#06C755]" />
             {t.dashboard.lineBannerTitle}
           </div>
-          <div className="text-[11px] text-emerald-700 leading-snug">
+          <div className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-snug">
             {t.dashboard.lineBannerDesc}
           </div>
         </div>

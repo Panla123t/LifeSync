@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
-import { Activity, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import ThemeToggle from '@/components/shared/ThemeToggle';
+import { Activity, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,12 +44,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF8] flex flex-col justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAF8] dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 flex flex-col justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-200">
       {/* Ambient background glows */}
-      <div className="absolute -top-32 -left-32 w-80 h-80 bg-emerald-200/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-sky-200/40 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-32 -left-32 w-80 h-80 bg-emerald-200/40 dark:bg-emerald-950/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-sky-200/40 dark:bg-sky-950/20 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="absolute top-5 right-5 z-20">
+      <div className="absolute top-5 right-5 z-20 flex items-center gap-2">
+        <ThemeToggle />
         <LanguageToggle />
       </div>
 
@@ -57,28 +59,28 @@ export default function LoginPage() {
           <div className="bg-gradient-to-tr from-emerald-600 to-teal-500 text-white p-3 rounded-2xl shadow-[0_4px_14px_rgba(16,185,129,0.35)]">
             <Activity className="h-6 w-6" />
           </div>
-          <span className="text-2xl font-extrabold tracking-tight text-slate-900">{t.common.appName}</span>
+          <span className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.common.appName}</span>
         </Link>
-        <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900">
+        <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
           {t.auth.welcomeBack}
         </h2>
-        <p className="text-xs text-slate-500 max-w-xs mx-auto">
+        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
           {t.common.tagline}
         </p>
       </div>
 
       <div className="mt-7 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white/90 backdrop-blur-xl py-8 px-6 shadow-[0_12px_40px_rgba(0,0,0,0.06)] rounded-[32px] border border-slate-200/80 sm:px-10">
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl py-8 px-6 shadow-[0_12px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.4)] rounded-[32px] border border-slate-200/80 dark:border-slate-800 sm:px-10">
           <form className="space-y-4.5" onSubmit={handleLogin}>
             {error && (
-              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5">
+              <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5">
                 <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-500 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 {t.auth.email}
               </label>
               <div className="relative rounded-2xl shadow-2xs">
@@ -91,13 +93,13 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-xs sm:text-sm bg-white"
+                  className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-xs sm:text-sm bg-white dark:bg-slate-800/80"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 {t.auth.password}
               </label>
               <div className="relative rounded-2xl shadow-2xs">
@@ -110,7 +112,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-xs sm:text-sm bg-white"
+                  className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-xs sm:text-sm bg-white dark:bg-slate-800/80"
                 />
               </div>
             </div>
@@ -126,9 +128,9 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {t.auth.noAccount}{' '}
-              <Link href="/register" className="font-bold text-emerald-600 hover:text-emerald-700 hover:underline">
+              <Link href="/register" className="font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:underline">
                 {t.auth.createOne}
               </Link>
             </p>
