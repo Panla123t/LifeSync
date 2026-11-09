@@ -27,6 +27,23 @@ interface LineWebhookEvent {
   };
 }
 
+// Health check endpoint for testing and verification
+export async function GET() {
+  const hasSecret = Boolean(process.env.LINE_CHANNEL_SECRET && process.env.LINE_CHANNEL_SECRET !== 'your-line-channel-secret');
+  const hasToken = Boolean(process.env.LINE_CHANNEL_ACCESS_TOKEN && process.env.LINE_CHANNEL_ACCESS_TOKEN !== 'your-line-channel-access-token');
+
+  return NextResponse.json({
+    status: 'online',
+    service: 'LifeSync LINE Webhook',
+    timestamp: new Date().toISOString(),
+    configured: {
+      has_channel_secret: hasSecret,
+      has_channel_access_token: hasToken,
+      bot_id: process.env.LINE_BOT_BASIC_ID || '@766iowmg',
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
@@ -34,12 +51,19 @@ export async function POST(req: NextRequest) {
 
     // 1. Verify Signature
     if (!verifyLineSignature(rawBody, signature)) {
-      console.warn('Invalid LINE webhook signature');
+      console.warn('[LINE Webhook] Invalid signature received');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
     }
 
-    const payload = JSON.parse(rawBody) as { events?: LineWebhookEvent[] };
+    let payload: { events?: LineWebhookEvent[] };
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const events = payload.events || [];
+    console.log(`[LINE Webhook] Received ${events.length} event(s)`);
 
     const admin = createAdminClient();
 
@@ -49,7 +73,7 @@ export async function POST(req: NextRequest) {
 
       // Handle Follow / Add Friend Event
       if (event.type === 'follow') {
-        const appUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+        const appUrl = process.env.APP_BASE_URL || 'https://life-sync-panla123ts-projects.vercel.app';
         await sendLineReply(event.replyToken, [createWelcomeMessage(appUrl)]);
         continue;
       }
@@ -66,6 +90,7 @@ export async function POST(req: NextRequest) {
       // Handle Text Message Event
       if (event.type === 'message' && event.message?.type === 'text') {
         const text = (event.message.text || '').trim();
+        console.log(`[LINE Message from ${lineUserId}]: "${text}"`);
 
         // A. Check for 6-digit Account Link Code
         const sixDigitMatch = text.match(/\b\d{6}\b/);
@@ -73,31 +98,65 @@ export async function POST(req: NextRequest) {
           const code = sixDigitMatch[0];
           let matchedUserId: string | null = null;
 
-          // Check database line_link_tokens
+          // 1. Check in notification_settings.reminder_preferences (persisted across servers)
           try {
-            const { data: tokenRow } = await admin
-              .from('line_link_tokens')
-              .select('user_id, expires_at')
-              .eq('token', code)
-              .maybeSingle();
+            const { data: notifRows } = await admin
+              .from('notification_settings')
+              .select('user_id, reminder_preferences');
 
-            if (tokenRow) {
-              if (new Date(tokenRow.expires_at) > new Date()) {
-                matchedUserId = tokenRow.user_id;
+            if (notifRows && notifRows.length > 0) {
+              for (const row of notifRows) {
+                const prefs = (row.reminder_preferences as Record<string, unknown>) || {};
+                if (prefs.link_token === code) {
+                  const expiresStr = prefs.link_token_expires as string | undefined;
+                  const expires = expiresStr ? new Date(expiresStr) : null;
+                  if (!expires || expires.getTime() > Date.now()) {
+                    matchedUserId = row.user_id;
+                  }
+                  // Clean up used token
+                  delete prefs.link_token;
+                  delete prefs.link_token_expires;
+                  await admin
+                    .from('notification_settings')
+                    .update({ reminder_preferences: prefs })
+                    .eq('user_id', row.user_id);
+                  break;
+                }
               }
-              await admin.from('line_link_tokens').delete().eq('token', code);
             }
           } catch (e) {
-            console.warn('Database token lookup error:', e);
+            console.warn('[LINE Webhook] Error checking notification_settings for token:', e);
           }
 
-          // Fallback to memory store
+          // 2. Check database line_link_tokens table if it exists
+          if (!matchedUserId) {
+            try {
+              const { data: tokenRow } = await admin
+                .from('line_link_tokens')
+                .select('user_id, expires_at')
+                .eq('token', code)
+                .maybeSingle();
+
+              if (tokenRow) {
+                if (new Date(tokenRow.expires_at) > new Date()) {
+                  matchedUserId = tokenRow.user_id;
+                }
+                await admin.from('line_link_tokens').delete().eq('token', code);
+              }
+            } catch {
+              // Ignore if table does not exist
+            }
+          }
+
+          // 3. Fallback to in-memory store
           if (!matchedUserId) {
             matchedUserId = verifyAndConsumeMemoryToken(code);
           }
 
           if (matchedUserId) {
-            // Update notification settings
+            console.log(`[LINE Webhook] Link token ${code} matched user: ${matchedUserId}`);
+
+            // Link user in notification_settings
             await admin
               .from('notification_settings')
               .upsert({
@@ -112,7 +171,7 @@ export async function POST(req: NextRequest) {
               .from('profiles')
               .select('display_name')
               .eq('id', matchedUserId)
-              .single();
+              .maybeSingle();
 
             const displayName = profile?.display_name || 'เพื่อนสุขภาพ';
 
@@ -124,14 +183,14 @@ export async function POST(req: NextRequest) {
                 reason: 'Linked LINE Official Account',
                 idempotency_key: `line_link_${matchedUserId}`,
               });
-            } catch (err) {
+            } catch {
               // Ignore duplicate bonus points
             }
 
             await sendLineReply(event.replyToken, [createLinkSuccessMessage(displayName)]);
             continue;
           } else {
-            // Invalid or expired code
+            console.log(`[LINE Webhook] No match or expired token for code: ${code}`);
             await sendLineReply(event.replyToken, [
               {
                 type: 'text',
@@ -190,7 +249,7 @@ export async function POST(req: NextRequest) {
             startOfDay.setHours(0, 0, 0, 0);
 
             const [profileRes, waterRes, foodRes, sleepRes, pointsRes] = await Promise.all([
-              admin.from('profiles').select('display_name').eq('id', linkedUserId).single(),
+              admin.from('profiles').select('display_name').eq('id', linkedUserId).maybeSingle(),
               admin.from('water_logs').select('amount_ml').eq('user_id', linkedUserId).gte('logged_at', startOfDay.toISOString()),
               admin.from('food_logs').select('id').eq('user_id', linkedUserId).gte('logged_at', startOfDay.toISOString()),
               admin.from('sleep_logs').select('duration_minutes').eq('user_id', linkedUserId).order('wake_time', { ascending: false }).limit(1),
@@ -219,7 +278,7 @@ export async function POST(req: NextRequest) {
 
           // 3. Sleep prompt command
           if (['นอน', 'sleep', 'เข้านอน', 'เข้านอนแล้ว'].includes(text.toLowerCase())) {
-            const appUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+            const appUrl = process.env.APP_BASE_URL || 'https://life-sync-panla123ts-projects.vercel.app';
             await sendLineReply(event.replyToken, [
               {
                 type: 'text',
@@ -270,7 +329,7 @@ export async function POST(req: NextRequest) {
           ]);
         } else {
           // Unlinked user sending messages
-          const appUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+          const appUrl = process.env.APP_BASE_URL || 'https://life-sync-panla123ts-projects.vercel.app';
           await sendLineReply(event.replyToken, [createWelcomeMessage(appUrl)]);
         }
       }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-// In-memory token store fallback in case migrations haven't run on local/remote Supabase
+// In-memory token store fallback
 const memoryTokens = new Map<string, { userId: string; expiresAt: number }>();
 
 export async function GET() {
@@ -46,24 +46,35 @@ export async function POST() {
     const token = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    // Save to memory fallback
+    // Save to memory
     memoryTokens.set(token, { userId: user.id, expiresAt: expiresAt.getTime() });
 
-    // Try saving to Supabase line_link_tokens
+    // Persist to Supabase notification_settings.reminder_preferences
     try {
       const admin = createAdminClient();
-      // Remove any previous token for this user
-      await admin.from('line_link_tokens').delete().eq('user_id', user.id);
-      await admin.from('line_link_tokens').insert({
-        token,
-        user_id: user.id,
-        expires_at: expiresAt.toISOString(),
-      });
+      const { data: existing } = await admin
+        .from('notification_settings')
+        .select('reminder_preferences')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const currentPrefs = (existing?.reminder_preferences as Record<string, unknown>) || {};
+      await admin
+        .from('notification_settings')
+        .upsert({
+          user_id: user.id,
+          reminder_preferences: {
+            ...currentPrefs,
+            link_token: token,
+            link_token_expires: expiresAt.toISOString(),
+          },
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
     } catch (dbErr) {
-      console.warn('Could not insert to line_link_tokens table (using memory fallback):', dbErr);
+      console.warn('Could not persist token in Supabase:', dbErr);
     }
 
-    const lineBotId = process.env.LINE_BOT_BASIC_ID || '@lifesync';
+    const lineBotId = process.env.LINE_BOT_BASIC_ID || '@766iowmg';
     const lineOaUrl = `https://line.me/R/ti/p/${lineBotId}`;
 
     return NextResponse.json({
@@ -104,7 +115,6 @@ export async function DELETE() {
   }
 }
 
-// Export memory store getter for the webhook handler
 export function verifyAndConsumeMemoryToken(token: string): string | null {
   const item = memoryTokens.get(token);
   if (!item) return null;

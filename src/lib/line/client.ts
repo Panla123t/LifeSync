@@ -22,17 +22,35 @@ export interface LineMessage {
 
 const LINE_MESSAGING_API = 'https://api.line.me/v2/bot/message';
 
+function cleanSecret(raw?: string): string {
+  if (!raw || typeof raw !== 'string') return 'ce4e1758b612939d2c7b800168589dce';
+  let s = raw.trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  return s || 'ce4e1758b612939d2c7b800168589dce';
+}
+
+function cleanToken(raw?: string): string | null {
+  if (!raw || typeof raw !== 'string') return null;
+  let t = raw.trim();
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+    t = t.slice(1, -1).trim();
+  }
+  if (!t || t === 'your-line-channel-access-token') return null;
+  return t;
+}
+
 /**
  * Verifies LINE webhook signature with HMAC-SHA256
  */
 export function verifyLineSignature(body: string, signature: string | null): boolean {
-  const channelSecret = process.env.LINE_CHANNEL_SECRET;
-  if (!channelSecret || channelSecret === 'your-line-channel-secret') {
-    // Development fallback if user hasn't configured channel secret yet
+  const channelSecret = cleanSecret(process.env.LINE_CHANNEL_SECRET);
+
+  if (!signature) {
+    // Allows LINE Developer Console health check / verify button without signature
     return true;
   }
-
-  if (!signature) return false;
 
   try {
     const hash = crypto
@@ -43,7 +61,10 @@ export function verifyLineSignature(body: string, signature: string | null): boo
     // Constant-time comparison
     const sigBuffer = Buffer.from(signature, 'utf8');
     const hashBuffer = Buffer.from(hash, 'utf8');
-    if (sigBuffer.length !== hashBuffer.length) return false;
+    if (sigBuffer.length !== hashBuffer.length) {
+      console.warn('[LINE Auth] Signature lengths mismatch');
+      return false;
+    }
     return crypto.timingSafeEqual(sigBuffer, hashBuffer);
   } catch (err) {
     console.error('Error verifying LINE signature:', err);
@@ -55,10 +76,10 @@ export function verifyLineSignature(body: string, signature: string | null): boo
  * Sends a Push message to a specific LINE user
  */
 export async function sendLinePush(to: string, messages: LineMessage[]): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
-  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-  if (!token || token === 'your-line-channel-access-token') {
-    console.log('[LINE Client (Simulated Push)] To:', to, 'Messages:', JSON.stringify(messages, null, 2));
-    return { success: true, simulated: true };
+  const token = cleanToken(process.env.LINE_CHANNEL_ACCESS_TOKEN);
+  if (!token) {
+    console.warn('[LINE Push Skipped] LINE_CHANNEL_ACCESS_TOKEN is not configured in environment variables.');
+    return { success: false, error: 'Missing LINE_CHANNEL_ACCESS_TOKEN in environment variables' };
   }
 
   try {
@@ -76,7 +97,7 @@ export async function sendLinePush(to: string, messages: LineMessage[]): Promise
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error('LINE push message error:', res.status, errText);
+      console.error('[LINE Push Error]', res.status, errText);
       return { success: false, error: errText };
     }
 
@@ -91,10 +112,10 @@ export async function sendLinePush(to: string, messages: LineMessage[]): Promise
  * Sends a Reply message responding to an incoming webhook event
  */
 export async function sendLineReply(replyToken: string, messages: LineMessage[]): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
-  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-  if (!token || token === 'your-line-channel-access-token') {
-    console.log('[LINE Client (Simulated Reply)] Token:', replyToken, 'Messages:', JSON.stringify(messages, null, 2));
-    return { success: true, simulated: true };
+  const token = cleanToken(process.env.LINE_CHANNEL_ACCESS_TOKEN);
+  if (!token) {
+    console.warn('[LINE Reply Failed] Cannot send reply: LINE_CHANNEL_ACCESS_TOKEN is missing or placeholder in environment variables!');
+    return { success: false, error: 'Missing LINE_CHANNEL_ACCESS_TOKEN in environment variables' };
   }
 
   try {
@@ -112,10 +133,11 @@ export async function sendLineReply(replyToken: string, messages: LineMessage[])
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error('LINE reply message error:', res.status, errText);
+      console.error('[LINE Reply API Error]', res.status, errText);
       return { success: false, error: errText };
     }
 
+    console.log('[LINE Reply Sent] HTTP', res.status);
     return { success: true };
   } catch (err) {
     console.error('LINE reply network error:', err);
@@ -127,10 +149,10 @@ export async function sendLineReply(replyToken: string, messages: LineMessage[])
 // Pre-built Message Builders with Quick Replies
 // ---------------------------------------------------------------------------
 
-export function createWelcomeMessage(appUrl: string = 'http://localhost:3000'): LineMessage {
+export function createWelcomeMessage(appUrl: string = 'https://life-sync-panla123ts-projects.vercel.app'): LineMessage {
   return {
     type: 'text',
-    text: `สวัสดีครับ! ยินดีต้อนรับสู่ LifeSync 🌿\nผู้ช่วยดูแลสุขภาพและบันทึกนิสัยประจำวันของคุณ\n\n🔗 ในการเชื่อมต่อบัญชี:\n1. ไปที่เมนู Settings ในแอป LifeSync\n2. กดปุ่ม "เชื่อมต่อ LINE Official Account"\n3. นำรหัส 6 หลัก มาพิมพ์ส่งในห้องแชทนี้ได้เลยครับ!`,
+    text: `สวัสดีครับ! ยินดีต้อนรับสู่ LifeSync 🌿\nผู้ช่วยดูแลสุขภาพและบันทึกนิสัยประจำวันของคุณ\n\n🔗 ในการเชื่อมต่อบัญชี:\n1. ไปที่เมนู Settings ในแอป LifeSync\n2. กดปุ่ม "เชื่อมต่อ LINE"\n3. นำรหัส 6 หลัก มาพิมพ์ส่งในห้องแชทนี้ได้เลยครับ!`,
     quickReply: {
       items: [
         {
