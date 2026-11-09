@@ -4,11 +4,21 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
-import { Droplets, Plus, Trash2, Trophy, Clock } from 'lucide-react';
+import { 
+  Droplets, 
+  Plus, 
+  Trash2, 
+  Trophy, 
+  Clock, 
+  GlassWater, 
+  Sparkles,
+  CupSoda,
+  CheckCircle2
+} from 'lucide-react';
 import type { WaterLog } from '@/types/database';
 
 export default function HydrationPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [logs, setLogs] = useState<WaterLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [customAmount, setCustomAmount] = useState('');
@@ -86,63 +96,93 @@ export default function HydrationPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.hydration.title}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{t.hydration.title}</h1>
           <p className="text-xs text-slate-500">{t.hydration.subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           <LanguageToggle />
-          <div className="bg-sky-50 text-sky-600 p-2.5 rounded-2xl">
+          <div className="bg-sky-50 text-sky-600 p-2.5 rounded-2xl shadow-xs">
             <Droplets className="h-6 w-6" />
           </div>
         </div>
       </div>
 
-      {/* Daily Progress Card */}
-      <div className="bg-gradient-to-br from-sky-500 to-blue-600 text-white rounded-3xl p-6 shadow-sm space-y-4">
+      {/* Aesthetic Hydration Visualizer Card */}
+      <div className="bg-gradient-to-br from-sky-500 via-sky-600 to-blue-600 text-white rounded-[32px] p-6 shadow-[0_12px_30px_rgba(14,165,233,0.3)] space-y-5 relative overflow-hidden">
+        {/* Soft floating glow circles */}
+        <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-36 h-36 bg-sky-300/20 rounded-full blur-2xl pointer-events-none" />
+
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-sky-100 uppercase tracking-wider">{t.hydration.todaysIntake}</span>
-          <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full font-medium">{t.hydration.goal}: {dailyGoal} ml</span>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-100 uppercase tracking-wider">
+            <Sparkles className="h-3.5 w-3.5 text-sky-200" />
+            <span>{t.hydration.todaysIntake}</span>
+          </div>
+          <span className="text-xs bg-white/20 backdrop-blur-md px-3 py-1 rounded-full font-bold">
+            {t.hydration.goal}: {dailyGoal} ml
+          </span>
         </div>
 
+        {/* Big Counter Display */}
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-extrabold">{totalAmount}</span>
-          <span className="text-sm font-medium text-sky-100">/ {dailyGoal} ml</span>
+          <span className="text-5xl font-black tracking-tight">{totalAmount}</span>
+          <span className="text-base font-semibold text-sky-100">/ {dailyGoal} ml</span>
         </div>
 
         {/* Progress bar */}
-        <div className="w-full bg-white/20 h-3 rounded-full overflow-hidden">
-          <div
-            className="bg-white h-full rounded-full transition-all duration-500"
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
+        <div className="space-y-1.5">
+          <div className="w-full bg-black/15 backdrop-blur-md h-3.5 rounded-full overflow-hidden p-0.5">
+            <div
+              className="bg-white h-full rounded-full transition-all duration-700 shadow-sm"
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
 
-        <div className="flex justify-between items-center text-xs text-sky-100 font-medium">
-          <span>{percentage}% {t.hydration.reached}</span>
-          {percentage >= 100 && (
-            <span className="flex items-center gap-1 text-white font-bold">
-              <Trophy className="h-3.5 w-3.5" /> {t.hydration.targetMet}
-            </span>
-          )}
+          <div className="flex justify-between items-center text-xs text-sky-100 font-semibold pt-1">
+            <span>{percentage}% {t.hydration.reached}</span>
+            {percentage >= 100 ? (
+              <span className="flex items-center gap-1.5 text-white font-extrabold bg-white/20 px-2.5 py-0.5 rounded-full">
+                <Trophy className="h-3.5 w-3.5 text-amber-300" /> {t.hydration.targetMet}
+              </span>
+            ) : (
+              <span className="text-[11px] text-sky-200">
+                {locale === 'th' ? `เหลืออีก ${Math.max(0, dailyGoal - totalAmount)} ml` : `${Math.max(0, dailyGoal - totalAmount)} ml left`}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Quick Add Buttons */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">
-        <h2 className="text-sm font-bold text-slate-800">{t.hydration.quickAdd}</h2>
+      {/* Quick Add Buttons with Cup Visuals */}
+      <div className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-800">{t.hydration.quickAdd}</h2>
+          <span className="text-[11px] text-sky-600 font-medium">1-Tap Logging</span>
+        </div>
+
         <div className="grid grid-cols-3 gap-3">
-          {[100, 250, 500].map((amount) => (
-            <button
-              key={amount}
-              type="button"
-              disabled={submitting}
-              onClick={() => addWater(amount)}
-              className="py-3 px-2 rounded-2xl border border-sky-100 bg-sky-50/60 hover:bg-sky-100/80 active:scale-95 transition-all flex flex-col items-center justify-center text-sky-700 font-semibold text-sm disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4 mb-1" />
-              <span>+{amount} ml</span>
-            </button>
-          ))}
+          {[
+            { ml: 100, label: locale === 'th' ? 'จิบน้ำ' : 'Sip', icon: GlassWater },
+            { ml: 250, label: locale === 'th' ? '1 แก้ว' : 'Glass', icon: CupSoda },
+            { ml: 500, label: locale === 'th' ? '1 ขวด' : 'Bottle', icon: Droplets },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.ml}
+                type="button"
+                disabled={submitting}
+                onClick={() => addWater(item.ml)}
+                className="group py-3.5 px-3 rounded-2xl border border-sky-100 bg-gradient-to-b from-sky-50/70 to-sky-50/30 hover:to-sky-100/70 active:scale-95 transition-all flex flex-col items-center justify-center text-sky-700 font-bold text-sm shadow-xs disabled:opacity-50"
+              >
+                <div className="w-8 h-8 rounded-xl bg-white text-sky-600 flex items-center justify-center mb-1.5 shadow-2xs group-hover:scale-110 transition-transform">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <span className="text-xs text-sky-800">+{item.ml} ml</span>
+                <span className="text-[10px] text-sky-500/80 font-normal mt-0.5">{item.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Custom Amount Form */}
@@ -164,12 +204,12 @@ export default function HydrationPage() {
               placeholder={t.hydration.customAmount}
               value={customAmount}
               onChange={(e) => setCustomAmount(e.target.value)}
-              className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="flex-1 px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
             <button
               type="submit"
               disabled={submitting || !customAmount}
-              className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-xs disabled:opacity-50"
             >
               {t.hydration.add}
             </button>
@@ -178,27 +218,33 @@ export default function HydrationPage() {
       </div>
 
       {/* Today's Log History */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-3">
-        <h2 className="text-sm font-bold text-slate-800">{t.hydration.todaysLogs}</h2>
+      <div className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3.5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-800">{t.hydration.todaysLogs}</h2>
+          <span className="text-xs text-slate-400">{logs.length} {locale === 'th' ? 'รายการ' : 'entries'}</span>
+        </div>
+
         {loading ? (
-          <p className="text-xs text-slate-400 py-3 text-center">{t.common.loading}</p>
+          <p className="text-xs text-slate-400 py-4 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
-          <div className="text-center py-6 space-y-1">
-            <Droplets className="h-8 w-8 mx-auto text-slate-300" />
-            <p className="text-xs font-medium text-slate-600">{t.hydration.noLogs}</p>
+          <div className="text-center py-8 space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-400 flex items-center justify-center mx-auto">
+              <Droplets className="h-6 w-6" />
+            </div>
+            <p className="text-xs font-bold text-slate-700">{t.hydration.noLogs}</p>
             <p className="text-[11px] text-slate-400">{t.hydration.noLogsHint}</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-slate-100">
             {logs.map((log) => (
-              <div key={log.id} className="py-2.5 flex items-center justify-between">
+              <div key={log.id} className="py-3 flex items-center justify-between hover:bg-slate-50/50 px-1 rounded-xl transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600">
+                  <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
                     <Droplets className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-800">{log.amount_ml} ml</div>
-                    <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                    <div className="text-sm font-extrabold text-slate-800">{log.amount_ml} ml</div>
+                    <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
                       <Clock className="h-3 w-3" />
                       {new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
@@ -206,7 +252,7 @@ export default function HydrationPage() {
                 </div>
                 <button
                   onClick={() => deleteLog(log.id)}
-                  className="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg transition-colors"
+                  className="text-slate-300 hover:text-rose-500 p-2 rounded-xl hover:bg-rose-50 transition-colors"
                   title={t.common.delete}
                 >
                   <Trash2 className="h-4 w-4" />

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
-import { Activity, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { Activity, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,43 +43,47 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center px-4 sm:px-6 lg:px-8">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen bg-[#F8FAF8] flex flex-col justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute -top-32 -left-32 w-80 h-80 bg-emerald-200/40 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-sky-200/40 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="absolute top-5 right-5 z-20">
         <LanguageToggle />
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center items-center gap-2">
-          <div className="bg-emerald-500 text-white p-2.5 rounded-2xl shadow-sm">
-            <Activity className="h-7 w-7" />
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
+        <Link href="/" className="inline-flex justify-center items-center gap-2.5">
+          <div className="bg-gradient-to-tr from-emerald-600 to-teal-500 text-white p-3 rounded-2xl shadow-[0_4px_14px_rgba(16,185,129,0.35)]">
+            <Activity className="h-6 w-6" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900">{t.common.appName}</span>
-        </div>
-        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-slate-900">
+          <span className="text-2xl font-extrabold tracking-tight text-slate-900">{t.common.appName}</span>
+        </Link>
+        <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900">
           {t.auth.welcomeBack}
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-600">
+        <p className="text-xs text-slate-500 max-w-xs mx-auto">
           {t.common.tagline}
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow-sm rounded-3xl border border-slate-100 sm:px-10">
-          <form className="space-y-5" onSubmit={handleLogin}>
+      <div className="mt-7 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white/90 backdrop-blur-xl py-8 px-6 shadow-[0_12px_40px_rgba(0,0,0,0.06)] rounded-[32px] border border-slate-200/80 sm:px-10">
+          <form className="space-y-4.5" onSubmit={handleLogin}>
             {error && (
-              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-100 text-rose-700 text-sm flex items-start gap-2.5">
-                <AlertCircle className="h-5 w-5 flex-shrink-0 text-rose-500 mt-0.5" />
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-500 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 {t.auth.email}
               </label>
-              <div className="relative rounded-2xl shadow-sm">
+              <div className="relative rounded-2xl shadow-2xs">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="h-5 w-5" />
+                  <Mail className="h-4 w-4" />
                 </div>
                 <input
                   type="email"
@@ -87,18 +91,18 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                  className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-xs sm:text-sm bg-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 {t.auth.password}
               </label>
-              <div className="relative rounded-2xl shadow-sm">
+              <div className="relative rounded-2xl shadow-2xs">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="h-5 w-5" />
+                  <Lock className="h-4 w-4" />
                 </div>
                 <input
                   type="password"
@@ -106,7 +110,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                  className="block w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-xs sm:text-sm bg-white"
                 />
               </div>
             </div>
@@ -114,7 +118,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-colors"
+              className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-2xl shadow-[0_6px_20px_rgba(16,185,129,0.3)] text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 focus:outline-none disabled:opacity-50 transition-all cursor-pointer"
             >
               {loading ? t.common.loading : t.auth.signInBtn}
               {!loading && <ArrowRight className="h-4 w-4" />}
@@ -122,9 +126,9 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
+            <p className="text-xs text-slate-500">
               {t.auth.noAccount}{' '}
-              <Link href="/register" className="font-semibold text-emerald-600 hover:text-emerald-500">
+              <Link href="/register" className="font-bold text-emerald-600 hover:text-emerald-700 hover:underline">
                 {t.auth.createOne}
               </Link>
             </p>
