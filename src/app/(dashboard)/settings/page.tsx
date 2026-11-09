@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import ThemeToggle from '@/components/shared/ThemeToggle';
 import { 
-  Settings, 
   User, 
   Bell, 
   MessageSquare, 
@@ -105,18 +102,9 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.settings.title}</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t.settings.subtitle}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LanguageToggle />
-          <div className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2.5 rounded-2xl">
-            <Settings className="h-6 w-6" />
-          </div>
-        </div>
+      <div className="text-center py-2 space-y-1">
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.settings.title}</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{t.settings.subtitle}</p>
       </div>
 
       {savedMessage && (
