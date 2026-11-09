@@ -204,18 +204,32 @@ export default function SleepPage() {
         </div>
       )}
 
-      {/* Add Sleep Form */}
+      {/* Add Sleep Glassmorphism Form */}
       {showForm && (
-        <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-indigo-200/80 dark:border-indigo-800/60 shadow-[0_8px_30px_rgba(99,102,241,0.08)] space-y-4 animate-in fade-in duration-200">
-          <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.sleep.recordSleep}</h2>
+        <div className="bg-white/75 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[32px] p-6 border border-white/80 dark:border-slate-700/60 shadow-[0_16px_45px_rgba(99,102,241,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-indigo-500/10 space-y-4.5 animate-in fade-in slide-in-from-bottom-3 duration-300 relative overflow-hidden">
+          {/* Ambient glass flare */}
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/15 dark:bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-500/15 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="flex items-center justify-between relative z-10">
+            <h2 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+              <span>{t.sleep.recordSleep}</span>
+            </h2>
+            <span className="text-[10px] text-indigo-700 dark:text-indigo-300 font-bold bg-indigo-500/15 backdrop-blur-md border border-indigo-400/20 px-3 py-1 rounded-full">
+              🌙 Night Routine
+            </span>
+          </div>
+
           {formError && (
-            <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs">
+            <div className="p-3.5 rounded-2xl bg-rose-50/80 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs backdrop-blur-md relative z-10">
               {formError}
             </div>
           )}
-          <form onSubmit={handleAddSleep} className="space-y-4">
+
+          <form onSubmit={handleAddSleep} className="space-y-4 relative z-10">
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                 <Bed className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                 <span>{t.sleep.bedtime}</span>
               </label>
@@ -225,20 +239,20 @@ export default function SleepPage() {
                   required
                   value={bedtimeDate}
                   onChange={(e) => setBedtimeDate(e.target.value)}
-                  className="px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
                 />
                 <input
                   type="time"
                   required
                   value={bedtimeTime}
                   onChange={(e) => setBedtimeTime(e.target.value)}
-                  className="px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                 <SunMedium className="h-3.5 w-3.5 text-amber-500" />
                 <span>{t.sleep.wakeTime}</span>
               </label>
@@ -248,41 +262,41 @@ export default function SleepPage() {
                   required
                   value={wakeDate}
                   onChange={(e) => setWakeDate(e.target.value)}
-                  className="px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
                 />
                 <input
                   type="time"
                   required
                   value={wakeTime}
                   onChange={(e) => setWakeTime(e.target.value)}
-                  className="px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">{t.sleep.notes}</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.sleep.notes}</label>
               <input
                 type="text"
                 placeholder={t.sleep.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-4 py-2.5 text-xs border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
               />
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="flex-1 py-3 border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-800/50 backdrop-blur-md rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-white dark:hover:bg-slate-700/60 transition-all cursor-pointer active:scale-95"
               >
                 {t.common.cancel}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-xs cursor-pointer"
+                className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-[0_6px_20px_rgba(99,102,241,0.35)] border border-indigo-400/20 cursor-pointer"
               >
                 {submitting ? t.common.saving : t.common.save}
               </button>

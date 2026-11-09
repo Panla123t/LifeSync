@@ -23,6 +23,7 @@ export default function HydrationPage() {
   const [loading, setLoading] = useState(true);
   const [customAmount, setCustomAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const dailyGoal = 2000;
 
   const supabase = createClient();
@@ -68,6 +69,7 @@ export default function HydrationPage() {
 
       if (!error) {
         setCustomAmount('');
+        setShowForm(false);
         await fetchLogs();
 
         if (logs.length === 0) {
@@ -153,7 +155,90 @@ export default function HydrationPage() {
         </div>
       </div>
 
-      {/* Quick Add Buttons with Cup Visuals */}
+      {/* Glassmorphism Input Card (When Add Button is Pressed) */}
+      {showForm && (
+        <div className="bg-white/75 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[32px] p-6 border border-white/80 dark:border-slate-700/60 shadow-[0_16px_45px_rgba(14,165,233,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-sky-500/10 space-y-4.5 animate-in fade-in slide-in-from-bottom-3 duration-300 relative overflow-hidden">
+          {/* Ambient glass flare */}
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-sky-400/20 dark:bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-400/15 dark:bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="flex items-center justify-between relative z-10">
+            <h2 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+              <span>{locale === 'th' ? 'บันทึกปริมาณน้ำดื่ม' : 'Record Water Intake'}</span>
+            </h2>
+            <span className="text-[10px] text-sky-700 dark:text-sky-300 font-bold bg-sky-500/15 backdrop-blur-md border border-sky-400/20 px-3 py-1 rounded-full">
+              💧 Pure Glass
+            </span>
+          </div>
+
+          {/* Quick presets inside glass card */}
+          <div className="grid grid-cols-3 gap-2.5 relative z-10">
+            {[
+              { ml: 100, label: locale === 'th' ? 'จิบน้ำ' : 'Sip' },
+              { ml: 250, label: locale === 'th' ? '1 แก้ว' : 'Glass' },
+              { ml: 500, label: locale === 'th' ? '1 ขวด' : 'Bottle' },
+            ].map((item) => (
+              <button
+                key={item.ml}
+                type="button"
+                disabled={submitting}
+                onClick={() => addWater(item.ml)}
+                className="py-2.5 px-2 rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/60 text-sky-700 dark:text-sky-300 hover:bg-white dark:hover:bg-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer"
+              >
+                <div>+{item.ml} ml</div>
+                <div className="text-[10px] text-slate-400 font-normal">{item.label}</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Input inside glass card */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const val = parseInt(customAmount);
+              if (!isNaN(val) && val > 0) {
+                addWater(val);
+              }
+            }}
+            className="space-y-3 relative z-10"
+          >
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                {t.hydration.customAmount}
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="3000"
+                placeholder="e.g. 350 ml"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                className="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs transition-all"
+              />
+            </div>
+
+            <div className="flex gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="flex-1 py-3 border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-800/50 backdrop-blur-md rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-white dark:hover:bg-slate-700/60 transition-all cursor-pointer active:scale-95"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || !customAmount}
+                className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-[0_6px_20px_rgba(14,165,233,0.35)] border border-sky-400/20 cursor-pointer"
+              >
+                {submitting ? t.common.saving : t.hydration.add}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Quick Add Buttons with Cup Visuals (Always available inline) */}
       <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.hydration.quickAdd}</h2>
@@ -183,37 +268,6 @@ export default function HydrationPage() {
               </button>
             );
           })}
-        </div>
-
-        {/* Custom Amount Form */}
-        <div className="pt-2">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const val = parseInt(customAmount);
-              if (!isNaN(val) && val > 0) {
-                addWater(val);
-              }
-            }}
-            className="flex gap-2"
-          >
-            <input
-              type="number"
-              min="1"
-              max="3000"
-              placeholder={t.hydration.customAmount}
-              value={customAmount}
-              onChange={(e) => setCustomAmount(e.target.value)}
-              className="flex-1 px-4 py-2.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-sky-500"
-            />
-            <button
-              type="submit"
-              disabled={submitting || !customAmount}
-              className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-            >
-              {t.hydration.add}
-            </button>
-          </form>
         </div>
       </div>
 
@@ -261,6 +315,25 @@ export default function HydrationPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Floating Add Water Button (Above BottomNav) */}
+      <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none">
+        <div className="max-w-md mx-auto px-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setShowForm((prev) => !prev);
+              if (!showForm) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="pointer-events-auto shadow-[0_8px_25px_rgba(14,165,233,0.35)] bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 active:scale-95 text-white py-3 px-5 rounded-full flex items-center gap-2 font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border border-sky-400/30"
+          >
+            <Plus className={`h-4 w-4 transition-transform duration-200 ${showForm ? 'rotate-45' : ''}`} />
+            <span>{showForm ? t.common.cancel : (locale === 'th' ? '+ ระบุปริมาณน้ำ' : '+ Add Water')}</span>
+          </button>
+        </div>
       </div>
     </div>
   );
