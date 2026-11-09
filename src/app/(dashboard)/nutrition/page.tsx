@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import ThemeToggle from '@/components/shared/ThemeToggle';
+import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
 import { 
   Utensils, 
   Plus, 
@@ -173,106 +174,101 @@ export default function NutritionPage() {
         </p>
       </div>
 
-      {/* Add Meal Glassmorphism Form */}
-      {showForm && (
-        <div className="bg-white/75 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[32px] p-6 border border-white/80 dark:border-slate-700/60 shadow-[0_16px_45px_rgba(16,185,129,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-emerald-500/10 space-y-4.5 animate-in fade-in slide-in-from-bottom-3 duration-300 relative overflow-hidden">
-          {/* Ambient glass flare */}
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-400/20 dark:bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-teal-400/15 dark:bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="flex items-center justify-between relative z-10">
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{t.nutrition.recordMeal}</span>
-            </h2>
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-500/15 backdrop-blur-md border border-emerald-400/20 px-3 py-1 rounded-full">
-              ✨ Glass Input
-            </span>
+      {/* Floating Glassmorphism Modal for Adding Meal */}
+      <FloatingGlassModal
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        title={t.nutrition.recordMeal}
+        icon={
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 dark:bg-emerald-400/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <Utensils className="h-4 w-4" />
+          </div>
+        }
+        badge={locale === 'th' ? '✨ หน้าต่างบันทึกมื้ออาหาร' : '✨ Floating Glass Window'}
+        glowColor="emerald"
+      >
+        <form onSubmit={handleAddMeal} className="space-y-4">
+          {/* Meal Type Tabs */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">{t.nutrition.mealType}</label>
+            <div className="grid grid-cols-4 gap-2">
+              {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((type) => {
+                const cfg = mealTypeConfigs[type];
+                const Icon = cfg.icon;
+                const isSelected = mealType === type;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setMealType(type)}
+                    className={`py-2 px-1 text-xs font-bold rounded-2xl border transition-all flex flex-col items-center gap-1 cursor-pointer active:scale-95 ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-500 shadow-[0_4px_12px_rgba(16,185,129,0.3)]'
+                        : 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-md text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/60 hover:bg-white dark:hover:bg-slate-700/70'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">{cfg.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <form onSubmit={handleAddMeal} className="space-y-4 relative z-10">
-            {/* Meal Type Tabs */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">{t.nutrition.mealType}</label>
-              <div className="grid grid-cols-4 gap-2">
-                {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((type) => {
-                  const cfg = mealTypeConfigs[type];
-                  const Icon = cfg.icon;
-                  const isSelected = mealType === type;
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setMealType(type)}
-                      className={`py-2 px-1 text-xs font-bold rounded-2xl border transition-all flex flex-col items-center gap-1 cursor-pointer active:scale-95 ${
-                        isSelected
-                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-500 shadow-[0_4px_12px_rgba(16,185,129,0.3)]'
-                          : 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-md text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/60 hover:bg-white dark:hover:bg-slate-700/70'
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span className="text-[10px]">{cfg.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.nutrition.foodName}</label>
+            <input
+              type="text"
+              required
+              placeholder={t.nutrition.foodNamePlaceholder}
+              value={foodName}
+              onChange={(e) => setFoodName(e.target.value)}
+              className="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs transition-all"
+            />
+          </div>
 
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.nutrition.foodName}</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.nutrition.portion}</label>
               <input
                 type="text"
-                required
-                placeholder={t.nutrition.foodNamePlaceholder}
-                value={foodName}
-                onChange={(e) => setFoodName(e.target.value)}
+                placeholder={t.nutrition.portionPlaceholder}
+                value={portion}
+                onChange={(e) => setPortion(e.target.value)}
                 className="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs transition-all"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.nutrition.portion}</label>
-                <input
-                  type="text"
-                  placeholder={t.nutrition.portionPlaceholder}
-                  value={portion}
-                  onChange={(e) => setPortion(e.target.value)}
-                  className="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.nutrition.calories}</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 550"
-                  value={calories}
-                  onChange={(e) => setCalories(e.target.value)}
-                  className="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs transition-all"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.nutrition.calories}</label>
+              <input
+                type="number"
+                placeholder="e.g. 550"
+                value={calories}
+                onChange={(e) => setCalories(e.target.value)}
+                className="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs transition-all"
+              />
             </div>
+          </div>
 
-            <div className="flex gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 py-3 border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-800/50 backdrop-blur-md rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-white dark:hover:bg-slate-700/60 transition-all cursor-pointer active:scale-95"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                type="submit"
-                disabled={submitting || !foodName.trim()}
-                className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-[0_6px_20px_rgba(16,185,129,0.35)] border border-emerald-400/20 cursor-pointer"
-              >
-                {submitting ? t.common.saving : t.common.save}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+          <div className="flex gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="flex-1 py-3 border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-800/50 backdrop-blur-md rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-white dark:hover:bg-slate-700/60 transition-all cursor-pointer active:scale-95"
+            >
+              {t.common.cancel}
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !foodName.trim()}
+              className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-[0_6px_20px_rgba(16,185,129,0.35)] border border-emerald-400/20 cursor-pointer"
+            >
+              {submitting ? t.common.saving : t.common.save}
+            </button>
+          </div>
+        </form>
+      </FloatingGlassModal>
 
       {/* Today's Meals List */}
       <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
@@ -284,12 +280,22 @@ export default function NutritionPage() {
         {loading ? (
           <p className="text-xs text-slate-400 py-4 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
-          <div className="text-center py-8 space-y-2">
+          <div className="text-center py-8 space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-500 flex items-center justify-center mx-auto">
               <Utensils className="h-6 w-6" />
             </div>
-            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.nutrition.noMeals}</p>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">{t.nutrition.noMealsHint}</p>
+            <div>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.nutrition.noMeals}</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">{t.nutrition.noMealsHint}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 font-bold text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer active:scale-95 border border-emerald-200/50 dark:border-emerald-800/40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>{t.nutrition.addMeal}</span>
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -344,16 +350,11 @@ export default function NutritionPage() {
         <div className="max-w-md mx-auto px-4 flex justify-end">
           <button
             type="button"
-            onClick={() => {
-              setShowForm((prev) => !prev);
-              if (!showForm) {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }}
+            onClick={() => setShowForm(true)}
             className="pointer-events-auto shadow-[0_8px_25px_rgba(16,185,129,0.35)] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white py-3 px-5 rounded-full flex items-center gap-2 font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border border-emerald-400/30"
           >
-            <Plus className={`h-4 w-4 transition-transform duration-200 ${showForm ? 'rotate-45' : ''}`} />
-            <span>{showForm ? t.common.cancel : t.nutrition.addMeal}</span>
+            <Plus className="h-4 w-4" />
+            <span>{t.nutrition.addMeal}</span>
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import ThemeToggle from '@/components/shared/ThemeToggle';
+import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
 import { 
   Moon, 
   Plus, 
@@ -204,106 +205,101 @@ export default function SleepPage() {
         </div>
       )}
 
-      {/* Add Sleep Glassmorphism Form */}
-      {showForm && (
-        <div className="bg-white/75 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[32px] p-6 border border-white/80 dark:border-slate-700/60 shadow-[0_16px_45px_rgba(99,102,241,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-indigo-500/10 space-y-4.5 animate-in fade-in slide-in-from-bottom-3 duration-300 relative overflow-hidden">
-          {/* Ambient glass flare */}
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/15 dark:bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-500/15 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="flex items-center justify-between relative z-10">
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span>{t.sleep.recordSleep}</span>
-            </h2>
-            <span className="text-[10px] text-indigo-700 dark:text-indigo-300 font-bold bg-indigo-500/15 backdrop-blur-md border border-indigo-400/20 px-3 py-1 rounded-full">
-              🌙 Night Routine
-            </span>
+      {/* Floating Glassmorphism Modal for Recording Sleep */}
+      <FloatingGlassModal
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        title={t.sleep.recordSleep}
+        icon={
+          <div className="w-8 h-8 rounded-xl bg-indigo-500/15 dark:bg-indigo-400/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+            <Moon className="h-4 w-4" />
           </div>
+        }
+        badge={locale === 'th' ? '🌙 หน้าต่างบันทึกการนอน' : '🌙 Floating Glass Window'}
+        glowColor="indigo"
+      >
+        {formError && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-rose-50/80 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs backdrop-blur-md">
+            {formError}
+          </div>
+        )}
 
-          {formError && (
-            <div className="p-3.5 rounded-2xl bg-rose-50/80 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs backdrop-blur-md relative z-10">
-              {formError}
-            </div>
-          )}
-
-          <form onSubmit={handleAddSleep} className="space-y-4 relative z-10">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                <Bed className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>{t.sleep.bedtime}</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="date"
-                  required
-                  value={bedtimeDate}
-                  onChange={(e) => setBedtimeDate(e.target.value)}
-                  className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
-                />
-                <input
-                  type="time"
-                  required
-                  value={bedtimeTime}
-                  onChange={(e) => setBedtimeTime(e.target.value)}
-                  className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                <SunMedium className="h-3.5 w-3.5 text-amber-500" />
-                <span>{t.sleep.wakeTime}</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="date"
-                  required
-                  value={wakeDate}
-                  onChange={(e) => setWakeDate(e.target.value)}
-                  className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
-                />
-                <input
-                  type="time"
-                  required
-                  value={wakeTime}
-                  onChange={(e) => setWakeTime(e.target.value)}
-                  className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.sleep.notes}</label>
+        <form onSubmit={handleAddSleep} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+              <Bed className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span>{t.sleep.bedtime}</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
               <input
-                type="text"
-                placeholder={t.sleep.notesPlaceholder}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-4 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+                type="date"
+                required
+                value={bedtimeDate}
+                onChange={(e) => setBedtimeDate(e.target.value)}
+                className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+              />
+              <input
+                type="time"
+                required
+                value={bedtimeTime}
+                onChange={(e) => setBedtimeTime(e.target.value)}
+                className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
               />
             </div>
+          </div>
 
-            <div className="flex gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 py-3 border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-800/50 backdrop-blur-md rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-white dark:hover:bg-slate-700/60 transition-all cursor-pointer active:scale-95"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-[0_6px_20px_rgba(99,102,241,0.35)] border border-indigo-400/20 cursor-pointer"
-              >
-                {submitting ? t.common.saving : t.common.save}
-              </button>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+              <SunMedium className="h-3.5 w-3.5 text-amber-500" />
+              <span>{t.sleep.wakeTime}</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="date"
+                required
+                value={wakeDate}
+                onChange={(e) => setWakeDate(e.target.value)}
+                className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+              />
+              <input
+                type="time"
+                required
+                value={wakeTime}
+                onChange={(e) => setWakeTime(e.target.value)}
+                className="px-3.5 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+              />
             </div>
-          </form>
-        </div>
-      )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">{t.sleep.notes}</label>
+            <input
+              type="text"
+              placeholder={t.sleep.notesPlaceholder}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-4 py-3 text-xs border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+            />
+          </div>
+
+          <div className="flex gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="flex-1 py-3 border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-800/50 backdrop-blur-md rounded-2xl text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-white dark:hover:bg-slate-700/60 transition-all cursor-pointer active:scale-95"
+            >
+              {t.common.cancel}
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-95 text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-[0_6px_20px_rgba(99,102,241,0.35)] border border-indigo-400/20 cursor-pointer"
+            >
+              {submitting ? t.common.saving : t.common.save}
+            </button>
+          </div>
+        </form>
+      </FloatingGlassModal>
 
       {/* Sleep Logs History */}
       <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
@@ -311,12 +307,22 @@ export default function SleepPage() {
         {loading ? (
           <p className="text-xs text-slate-400 py-4 text-center">{t.common.loading}</p>
         ) : logs.length === 0 ? (
-          <div className="text-center py-8 space-y-2">
+          <div className="text-center py-8 space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-400 flex items-center justify-center mx-auto">
               <Moon className="h-6 w-6" />
             </div>
-            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.sleep.noLogs}</p>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">{t.sleep.noLogsHint}</p>
+            <div>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.sleep.noLogs}</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">{t.sleep.noLogsHint}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold text-xs hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors cursor-pointer active:scale-95 border border-indigo-200/50 dark:border-indigo-800/40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>{t.sleep.recordSleep}</span>
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -363,16 +369,11 @@ export default function SleepPage() {
         <div className="max-w-md mx-auto px-4 flex justify-end">
           <button
             type="button"
-            onClick={() => {
-              setShowForm((prev) => !prev);
-              if (!showForm) {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }}
+            onClick={() => setShowForm(true)}
             className="pointer-events-auto shadow-[0_8px_25px_rgba(99,102,241,0.35)] bg-gradient-to-r from-indigo-600 to-slate-900 hover:from-indigo-700 hover:to-slate-950 active:scale-95 text-white py-3 px-5 rounded-full flex items-center gap-2 font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border border-indigo-400/30"
           >
-            <Plus className={`h-4 w-4 transition-transform duration-200 ${showForm ? 'rotate-45' : ''}`} />
-            <span>{showForm ? t.common.cancel : t.sleep.recordSleep}</span>
+            <Plus className="h-4 w-4" />
+            <span>{t.sleep.recordSleep}</span>
           </button>
         </div>
       </div>
