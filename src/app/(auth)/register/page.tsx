@@ -75,8 +75,13 @@ export default function RegisterPage() {
 
         setSuccess(true);
       }
-    } catch {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.toLowerCase().includes('fetch')) {
+        setError('Network error: Unable to connect to Supabase. Please ensure your Vercel Supabase URL starts with https://');
+      } else {
+        setError(msg || 'An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
