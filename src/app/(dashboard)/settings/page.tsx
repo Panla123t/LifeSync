@@ -119,6 +119,14 @@ export default function SettingsPage() {
     setLineActionFeedback(null);
     try {
       const res = await fetch('/api/line/link-token', { method: 'POST' });
+      if (!res.ok) {
+        if (res.status === 401) {
+          setLineActionFeedback('กรุณาเข้าสู่ระบบก่อนสร้างรหัสเชื่อมต่อ LINE');
+        } else {
+          setLineActionFeedback('ไม่สามารถสร้างรหัสได้ กรุณาลองใหม่อีกครั้ง');
+        }
+        return;
+      }
       const data = await res.json();
       if (data.token) {
         setLineToken(data.token);
@@ -127,6 +135,7 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error(err);
+      setLineActionFeedback('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
     } finally {
       setLoadingToken(false);
     }
@@ -529,6 +538,12 @@ export default function SettingsPage() {
               {lineActionFeedback}
             </div>
           )}
+
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 text-center">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              💡 <span className="font-semibold text-slate-700 dark:text-slate-300">วิธีเชื่อมต่อที่ง่ายที่สุด:</span> คุณสามารถพิมพ์อีเมลที่ใช้สมัครของคุณ (เช่น <span className="text-emerald-600 dark:text-emerald-400 font-mono">user@example.com</span>) ส่งให้ Sunny ใน LINE ได้โดยตรง!
+            </p>
+          </div>
 
           {/* Action Buttons */}
           <div className="space-y-2 pt-1">

@@ -190,6 +190,16 @@ export interface TranslationSchema {
     createOne: string;
     regSuccessTitle: string;
     regSuccessDesc: string;
+    forgotPassword: string;
+    resetPassword: string;
+    resetDesc: string;
+    sendResetLink: string;
+    resetSentTitle: string;
+    resetSentDesc: string;
+    backToSignIn: string;
+    newPassword: string;
+    updatePassword: string;
+    passwordUpdated: string;
   };
 }
 
@@ -384,6 +394,16 @@ export const translations: Record<Locale, TranslationSchema> = {
       createOne: 'สมัครสมาชิก',
       regSuccessTitle: 'สมัครสมาชิกเรียบร้อยแล้ว!',
       regSuccessDesc: 'กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยันตัวตน จากนั้นเข้าสู่ระบบเพื่อเริ่มใช้งาน',
+      forgotPassword: 'ลืมรหัสผ่าน?',
+      resetPassword: 'รีเซ็ตรหัสผ่าน',
+      resetDesc: 'กรอกอีเมลของคุณเพื่อรับลิงก์สำหรับตั้งรหัสผ่านใหม่',
+      sendResetLink: 'ส่งลิงก์รีเซ็ตรหัสผ่าน',
+      resetSentTitle: 'ส่งลิงก์รีเซ็ตสำเร็จแล้ว!',
+      resetSentDesc: 'กรุณาตรวจสอบกล่องจดหมายในอีเมลของคุณ เพื่อเปิดลิงก์สำหรับตั้งรหัสผ่านใหม่',
+      backToSignIn: 'กลับไปหน้าเข้าสู่ระบบ',
+      newPassword: 'รหัสผ่านใหม่',
+      updatePassword: 'บันทึกรหัสผ่านใหม่',
+      passwordUpdated: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว',
     },
   },
   en: {
@@ -576,6 +596,16 @@ export const translations: Record<Locale, TranslationSchema> = {
       createOne: 'Create one now',
       regSuccessTitle: 'Registration Successful!',
       regSuccessDesc: 'Check your email inbox to verify your account, then sign in to start tracking.',
+      forgotPassword: 'Forgot password?',
+      resetPassword: 'Reset Password',
+      resetDesc: 'Enter your email and we will send you a password reset link.',
+      sendResetLink: 'Send Reset Link',
+      resetSentTitle: 'Reset Link Sent!',
+      resetSentDesc: 'Please check your email inbox for instructions to reset your password.',
+      backToSignIn: 'Back to Sign In',
+      newPassword: 'New Password',
+      updatePassword: 'Update Password',
+      passwordUpdated: 'Password updated successfully',
     },
   },
 };

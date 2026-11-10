@@ -194,10 +194,69 @@ export async function POST(req: NextRequest) {
             await sendLineReply(event.replyToken, [
               {
                 type: 'text',
-                text: '⚠️ ไม่พบรหัสเชื่อมต่อนี้ หรือรหัสอาจหมดอายุแล้ว (รหัสมีอายุ 15 นาที)\n\nกรุณาไปที่แอป LifeSync > เมนู Settings เพื่อกดสร้างรหัสเชื่อมต่อใหม่อีกครั้งนะครับ 🌿',
+                text: '⚠️ ไม่พบรหัสเชื่อมต่อนี้ หรือรหัสอาจหมดอายุแล้ว (รหัสมีอายุ 15 นาที)\n\n💡 ทิป: คุณสามารถพิมพ์อีเมลที่ใช้สมัคร LifeSync (เช่น your@email.com) ส่งให้ Sunny ในห้องแชทนี้ เพื่อเชื่อมต่อบัญชีได้ทันทีเช่นกันครับ! 🌿',
               },
             ]);
             continue;
+          }
+        }
+
+        // B. Check for Email Linking (e.g. user sends their email directly: theb5702@gmail.com)
+        const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch) {
+          const targetEmail = emailMatch[0].toLowerCase();
+          try {
+            const { data: userList, error: listErr } = await admin.auth.admin.listUsers();
+            if (listErr) {
+              console.warn('[LINE Webhook] listUsers error:', listErr);
+            }
+            const foundUser = (userList?.users || []).find(
+              (u) => u.email?.toLowerCase() === targetEmail
+            );
+
+            if (foundUser) {
+              await admin
+                .from('notification_settings')
+                .upsert({
+                  user_id: foundUser.id,
+                  line_user_id: lineUserId,
+                  line_linked_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                }, { onConflict: 'user_id' });
+
+              const { data: profile } = await admin
+                .from('profiles')
+                .select('display_name')
+                .eq('id', foundUser.id)
+                .maybeSingle();
+
+              const displayName = profile?.display_name || foundUser.email?.split('@')[0] || 'เพื่อนสุขภาพ';
+
+              try {
+                await admin.from('point_transactions').insert({
+                  user_id: foundUser.id,
+                  points_delta: 20,
+                  reason: 'Linked LINE Official Account via Email',
+                  idempotency_key: `line_link_${foundUser.id}`,
+                });
+              } catch {
+                // Ignore duplicate bonus points
+              }
+
+              console.log(`[LINE Webhook] Successfully linked user ${foundUser.id} via email ${targetEmail}`);
+              await sendLineReply(event.replyToken, [createLinkSuccessMessage(displayName)]);
+              continue;
+            } else {
+              await sendLineReply(event.replyToken, [
+                {
+                  type: 'text',
+                  text: `⚠️ ไม่พบอีเมล "${targetEmail}" ในระบบ LifeSync ครับ\n\nกรุณาตรวจสอบว่าท่านได้สมัครสมาชิกที่แอป LifeSync ด้วยอีเมลนี้เรียบร้อยแล้ว หรือนำรหัส 6 หลักจากหน้า Settings มาใส่แทนนะครับ 🌿`,
+                },
+              ]);
+              continue;
+            }
+          } catch (err) {
+            console.warn('Error checking email for LINE linking:', err);
           }
         }
 
