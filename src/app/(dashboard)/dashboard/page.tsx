@@ -126,17 +126,31 @@ export default function DashboardPage() {
         setQuests(activeQuests as Quest[]);
       }
 
-      // 7. Get Today's Completed Quests
-      const todayDate = new Date().toISOString().slice(0, 10);
-      const { data: userQuests } = await supabase
-        .from('user_quests')
-        .select('quest_id, status')
-        .eq('user_id', user.id)
-        .eq('quest_date', todayDate)
-        .eq('status', 'completed');
+      // 7. Sync & Auto-Evaluate Today's Quests & Points
+      try {
+        const syncRes = await fetch('/api/quests/sync', { method: 'POST' });
+        if (syncRes.ok) {
+          const syncData = await syncRes.json();
+          if (syncData.completedQuestIds) {
+            setCompletedQuestIds(syncData.completedQuestIds);
+          }
+          if (typeof syncData.totalPoints === 'number') {
+            setPoints(syncData.totalPoints);
+          }
+        }
+      } catch (syncErr) {
+        console.warn('[Dashboard] Quests sync error:', syncErr);
+        const todayDate = new Date().toISOString().slice(0, 10);
+        const { data: userQuests } = await supabase
+          .from('user_quests')
+          .select('quest_id, status')
+          .eq('user_id', user.id)
+          .eq('quest_date', todayDate)
+          .eq('status', 'completed');
 
-      if (userQuests) {
-        setCompletedQuestIds(userQuests.map((uq: { quest_id: string }) => uq.quest_id));
+        if (userQuests) {
+          setCompletedQuestIds(userQuests.map((uq: { quest_id: string }) => uq.quest_id));
+        }
       }
 
       // 8. Aggregate 7-Day Weekly Analytics Data

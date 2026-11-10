@@ -94,13 +94,11 @@ export default function HydrationPage() {
         setCustomAmount('');
         await fetchLogs();
 
-        if (logs.length === 0) {
-          await supabase.from('point_transactions').insert({
-            user_id: user.id,
-            points_delta: 10,
-            reason: 'Logged water intake',
-            idempotency_key: `water_${user.id}_${new Date().toISOString().slice(0, 10)}`,
-          });
+        // Trigger quest sync to auto-award points and mark quests
+        try {
+          await fetch('/api/quests/sync', { method: 'POST' });
+        } catch {
+          // Background sync
         }
       }
     } finally {

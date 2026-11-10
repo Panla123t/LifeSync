@@ -152,13 +152,11 @@ export default function NutritionPage() {
         setShowForm(false);
         await fetchLogs();
 
-        if (logs.length === 0) {
-          await supabase.from('point_transactions').insert({
-            user_id: user.id,
-            points_delta: 10,
-            reason: 'Logged meal today',
-            idempotency_key: `meal_${user.id}_${new Date().toISOString().slice(0, 10)}`,
-          });
+        // Sync quests and award points via server
+        try {
+          await fetch('/api/quests/sync', { method: 'POST' });
+        } catch {
+          // Background sync
         }
       }
     } finally {

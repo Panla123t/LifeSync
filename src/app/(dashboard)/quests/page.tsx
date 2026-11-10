@@ -30,6 +30,31 @@ export default function QuestsPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // 1. Sync & evaluate today's quests and points via server engine
+        try {
+          const syncRes = await fetch('/api/quests/sync', { method: 'POST' });
+          if (syncRes.ok) {
+            const syncData = await syncRes.json();
+            if (syncData.completedQuestIds) {
+              setCompletedQuestIds(syncData.completedQuestIds);
+            }
+            if (typeof syncData.totalPoints === 'number') {
+              setTotalPoints(syncData.totalPoints);
+            }
+          }
+        } catch (syncErr) {
+          console.warn('[Quests] Sync error:', syncErr);
+        }
+
+        // 2. Fetch all active quests
+        const { data: allQuests } = await supabase
+          .from('quests')
+          .select('*')
+          .eq('active', true);
+
+        if (allQuests) setQuests(allQuests as Quest[]);
+
+        // 3. Fallback to point_transactions if not synced
         const { data: pointTxs } = await supabase
           .from('point_transactions')
           .select('points_delta')
@@ -38,25 +63,6 @@ export default function QuestsPage() {
         if (pointTxs) {
           const sum = pointTxs.reduce((acc, curr) => acc + curr.points_delta, 0);
           setTotalPoints(sum);
-        }
-
-        const { data: allQuests } = await supabase
-          .from('quests')
-          .select('*')
-          .eq('active', true);
-
-        if (allQuests) setQuests(allQuests as Quest[]);
-
-        const todayDate = new Date().toISOString().slice(0, 10);
-        const { data: userQuests } = await supabase
-          .from('user_quests')
-          .select('quest_id, status')
-          .eq('user_id', user.id)
-          .eq('quest_date', todayDate)
-          .eq('status', 'completed');
-
-        if (userQuests) {
-          setCompletedQuestIds(userQuests.map((uq: { quest_id: string }) => uq.quest_id));
         }
       } finally {
         setLoading(false);
