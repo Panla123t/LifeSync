@@ -7,8 +7,19 @@ function sanitizeSupabaseUrl(rawUrl?: string): string | null {
   if ((url.startsWith('"') && url.endsWith('"')) || (url.startsWith("'") && url.endsWith("'"))) {
     url = url.slice(1, -1).trim();
   }
-  if (!url || url === 'undefined' || url === 'null' || url.includes('your-project')) {
+  if (!url || url === 'undefined' || url === 'null' || url.includes('your-project') || url.includes('placeholder')) {
     return null;
+  }
+  // Auto-heal missing letters in https from copy-paste typos (e.g. ttps://...)
+  if (url.startsWith('ttps://')) {
+    url = 'h' + url;
+  } else if (url.startsWith('tps://')) {
+    url = 'ht' + url;
+  }
+  // Extract supabase host if present
+  const match = url.match(/([a-z0-9_-]+\.supabase\.co)/i);
+  if (match) {
+    return `https://${match[1]}`;
   }
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = `https://${url}`;
@@ -30,7 +41,7 @@ function sanitizeSupabaseKey(rawKey?: string): string | null {
   if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
     key = key.slice(1, -1).trim();
   }
-  if (!key || key === 'undefined' || key === 'null' || key.includes('your-anon-key')) {
+  if (!key || key === 'undefined' || key === 'null' || key.includes('your-anon-key') || key.includes('placeholder')) {
     return null;
   }
   return key;
@@ -99,9 +110,10 @@ export async function updateSession(request: NextRequest) {
       url.pathname = '/dashboard';
       return NextResponse.redirect(url);
     }
-  } catch (err) {
-    console.error('Middleware Supabase session update error:', err);
-  }
 
-  return supabaseResponse;
+    return supabaseResponse;
+  } catch (err) {
+    console.error('Session middleware error, bypassing:', err);
+    return supabaseResponse;
+  }
 }

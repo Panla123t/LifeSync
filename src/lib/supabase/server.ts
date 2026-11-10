@@ -10,6 +10,17 @@ function sanitizeSupabaseUrl(rawUrl?: string): string {
   if (!url || url === 'undefined' || url === 'null') {
     return 'https://placeholder.supabase.co';
   }
+  // Auto-heal missing letters in https from copy-paste typos (e.g. ttps://...)
+  if (url.startsWith('ttps://')) {
+    url = 'h' + url;
+  } else if (url.startsWith('tps://')) {
+    url = 'ht' + url;
+  }
+  // Extract supabase host if present
+  const match = url.match(/([a-z0-9_-]+\.supabase\.co)/i);
+  if (match) {
+    return `https://${match[1]}`;
+  }
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = `https://${url}`;
   }
