@@ -1,0 +1,24 @@
+{
+  "crons": [
+    {
+      "path": "/api/line/reminders?type=morning",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/line/reminders?type=hydration",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/line/reminders?type=hydration",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/line/reminders?type=hydration",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/line/reminders?type=sleep",
+      "schedule": "30 14 * * *"
+    }
+  ]
+}

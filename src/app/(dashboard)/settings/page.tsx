@@ -21,7 +21,9 @@ import {
   Send,
   RefreshCw,
   Sparkles,
-  Unlink
+  Unlink,
+  Clock,
+  Droplets
 } from 'lucide-react';
 import type { NotificationSettings, Profile } from '@/types/database';
 import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
@@ -181,18 +183,18 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSendTestReminder = async () => {
+  const handleSendTestReminder = async (type: 'hydration' | 'sleep' = 'hydration') => {
     setSendingTestReminder(true);
     setLineActionFeedback(null);
     try {
       const res = await fetch('/api/line/reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'hydration' }),
+        body: JSON.stringify({ type }),
       });
       const data = await res.json();
       if (data.success) {
-        setLineActionFeedback(data.message || (locale === 'th' ? 'ส่งการแจ้งเตือนทดสอบแล้ว! กรุณาตรวจสอบใน LINE' : 'Test reminder sent! Check your LINE chat'));
+        setLineActionFeedback(data.message || (locale === 'th' ? `ส่งการแจ้งเตือน${type === 'sleep' ? 'เข้านอน' : 'ดื่มน้ำ'}แล้ว! กรุณาตรวจสอบใน LINE` : `Test reminder sent! Check your LINE chat`));
         setTimeout(() => setLineActionFeedback(null), 4500);
       } else {
         setLineActionFeedback(data.error || 'Failed to send reminder');
@@ -433,27 +435,66 @@ export default function SettingsPage() {
               <button
                 type="button"
                 disabled={sendingTestReminder}
-                onClick={handleSendTestReminder}
+                onClick={() => handleSendTestReminder('hydration')}
                 className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {sendingTestReminder ? (
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Send className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <Droplets className="h-3.5 w-3.5 text-sky-500" />
                 )}
-                <span>{t.settings.sendTestReminder}</span>
+                <span>{locale === 'th' ? 'ลองเตือนจิบน้ำ' : 'Test Water'}</span>
               </button>
 
               <button
                 type="button"
-                disabled={unlinkingLine}
-                onClick={handleUnlinkLine}
-                className="py-2.5 px-3 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-100/70 dark:hover:bg-rose-950/50 active:scale-95 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-900/40 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                disabled={sendingTestReminder}
+                onClick={() => handleSendTestReminder('sleep')}
+                className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                <Unlink className="h-3.5 w-3.5" />
-                <span>{t.settings.disconnectLine}</span>
+                {sendingTestReminder ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Moon className="h-3.5 w-3.5 text-indigo-500" />
+                )}
+                <span>{locale === 'th' ? 'ลองเตือนนอน' : 'Test Sleep'}</span>
               </button>
             </div>
+
+            {/* Daily Schedule Card */}
+            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 text-xs space-y-2">
+              <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 text-[11px]">
+                <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>{locale === 'th' ? 'รอบเวลาเตือนอัตโนมัติ (Sunny ☀️)' : 'Daily Automated Reminder Schedule'}</span>
+              </div>
+              <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">☀️ 08:00 น.</span>
+                  <span className="text-slate-400">•</span>
+                  <span>{locale === 'th' ? 'อรุณสวัสดิ์ & น้ำแก้วแรก' : 'Morning Greeting & Wake-up Water'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">💧 10:00, 14:00, 18:00 น.</span>
+                  <span className="text-slate-400">•</span>
+                  <span>{locale === 'th' ? 'เตือนจิบน้ำระหว่างวัน' : 'Hydration Check-ins'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">🌙 21:30 น.</span>
+                  <span className="text-slate-400">•</span>
+                  <span>{locale === 'th' ? 'เตรียมตัวผ่อนคลายเข้านอน' : 'Bedtime Wind-down'}</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={unlinkingLine}
+              onClick={handleUnlinkLine}
+              className="w-full py-2.5 px-3 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-100/70 dark:hover:bg-rose-950/50 active:scale-95 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-900/40 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <Unlink className="h-3.5 w-3.5" />
+              <span>{t.settings.disconnectLine}</span>
+            </button>
           </div>
         ) : (
           <button

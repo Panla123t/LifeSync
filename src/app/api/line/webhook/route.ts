@@ -6,7 +6,9 @@ import {
   createWelcomeMessage, 
   createLinkSuccessMessage, 
   createWaterLoggedMessage,
-  createDailySummaryMessage
+  createDailySummaryMessage,
+  createHydrationReminderMessage,
+  createSleepReminderMessage
 } from '@/lib/line/client';
 import { verifyAndConsumeMemoryToken } from '../link-token/route';
 
@@ -173,7 +175,7 @@ export async function POST(req: NextRequest) {
               .eq('id', matchedUserId)
               .maybeSingle();
 
-            const displayName = profile?.display_name || 'เพื่อนสุขภาพ';
+            const displayName = profile?.display_name || 'เพื่อนคนเก่ง';
 
             // Award 20 bonus points
             try {
@@ -194,14 +196,14 @@ export async function POST(req: NextRequest) {
             await sendLineReply(event.replyToken, [
               {
                 type: 'text',
-                text: '⚠️ ไม่พบรหัสเชื่อมต่อนี้ หรือรหัสอาจหมดอายุแล้ว (รหัสมีอายุ 15 นาที)\n\n💡 ทิป: คุณสามารถพิมพ์อีเมลที่ใช้สมัคร LifeSync (เช่น your@email.com) ส่งให้ Sunny ในห้องแชทนี้ เพื่อเชื่อมต่อบัญชีได้ทันทีเช่นกันครับ! 🌿',
+                text: '⚠️ ซันนี่ไม่พบรหัสนี้ หรือรหัสอาจหมดอายุแล้วครับ (รหัสมีอายุ 15 นาที)\n\n💡 ทิป: คุณสามารถพิมพ์ "อีเมล" ที่ใช้สมัคร LifeSync (เช่น your@email.com) ส่งให้ซันนี่ในห้องแชทนี้ เพื่อเชื่อมต่อบัญชีได้ทันทีเช่นกันครับ! 🌿',
               },
             ]);
             continue;
           }
         }
 
-        // B. Check for Email Linking (e.g. user sends their email directly: theb5702@gmail.com)
+        // B. Check for Email Linking (e.g. user sends their email directly: user@example.com)
         const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
         if (emailMatch) {
           const targetEmail = emailMatch[0].toLowerCase();
@@ -230,7 +232,7 @@ export async function POST(req: NextRequest) {
                 .eq('id', foundUser.id)
                 .maybeSingle();
 
-              const displayName = profile?.display_name || foundUser.email?.split('@')[0] || 'เพื่อนสุขภาพ';
+              const displayName = profile?.display_name || foundUser.email?.split('@')[0] || 'เพื่อนคนเก่ง';
 
               try {
                 await admin.from('point_transactions').insert({
@@ -250,7 +252,7 @@ export async function POST(req: NextRequest) {
               await sendLineReply(event.replyToken, [
                 {
                   type: 'text',
-                  text: `⚠️ ไม่พบอีเมล "${targetEmail}" ในระบบ LifeSync ครับ\n\nกรุณาตรวจสอบว่าท่านได้สมัครสมาชิกที่แอป LifeSync ด้วยอีเมลนี้เรียบร้อยแล้ว หรือนำรหัส 6 หลักจากหน้า Settings มาใส่แทนนะครับ 🌿`,
+                  text: `⚠️ ซันนี่หาอีเมล "${targetEmail}" ในระบบไม่เจอครับ\n\nลองตรวจสอบว่าสมัครสมาชิกที่แอป LifeSync ด้วยอีเมลนี้แล้วหรือยัง หรือนำรหัส 6 หลักจากหน้า Settings มาใส่แทนได้นะครับ 🌿`,
                 },
               ]);
               continue;
@@ -260,16 +262,25 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // B. Check if this LINE user is already linked
+        // C. Check if this LINE user is already linked
         const { data: notifRow } = await admin
           .from('notification_settings')
-          .select('user_id')
+          .select('user_id, hydration_enabled, sleep_enabled')
           .eq('line_user_id', lineUserId)
           .maybeSingle();
 
         const linkedUserId = notifRow?.user_id;
 
         if (linkedUserId) {
+          // Fetch user profile for personal touch
+          const { data: profile } = await admin
+            .from('profiles')
+            .select('display_name')
+            .eq('id', linkedUserId)
+            .maybeSingle();
+
+          const userName = profile?.display_name || 'เพื่อนคนเก่ง';
+
           // 1. Water Logging Command: e.g. "น้ำ 250", "ดื่มน้ำ 500", "+250", "250ml", "น้ำ"
           const waterMatch = text.match(/^(?:น้ำ|ดื่มน้ำ|water|\+)\s*(\d{2,4})?\s*(?:ml|มล)?$/i);
           if (waterMatch || text.toLowerCase() === 'น้ำ' || text.toLowerCase() === 'water') {
@@ -296,8 +307,38 @@ export async function POST(req: NextRequest) {
             const todayTotal = (waterLogs || []).reduce((acc, curr) => acc + curr.amount_ml, 0);
             const waterGoal = 2000;
 
+            // Complete water quest in real-time
+            const todayDateStr = new Date().toISOString().slice(0, 10);
+            const { data: waterQuest } = await admin
+              .from('quests')
+              .select('id, points, title')
+              .eq('rule_key', 'log_water_once')
+              .maybeSingle();
+
+            if (waterQuest) {
+              await admin.from('user_quests').upsert({
+                user_id: linkedUserId,
+                quest_id: waterQuest.id,
+                quest_date: todayDateStr,
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+              }, { onConflict: 'user_id,quest_id,quest_date' });
+
+              try {
+                await admin.from('point_transactions').insert({
+                  user_id: linkedUserId,
+                  points_delta: waterQuest.points,
+                  reason: `Quest Completed: ${waterQuest.title}`,
+                  reference_id: waterQuest.id,
+                  idempotency_key: `quest_${waterQuest.id}_${linkedUserId}_${todayDateStr}`,
+                });
+              } catch {
+                // Already awarded today
+              }
+            }
+
             await sendLineReply(event.replyToken, [
-              createWaterLoggedMessage(validAmount, todayTotal, waterGoal),
+              createWaterLoggedMessage(validAmount, todayTotal, waterGoal, userName),
             ]);
             continue;
           }
@@ -307,15 +348,13 @@ export async function POST(req: NextRequest) {
             const startOfDay = new Date();
             startOfDay.setHours(0, 0, 0, 0);
 
-            const [profileRes, waterRes, foodRes, sleepRes, pointsRes] = await Promise.all([
-              admin.from('profiles').select('display_name').eq('id', linkedUserId).maybeSingle(),
+            const [waterRes, foodRes, sleepRes, pointsRes] = await Promise.all([
               admin.from('water_logs').select('amount_ml').eq('user_id', linkedUserId).gte('logged_at', startOfDay.toISOString()),
               admin.from('food_logs').select('id').eq('user_id', linkedUserId).gte('logged_at', startOfDay.toISOString()),
               admin.from('sleep_logs').select('duration_minutes').eq('user_id', linkedUserId).order('wake_time', { ascending: false }).limit(1),
               admin.from('point_transactions').select('points_delta').eq('user_id', linkedUserId),
             ]);
 
-            const userName = profileRes.data?.display_name || 'เพื่อนรักสุขภาพ';
             const waterTotal = (waterRes.data || []).reduce((sum, w) => sum + w.amount_ml, 0);
             const mealsCount = foodRes.data?.length || 0;
             
@@ -335,20 +374,20 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          // 3. Sleep prompt command
-          if (['นอน', 'sleep', 'เข้านอน', 'เข้านอนแล้ว'].includes(text.toLowerCase())) {
+          // 3. Sleep prompt command: e.g. "นอน", "sleep", "เข้านอน", "เข้านอนแล้ว"
+          if (['นอน', 'sleep', 'เข้านอน', 'เข้านอนแล้ว', 'ง่วง', 'ไปนอนแล้ว'].includes(text.toLowerCase())) {
             const appUrl = process.env.APP_BASE_URL || 'https://life-sync-panla123ts-projects.vercel.app';
             await sendLineReply(event.replyToken, [
               {
                 type: 'text',
-                text: '🌙 ยอดเยี่ยมมากครับ! ขอให้หลับสบายและพักผ่อนเต็มที่ 💤\n\nเมื่อตื่นนอนตอนเช้า สามารถแตะบันทึกเวลาตื่นและเวลานอนได้ในแอป LifeSync นะครับ ✨',
+                text: `ขอให้คืนนี้เป็นค่ำคืนที่อบอุ่นและหลับสบายที่สุดนะครับคุณ ${userName} 🌙💤\n\nวางมือถือไว้ข้างเตียง หายใจเข้าลึกๆ ผ่อนคลายร่างกาย แล้วหลับตาให้สนิทน้า 🌟\n\nพรุ่งนี้ตื่นเช้ามา อย่าลืมแวะมาจิบน้ำแก้วแรกและบันทึกเวลาตื่นในแอป LifeSync นะครับ ราตรีสวัสดิ์ครับผม 🛌✨`,
                 quickReply: {
                   items: [
                     {
                       type: 'action',
                       action: {
                         type: 'uri',
-                        label: 'เปิดแอป LifeSync',
+                        label: '📱 เปิดแอป LifeSync',
                         uri: `${appUrl}/sleep`,
                       },
                     },
@@ -359,11 +398,131 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          // 4. Fallback for linked user
+          // 4. Reminder check & test command: e.g. "เตือน", "เตือนดื่มน้ำ", "เตือนนอน", "การแจ้งเตือน"
+          if (['เตือน', 'เตือนดื่มน้ำ', 'เตือนนอน', 'ตั้งเตือน', 'การแจ้งเตือน', 'reminder'].some(k => text.toLowerCase().includes(k))) {
+            const hydrationStatus = notifRow?.hydration_enabled ? '✅ เปิดอยู่' : '❌ ปิดอยู่';
+            const sleepStatus = notifRow?.sleep_enabled ? '✅ เปิดอยู่' : '❌ ปิดอยู่';
+
+            await sendLineReply(event.replyToken, [
+              {
+                type: 'text',
+                text: `⏰ สถานะการแจ้งเตือนของคุณ ${userName} 🌿\n\n💧 เตือนจิบน้ำ: ${hydrationStatus}\n🌙 เตือนเข้านอน: ${sleepStatus}\n\nซันนี่มีตารางแวะมาสะกิดเบาๆ:\n• 08:00 น. อรุณสวัสดิ์ & น้ำแก้วแรก ☀️\n• 10:00, 14:00, 18:00 น. เตือนจิบน้ำระหว่างวัน 💧\n• 21:30 น. เตรียมตัวพักผ่อนเข้านอน 🌙\n\nอยากให้ซันนี่ลองส่งการแจ้งเตือนตัวอย่างให้ดู แตะปุ่มด้านล่างได้เลยนะครับ! 👇`,
+                quickReply: {
+                  items: [
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'message',
+                        label: '💧 ลองเตือนดื่มน้ำ',
+                        text: 'ทดสอบเตือนน้ำ',
+                      },
+                    },
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'message',
+                        label: '🌙 ลองเตือนเข้านอน',
+                        text: 'ทดสอบเตือนนอน',
+                      },
+                    },
+                  ],
+                },
+              },
+            ]);
+            continue;
+          }
+
+          // 5. Test Reminder Trigger from chat
+          if (text === 'ทดสอบเตือนน้ำ') {
+            await sendLineReply(event.replyToken, [
+              createHydrationReminderMessage(userName, 750, 2000),
+            ]);
+            continue;
+          }
+
+          if (text === 'ทดสอบเตือนนอน') {
+            await sendLineReply(event.replyToken, [
+              createSleepReminderMessage(userName),
+            ]);
+            continue;
+          }
+
+          // 6. Conversational empathy: "เหนื่อย", "ขอบคุณ", "ซันนี่", "สวัสดี"
+          if (text.includes('เหนื่อย') || text.includes('ท้อ') || text.includes('เพลีย')) {
+            await sendLineReply(event.replyToken, [
+              {
+                type: 'text',
+                text: `กอดๆ น้าคุณ ${userName} 🫂🩵\nวันนี้คุณพยายามมาทั้งวันแล้ว เก่งมากๆ เลยครับ ไม่เป็นไรเลยนะถ้าจะรู้สึกเหนื่อยบ้าง\n\nหาของอร่อยๆ ทาน จิบน้ำเย็นๆ สักแก้ว แล้วพักผ่อนให้สบายใจ ซันนี่พร้อมอยู่ข้างๆ และคอยเชียร์คุณเสมอนะครับ 🌿✨`,
+                quickReply: {
+                  items: [
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'message',
+                        label: '💧 จิบน้ำให้สดชื่น (+250ml)',
+                        text: 'น้ำ 250',
+                      },
+                    },
+                  ],
+                },
+              },
+            ]);
+            continue;
+          }
+
+          if (text.includes('ขอบคุณ') || text.includes('thank')) {
+            await sendLineReply(event.replyToken, [
+              {
+                type: 'text',
+                text: `ยินดีมากๆ เลยครับคุณ ${userName}! รอยยิ้มและสุขภาพที่ดีของคุณคือกำลังใจที่ดีที่สุดของซันนี่เลยน้า มีอะไรให้ช่วยบอกซันนี่ได้ตลอดเลยนะครับ 😊🩵`,
+              },
+            ]);
+            continue;
+          }
+
+          if (['สวัสดี', 'หวัดดี', 'hi', 'hello', 'ซันนี่', 'sunny'].includes(text.toLowerCase())) {
+            await sendLineReply(event.replyToken, [
+              {
+                type: 'text',
+                text: `สวัสดีครับคุณ ${userName}! วันนี้รู้สึกสดชื่นดีไหมครับ? ☀️🌿\n\nอยากให้ซันนี่ช่วยบันทึกหรือดูข้อมูลอะไร เลือกแตะปุ่มด้านล่างได้เลยนะครับผม 👇`,
+                quickReply: {
+                  items: [
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'message',
+                        label: '💧 บันทึกดื่มน้ำ +250ml',
+                        text: 'น้ำ 250',
+                      },
+                    },
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'message',
+                        label: '📊 สรุปสุขภาพวันนี้',
+                        text: 'สรุป',
+                      },
+                    },
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'message',
+                        label: '⏰ เช็คการแจ้งเตือน',
+                        text: 'เตือน',
+                      },
+                    },
+                  ],
+                },
+              },
+            ]);
+            continue;
+          }
+
+          // 7. Fallback friendly companion message for linked user
           await sendLineReply(event.replyToken, [
             {
               type: 'text',
-              text: `🌿 สวัสดีครับ! บัญชีของคุณเชื่อมต่อเรียบร้อยแล้ว\n\nคุณสามารถพิมพ์:\n• "น้ำ 250" หรือ "น้ำ 500" เพื่อบันทึกน้ำดื่ม\n• "สรุป" เพื่อดูรายงานสุขภาพวันนี้`,
+              text: `ซันนี่อยู่นี่ครับคุณ ${userName}! ☀️🌿\n\nมีอะไรให้ซันนี่ช่วยดูแลไหมครับ? คุณสามารถพิมพ์คุยหรือสั่งการได้ง่ายๆ เลย:\n• "น้ำ 250" หรือ "น้ำ 500" เพื่อจดน้ำดื่ม 💧\n• "สรุป" เพื่อดูภาพรวมสุขภาพวันนี้ 📊\n• "เตือน" เพื่อดูเวลาแจ้งเตือน ⏰`,
               quickReply: {
                 items: [
                   {
@@ -380,6 +539,14 @@ export async function POST(req: NextRequest) {
                       type: 'message',
                       label: '📊 ดูสรุปวันนี้',
                       text: 'สรุป',
+                    },
+                  },
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'message',
+                      label: '⏰ เช็คการแจ้งเตือน',
+                      text: 'เตือน',
                     },
                   },
                 ],

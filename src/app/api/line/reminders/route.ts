@@ -4,37 +4,51 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { 
   sendLinePush, 
   createHydrationReminderMessage, 
-  createSleepReminderMessage 
+  createSleepReminderMessage,
+  createMorningGreetingMessage,
+  createMealReminderMessage
 } from '@/lib/line/client';
 
-export async function POST(req: NextRequest) {
+async function handleReminders(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization') || '';
     const cronSecretHeader = req.headers.get('x-cron-secret');
-    const expectedSecret = process.env.CRON_SECRET || 'your-cron-secret';
+    const expectedSecret = process.env.CRON_SECRET;
 
+    // Check if called by Vercel Cron or with bearer token
     const isCronAuthorized = 
-      cronSecretHeader === expectedSecret ||
-      authHeader.replace('Bearer ', '') === expectedSecret;
+      (expectedSecret && (cronSecretHeader === expectedSecret || authHeader.replace('Bearer ', '') === expectedSecret)) ||
+      req.headers.get('user-agent')?.includes('vercel-cron');
 
     let targetUserId: string | null = null;
 
     if (!isCronAuthorized) {
       // If not called by cron, check if called by authenticated user in Settings
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          targetUserId = user.id;
+        }
+      } catch {
+        // Not authenticated
       }
-      targetUserId = user.id;
     }
 
-    const body = await req.json().catch(() => ({}));
-    const reminderType: 'test' | 'hydration' | 'sleep' = body.type || 'test';
+    const { searchParams } = new URL(req.url);
+    const queryType = searchParams.get('type');
+
+    let bodyType: string | undefined;
+    if (req.method === 'POST') {
+      const body = await req.json().catch(() => ({}));
+      bodyType = body.type;
+    }
+
+    const reminderType = queryType || bodyType || (targetUserId ? 'test' : 'hydration');
 
     const admin = createAdminClient();
 
-    // If targeted at a specific user (e.g. "Send Test Reminder" in Settings)
+    // 1. Single User Target (e.g. "Send Test Reminder" in Settings)
     if (targetUserId) {
       const { data: notif } = await admin
         .from('notification_settings')
@@ -52,14 +66,31 @@ export async function POST(req: NextRequest) {
         .from('profiles')
         .select('display_name')
         .eq('id', targetUserId)
-        .single();
+        .maybeSingle();
 
-      const userName = profile?.display_name || 'เพื่อนสุขภาพ';
+      const userName = profile?.display_name || 'เพื่อนคนเก่ง';
 
-      // Send test hydration push
-      const message = reminderType === 'sleep' 
-        ? createSleepReminderMessage(userName)
-        : createHydrationReminderMessage(userName, 750, 2000);
+      let message;
+      if (reminderType === 'sleep') {
+        message = createSleepReminderMessage(userName);
+      } else if (reminderType === 'morning') {
+        message = createMorningGreetingMessage(userName);
+      } else if (reminderType === 'meal') {
+        message = createMealReminderMessage(userName);
+      } else {
+        // Default hydration reminder
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const { data: waterLogs } = await admin
+          .from('water_logs')
+          .select('amount_ml')
+          .eq('user_id', targetUserId)
+          .gte('logged_at', startOfDay.toISOString());
+
+        const currentMl = (waterLogs || []).reduce((sum, w) => sum + w.amount_ml, 0);
+        message = createHydrationReminderMessage(userName, currentMl || 500, 2000);
+      }
 
       const result = await sendLinePush(notif.line_user_id, [message]);
 
@@ -72,7 +103,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Cron job: broadcast to eligible users
+    // 2. Broadcast Cron Reminders to all connected users
+    let sentCount = 0;
+
     if (reminderType === 'hydration') {
       const { data: users } = await admin
         .from('notification_settings')
@@ -80,17 +113,16 @@ export async function POST(req: NextRequest) {
         .eq('hydration_enabled', true)
         .not('line_user_id', 'is', null);
 
-      let sentCount = 0;
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
       for (const u of (users || [])) {
         if (!u.line_user_id) continue;
         const { data: prof } = await admin
           .from('profiles')
           .select('display_name')
           .eq('id', u.user_id)
-          .single();
-
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
+          .maybeSingle();
 
         const { data: waterLogs } = await admin
           .from('water_logs')
@@ -100,42 +132,62 @@ export async function POST(req: NextRequest) {
 
         const currentMl = (waterLogs || []).reduce((sum, w) => sum + w.amount_ml, 0);
         const res = await sendLinePush(u.line_user_id, [
-          createHydrationReminderMessage(prof?.display_name || 'เพื่อนสุขภาพ', currentMl, 2000),
+          createHydrationReminderMessage(prof?.display_name || 'เพื่อนคนเก่ง', currentMl, 2000),
         ]);
         if (res.success) sentCount++;
       }
-
-      return NextResponse.json({ success: true, count: sentCount });
-    }
-
-    if (reminderType === 'sleep') {
+    } else if (reminderType === 'sleep') {
       const { data: users } = await admin
         .from('notification_settings')
         .select('user_id, line_user_id')
         .eq('sleep_enabled', true)
         .not('line_user_id', 'is', null);
 
-      let sentCount = 0;
       for (const u of (users || [])) {
         if (!u.line_user_id) continue;
         const { data: prof } = await admin
           .from('profiles')
           .select('display_name')
           .eq('id', u.user_id)
-          .single();
+          .maybeSingle();
 
         const res = await sendLinePush(u.line_user_id, [
-          createSleepReminderMessage(prof?.display_name || 'เพื่อนสุขภาพ'),
+          createSleepReminderMessage(prof?.display_name || 'เพื่อนคนเก่ง'),
         ]);
         if (res.success) sentCount++;
       }
+    } else if (reminderType === 'morning') {
+      const { data: users } = await admin
+        .from('notification_settings')
+        .select('user_id, line_user_id')
+        .not('line_user_id', 'is', null);
 
-      return NextResponse.json({ success: true, count: sentCount });
+      for (const u of (users || [])) {
+        if (!u.line_user_id) continue;
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('display_name')
+          .eq('id', u.user_id)
+          .maybeSingle();
+
+        const res = await sendLinePush(u.line_user_id, [
+          createMorningGreetingMessage(prof?.display_name || 'เพื่อนคนเก่ง'),
+        ]);
+        if (res.success) sentCount++;
+      }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, type: reminderType, sentCount });
   } catch (err) {
     console.error('Error sending LINE reminders:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
+
+export async function GET(req: NextRequest) {
+  return handleReminders(req);
+}
+
+export async function POST(req: NextRequest) {
+  return handleReminders(req);
 }
