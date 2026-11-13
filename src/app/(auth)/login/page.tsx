@@ -11,13 +11,24 @@ import { Activity, Mail, Lock, AlertCircle, ArrowRight, CheckCircle2, ArrowLeft 
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
+
+  // Check URL parameters for LINE OAuth callbacks or errors
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlError = params.get('error');
+      if (urlError) {
+        setError(urlError);
+      }
+    }
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,13 +196,69 @@ export default function LoginPage() {
               </div>
             </form>
           ) : (
-            <form className="space-y-4.5" onSubmit={handleLogin}>
-              {error && (
+            <div className="space-y-4.5">
+              {/* LINE 1-Tap Login */}
+              <div className="space-y-3.5">
+                <a
+                  href="/api/auth/line"
+                  className="w-full flex justify-center items-center gap-2.5 py-3 px-4 rounded-2xl shadow-[0_4px_14px_rgba(6,199,85,0.28)] text-xs sm:text-sm font-bold text-white bg-[#06C755] hover:bg-[#05b04b] active:scale-95 transition-all cursor-pointer"
+                >
+                  <svg className="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 5.92 2 10.75c0 4.31 3.59 7.92 8.44 8.62.33.07.78.22.89.5.1.26.07.66.03.92-.06.39-.24 1.4-.27 1.6-.05.29-.21 1.13.99.62 1.2-.52 6.47-3.81 8.84-6.52C21.73 14.93 22 12.92 22 10.75 22 5.92 17.52 2 12 2z" />
+                  </svg>
+                  <span>{t.auth.lineLogin}</span>
+                </a>
+
+                {/* LINE Quick Magic Link from Sunny */}
+                <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/60 rounded-2xl text-[11px] text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-2">
+                  <span>💬 {locale === 'th' ? 'หรือพิมพ์ "เข้าสู่ระบบ" ส่งให้ Sunny ใน LINE' : 'Or send "login" to Sunny in LINE'}</span>
+                  <a
+                    href="https://line.me/R/oaMessage/@766iowmg/?%E0%B9%80%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%AA%E0%B8%B9%E0%B9%88%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%9A"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-[#06C755] hover:underline flex-shrink-0"
+                  >
+                    {locale === 'th' ? 'ขอลิงก์ 1-Tap ↗' : 'Get Magic Link ↗'}
+                  </a>
+                </div>
+
+                {/* Divider */}
+                <div className="relative flex items-center justify-center pt-1 pb-1">
+                  <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+                  <span className="absolute bg-white dark:bg-slate-900 px-3 text-[11px] font-semibold text-slate-400">
+                    {t.auth.orContinueWithEmail}
+                  </span>
+                </div>
+              </div>
+
+              {error === 'line_login_unconfigured' ? (
+                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 space-y-2">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>{locale === 'th' ? 'ตั้งค่า LINE Login บนเว็บ' : 'Set up LINE Login Channel'}</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    {locale === 'th'
+                      ? 'ปุ่มเว็บ LINE Login ต้องใช้ Channel แบบ "LINE Login" จาก LINE Developers Console (สร้างภายใต้ Provider เดียวกับ Sunny) แล้วใส่ LINE_LOGIN_CHANNEL_ID ใน Vercel ครับ'
+                      : 'Web LINE Login requires a "LINE Login" Channel in your LINE Developers Console. Add LINE_LOGIN_CHANNEL_ID in Vercel.'}
+                  </p>
+                  <a
+                    href="https://line.me/R/oaMessage/@766iowmg/?%E0%B9%80%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%AA%E0%B8%B9%E0%B9%88%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%9A"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block text-[11px] font-bold text-[#06C755] hover:underline"
+                  >
+                    👉 {locale === 'th' ? 'ตอนนี้คุณสามารถพิมพ์ "เข้าสู่ระบบ" ใน LINE Sunny เพื่อรับลิงก์ล็อกอินได้ทันที' : 'For now, type "login" to Sunny on LINE for a 1-tap link!'}
+                  </a>
+                </div>
+              ) : error ? (
                 <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5">
                   <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-500 mt-0.5" />
                   <span>{error}</span>
                 </div>
-              )}
+              ) : null}
+
+              <form className="space-y-4" onSubmit={handleLogin}>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
@@ -253,7 +320,8 @@ export default function LoginPage() {
                 {!loading && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>
-          )}
+          </div>
+        )}
 
           {!isResetMode && !resetSuccess && (
             <div className="mt-6 text-center">
