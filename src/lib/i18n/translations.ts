@@ -213,6 +213,13 @@ export interface TranslationSchema {
     passwordUpdated: string;
     lineLogin: string;
     orContinueWithEmail: string;
+    termsOfUse: string;
+    privacyPolicy: string;
+    agreeTermsPrefix: string;
+    agreeTermsAnd: string;
+    mustAgreeTerms: string;
+    lineTermsNotice: string;
+    acceptAndClose: string;
   };
 }
 
@@ -430,6 +437,13 @@ export const translations: Record<Locale, TranslationSchema> = {
       passwordUpdated: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว',
       lineLogin: 'เข้าสู่ระบบด้วย LINE',
       orContinueWithEmail: 'หรือเข้าสู่ระบบด้วยอีเมล',
+      termsOfUse: 'ข้อกำหนดการใช้งาน',
+      privacyPolicy: 'นโยบายความเป็นส่วนตัว',
+      agreeTermsPrefix: 'ฉันยอมรับ',
+      agreeTermsAnd: 'และ',
+      mustAgreeTerms: 'กรุณายอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัวก่อนสร้างบัญชี',
+      lineTermsNotice: 'การลงทะเบียนหรือเข้าสู่ระบบ ถือว่าคุณยอมรับ ข้อกำหนดการใช้งาน และ นโยบายความเป็นส่วนตัว ของ LifeSync',
+      acceptAndClose: 'ยอมรับและปิด',
     },
   },
   en: {
@@ -645,6 +659,13 @@ export const translations: Record<Locale, TranslationSchema> = {
       passwordUpdated: 'Password updated successfully',
       lineLogin: 'Log in with LINE',
       orContinueWithEmail: 'or continue with email',
+      termsOfUse: 'Terms of Use',
+      privacyPolicy: 'Privacy Policy',
+      agreeTermsPrefix: 'I agree to the',
+      agreeTermsAnd: 'and',
+      mustAgreeTerms: 'Please accept the Terms of Use and Privacy Policy to continue',
+      lineTermsNotice: 'By continuing with LINE or email, you agree to LifeSync\'s Terms of Use and Privacy Policy',
+      acceptAndClose: 'Accept & Close',
     },
   },
 };
