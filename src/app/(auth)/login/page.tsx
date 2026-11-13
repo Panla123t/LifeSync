@@ -325,13 +325,23 @@ export default function LoginPage() {
         )}
 
           {!isResetMode && !resetSuccess && (
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-3">
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {t.auth.noAccount}{' '}
                 <Link href="/register" className="font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:underline">
                   {t.auth.createOne}
                 </Link>
               </p>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                <Link href="/terms" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  {locale === 'th' ? 'ข้อกำหนดการใช้งาน' : 'Terms of Use'}
+                </Link>
+                <span>•</span>
+                <Link href="/privacy" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  {locale === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}
+                </Link>
+              </div>
             </div>
           )}
         </div>

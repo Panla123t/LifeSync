@@ -7,14 +7,20 @@ import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import ThemeToggle from '@/components/shared/ThemeToggle';
-import { Activity, Mail, Lock, User, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Activity, Mail, Lock, User, AlertCircle, ArrowRight, CheckCircle2, ShieldCheck, FileText, ExternalLink } from 'lucide-react';
+import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
+import TermsContent from '@/components/legal/TermsContent';
+import PrivacyContent from '@/components/legal/PrivacyContent';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,6 +29,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (!agreedToTerms) {
+      setError(t.auth.mustAgreeTerms);
+      setLoading(false);
+      return;
+    }
 
     if (password.length < 6) {
       setError(t.auth.passwordMin);
@@ -146,6 +158,49 @@ export default function RegisterPage() {
                   <span>{t.auth.lineLogin}</span>
                 </a>
 
+                {/* LINE Terms Notice */}
+                <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 leading-normal px-2">
+                  {locale === 'th' ? (
+                    <>
+                      การเข้าสู่ระบบหรือลงทะเบียน ถือว่าคุณยอมรับ{' '}
+                      <button
+                        type="button"
+                        onClick={() => setShowTermsModal(true)}
+                        className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                      >
+                        ข้อกำหนดการใช้งาน
+                      </button>{' '}
+                      และ{' '}
+                      <button
+                        type="button"
+                        onClick={() => setShowPrivacyModal(true)}
+                        className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                      >
+                        นโยบายความเป็นส่วนตัว
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      By continuing, you agree to LifeSync&apos;s{' '}
+                      <button
+                        type="button"
+                        onClick={() => setShowTermsModal(true)}
+                        className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                      >
+                        Terms of Use
+                      </button>{' '}
+                      and{' '}
+                      <button
+                        type="button"
+                        onClick={() => setShowPrivacyModal(true)}
+                        className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                      >
+                        Privacy Policy
+                      </button>
+                    </>
+                  )}
+                </p>
+
                 {/* Divider */}
                 <div className="relative flex items-center justify-center pt-1 pb-1">
                   <div className="w-full border-t border-slate-200 dark:border-slate-800" />
@@ -220,6 +275,72 @@ export default function RegisterPage() {
                 </div>
               </div>
 
+              {/* Terms & Privacy Agreement Checkbox */}
+              <div className="pt-1">
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="h-4 w-4 mt-0.5 text-emerald-600 rounded-md focus:ring-emerald-500 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer shrink-0"
+                  />
+                  <span className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-snug">
+                    {locale === 'th' ? (
+                      <>
+                        ฉันยอมรับ{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowTermsModal(true);
+                          }}
+                          className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                        >
+                          ข้อกำหนดการใช้งาน
+                        </button>{' '}
+                        และ{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowPrivacyModal(true);
+                          }}
+                          className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                        >
+                          นโยบายความเป็นส่วนตัว
+                        </button>{' '}
+                        ของ LifeSync
+                      </>
+                    ) : (
+                      <>
+                        I agree to LifeSync&apos;s{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowTermsModal(true);
+                          }}
+                          className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                        >
+                          Terms of Use
+                        </button>{' '}
+                        and{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowPrivacyModal(true);
+                          }}
+                          className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                        >
+                          Privacy Policy
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </label>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
@@ -242,6 +363,73 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Terms of Use Modal */}
+      <FloatingGlassModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        title={locale === 'th' ? 'ข้อกำหนดการใช้งาน' : 'Terms of Use'}
+        icon={<FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+        glowColor="emerald"
+      >
+        <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+          <TermsContent locale={locale} />
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+            <Link
+              href="/terms"
+              target="_blank"
+              className="text-[11px] text-slate-400 hover:text-emerald-600 flex items-center gap-1 font-semibold"
+            >
+              <span>{locale === 'th' ? 'เปิดในแท็บใหม่' : 'Open in new tab'}</span>
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAgreedToTerms(true);
+                setShowTermsModal(false);
+              }}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer"
+            >
+              {t.auth.acceptAndClose}
+            </button>
+          </div>
+        </div>
+      </FloatingGlassModal>
+
+      {/* Privacy Policy Modal */}
+      <FloatingGlassModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        title={locale === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}
+        icon={<ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+        glowColor="emerald"
+      >
+        <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+          <PrivacyContent locale={locale} />
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+            <Link
+              href="/privacy"
+              target="_blank"
+              className="text-[11px] text-slate-400 hover:text-emerald-600 flex items-center gap-1 font-semibold"
+            >
+              <span>{locale === 'th' ? 'เปิดในแท็บใหม่' : 'Open in new tab'}</span>
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowPrivacyModal(false);
+              }}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer"
+            >
+              {locale === 'th' ? 'รับทราบและปิด' : 'Understood & Close'}
+            </button>
+          </div>
+        </div>
+      </FloatingGlassModal>
     </div>
   );
 }
