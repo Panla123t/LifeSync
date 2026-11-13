@@ -206,8 +206,18 @@ export default function NutritionPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.nutrition.title}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.nutrition.subtitle}</p>
         </div>
-        <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
-          <Utensils className="h-6 w-6" />
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md hover:from-emerald-500 hover:to-teal-500 active:scale-95 transition-all cursor-pointer"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span>{t.nutrition.recordMeal}</span>
+          </button>
+          <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
+            <Utensils className="h-6 w-6" />
+          </div>
         </div>
       </div>
 
@@ -548,8 +558,8 @@ export default function NutritionPage() {
         )}
       </div>
 
-      {/* Floating Centered Add Meal Button (Above BottomNav) */}
-      <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none">
+      {/* Floating Centered Add Meal Button (Above BottomNav on mobile) */}
+      <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none md:hidden">
         <div className="max-w-md mx-auto px-4 flex justify-center">
           <button
             type="button"
