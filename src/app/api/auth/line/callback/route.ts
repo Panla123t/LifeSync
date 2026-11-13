@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 function getBaseUrl(req: NextRequest): string {
@@ -185,7 +186,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 4. Generate seamless Supabase authentication magic link
+    // 4. Generate Supabase magic auth token
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: 'magiclink',
       email: targetUser.email,
@@ -194,14 +195,56 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    if (linkErr || !linkData?.properties?.action_link) {
+    if (linkErr || !linkData?.properties) {
       console.error('Error generating auth link:', linkErr);
       return NextResponse.redirect(new URL('/login?error=auth_session_failed', req.url));
     }
 
-    // Redirect to the generated magic verification link which signs the user in and opens /dashboard!
-    const response = NextResponse.redirect(linkData.properties.action_link);
+    const redirectTarget = new URL('/dashboard', baseUrl);
+    const response = NextResponse.redirect(redirectTarget);
     response.cookies.delete('line_oauth_state');
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    // Verify token directly on the server so session cookies are written immediately
+    // to the response! This avoids bouncing to external hosts and prevents unwanted redirects to localhost.
+    if (linkData.properties.hashed_token && supabaseUrl && supabaseKey) {
+      try {
+        const serverClient = createServerClient(supabaseUrl, supabaseKey, {
+          cookies: {
+            getAll() {
+              return req.cookies.getAll();
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                response.cookies.set(name, value, options);
+              });
+            },
+          },
+        });
+
+        const { data: sessionData, error: otpErr } = await serverClient.auth.verifyOtp({
+          token_hash: linkData.properties.hashed_token,
+          type: 'magiclink',
+        });
+
+        if (!otpErr && sessionData?.session) {
+          return response;
+        }
+        if (otpErr) {
+          console.warn('Server verifyOtp error, falling back to action_link:', otpErr);
+        }
+      } catch (err) {
+        console.warn('Error establishing server session:', err);
+      }
+    }
+
+    // Fallback: If direct verification did not succeed, redirect to the generated action link
+    if (linkData.properties.action_link) {
+      return NextResponse.redirect(linkData.properties.action_link);
+    }
+
     return response;
   } catch (err) {
     console.error('Fatal error in LINE callback:', err);
