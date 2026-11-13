@@ -199,14 +199,29 @@ export default function SleepPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.sleep.title}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.sleep.subtitle}</p>
         </div>
-        <div className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-2xl shadow-xs">
-          <Moon className="h-6 w-6" />
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              setSleepType('night');
+              setShowForm(true);
+            }}
+            className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xs shadow-md hover:from-indigo-500 hover:to-purple-500 active:scale-95 transition-all cursor-pointer"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span>{t.sleep.recordSleep}</span>
+          </button>
+          <div className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-2xl shadow-xs">
+            <Moon className="h-6 w-6" />
+          </div>
         </div>
       </div>
 
-      {/* Hero Sleep Card (Serene Night Aesthetic) */}
-      {latestLog ? (
-        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 text-white rounded-[32px] p-6 shadow-[0_12px_30px_rgba(30,27,75,0.4)] space-y-5 relative overflow-hidden">
+      {/* Responsive Grid: Hero Sleep Card & 1-Tap Power Nap (2-column on desktop) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+        {/* Hero Sleep Card (Serene Night Aesthetic) */}
+        {latestLog ? (
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 text-white rounded-[32px] p-6 shadow-[0_12px_30px_rgba(30,27,75,0.4)] space-y-5 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute top-0 right-0 w-36 h-36 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
           
           <div className="flex items-center justify-between relative z-10">
@@ -254,20 +269,20 @@ export default function SleepPage() {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-[32px] p-6 text-center space-y-3">
-          <Moon className="h-10 w-10 mx-auto text-indigo-300" />
-          <h2 className="text-sm font-bold">{locale === 'th' ? 'เริ่มต้นบันทึกตารางการนอน' : 'Start tracking your sleep'}</h2>
-          <p className="text-xs text-indigo-200 max-w-xs mx-auto leading-relaxed">
-            {locale === 'th'
-              ? 'การพักผ่อนที่เพียงพอช่วยฟื้นฟูร่างกาย สมอง และภูมิคุ้มกันให้พร้อมรับวันใหม่'
-              : 'Consistent sleep timing helps regulate circadian rhythm and daytime alertness.'}
-          </p>
-        </div>
-      )}
+        ) : (
+          <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-[32px] p-6 text-center space-y-3 flex flex-col justify-center items-center">
+            <Moon className="h-10 w-10 mx-auto text-indigo-300" />
+            <h2 className="text-sm font-bold">{locale === 'th' ? 'เริ่มต้นบันทึกตารางการนอน' : 'Start tracking your sleep'}</h2>
+            <p className="text-xs text-indigo-200 max-w-xs mx-auto leading-relaxed">
+              {locale === 'th'
+                ? 'การพักผ่อนที่เพียงพอช่วยฟื้นฟูร่างกาย สมอง และภูมิคุ้มกันให้พร้อมรับวันใหม่'
+                : 'Consistent sleep timing helps regulate circadian rhythm and daytime alertness.'}
+            </p>
+          </div>
+        )}
 
-      {/* 1-Tap Power Nap Quick Presets Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">
+        {/* 1-Tap Power Nap Quick Presets Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5 flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
@@ -313,6 +328,7 @@ export default function SleepPage() {
             );
           })}
         </div>
+      </div>
       </div>
 
       {/* Floating Glassmorphism Modal for Recording Sleep & Nap */}
@@ -610,8 +626,8 @@ export default function SleepPage() {
         )}
       </div>
 
-      {/* Floating Centered Add Sleep Button (Above BottomNav) */}
-      <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none">
+      {/* Floating Centered Add Sleep Button (Above BottomNav on mobile) */}
+      <div className="fixed bottom-20 left-0 right-0 z-30 pointer-events-none md:hidden">
         <div className="max-w-md mx-auto px-4 flex justify-center">
           <button
             type="button"

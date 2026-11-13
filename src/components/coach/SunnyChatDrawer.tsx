@@ -121,9 +121,9 @@ export default function SunnyChatDrawer() {
 
   return (
     <>
-      {/* Floating Action Button (Always visible on dashboard) */}
+      {/* Floating Action Button (Always visible on dashboard, adjusted for mobile vs desktop) */}
       {!isOpen && (
-        <div className="fixed bottom-22 right-4 sm:right-8 z-40">
+        <div className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-40">
           <button
             type="button"
             onClick={() => setIsOpen(true)}
@@ -161,7 +161,7 @@ export default function SunnyChatDrawer() {
 
       {/* Floating Chat Drawer Window */}
       {isOpen && (
-        <div className="fixed inset-x-3 bottom-20 sm:inset-auto sm:bottom-22 sm:right-6 sm:w-96 h-[520px] max-h-[80vh] z-50 flex flex-col bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200/80 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-300">
+        <div className="fixed inset-x-3 bottom-20 md:inset-auto md:bottom-8 md:right-8 md:w-[400px] h-[520px] max-h-[85vh] z-50 flex flex-col bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200/80 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-300">
           {/* Header */}
           <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 p-4 text-white flex items-center justify-between shadow-xs shrink-0">
             <div className="flex items-center gap-3">

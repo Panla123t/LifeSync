@@ -481,6 +481,7 @@ export default function DashboardPage() {
               </span>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
             {/* Nutrition Card */}
             <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4.5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-amber-200 dark:hover:border-amber-800/60 transition-all">
               <div className="flex items-center justify-between mb-3">
@@ -581,6 +582,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
             </div>
+            </div>
           </div>
         </>
       )}
@@ -602,7 +604,7 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
           {quests.map((q) => {
             const isCompleted = completedQuestIds.includes(q.id);
             return (

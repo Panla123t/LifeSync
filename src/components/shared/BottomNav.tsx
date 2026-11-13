@@ -19,7 +19,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
       <div className="max-w-md mx-auto">
         <div className="mx-3 mb-2.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] px-2 py-1.5 flex justify-around items-center">
           {navItems.map((item) => {

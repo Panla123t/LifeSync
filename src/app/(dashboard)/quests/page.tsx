@@ -280,118 +280,123 @@ export default function QuestsPage() {
         </div>
       </div>
 
-      {/* Gamification Level & Points Card */}
-      <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white rounded-[32px] p-5 shadow-[0_12px_30px_rgba(245,158,11,0.25)] space-y-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+      {/* Top 2 Cards: Level & Points + Consistency Streak (Side-by-side on desktop) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+        {/* Gamification Level & Points Card */}
+        <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white rounded-[32px] p-5 shadow-[0_12px_30px_rgba(245,158,11,0.25)] space-y-4 relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-xl bg-white/20 backdrop-blur-md">
-              <Star className="h-4 w-4 text-amber-100" />
-            </div>
-            <span className="text-xs font-bold text-amber-100 uppercase tracking-wider">
-              {locale === 'th' ? `ระดับ ${userLevel} • ผู้สร้างวินัยสุขภาพ` : `Level ${userLevel} • Habit Builder`}
-            </span>
-          </div>
-
-          <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-extrabold flex items-center gap-1.5 backdrop-blur-sm">
-            <Flame className="h-3.5 w-3.5 fill-white text-white" />
-            <span>{totalPoints} {t.common.pts}</span>
-          </span>
-        </div>
-
-        {/* Level Progress Bar */}
-        <div className="space-y-1.5 pt-1">
-          <div className="flex justify-between items-center text-xs text-amber-100 font-semibold">
-            <span>{locale === 'th' ? 'ความคืบหน้าสู่ระดับถัดไป' : 'Progress to next level'}</span>
-            <span>{currentLevelPoints} / 50 pts</span>
-          </div>
-          <div className="w-full bg-black/15 backdrop-blur-md h-3 rounded-full overflow-hidden p-0.5">
-            <div
-              className="bg-white h-full rounded-full transition-all duration-700 shadow-sm"
-              style={{ width: `${levelProgressPercent}%` }}
-            />
-          </div>
-        </div>
-
-        <p className="text-[11px] text-amber-100/90 leading-relaxed pt-0.5">
-          {t.quests.pointsInfo}
-        </p>
-      </div>
-
-      {/* Habit Consistency Streak Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-3 rounded-2xl ${
-              currentOverallStreak > 0
-                ? 'bg-orange-500/15 text-orange-500 dark:bg-orange-950/60 dark:text-orange-400'
-                : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
-            }`}>
-              <Flame className={`h-6 w-6 ${currentOverallStreak > 0 ? 'fill-orange-500 text-orange-500 animate-pulse' : ''}`} />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-black text-slate-900 dark:text-white">
-                  {currentOverallStreak} {locale === 'th' ? 'วันต่อเนื่อง' : 'Day Streak'}
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-xl bg-white/20 backdrop-blur-md">
+                  <Star className="h-4 w-4 text-amber-100" />
+                </div>
+                <span className="text-xs font-bold text-amber-100 uppercase tracking-wider">
+                  {locale === 'th' ? `ระดับ ${userLevel} • ผู้สร้างวินัยสุขภาพ` : `Level ${userLevel} • Habit Builder`}
                 </span>
-                {isLoggedToday && (
-                  <span className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 font-bold px-2 py-0.5 rounded-full">
-                    {locale === 'th' ? 'สถิติแอคทีฟ 🔥' : 'Active Today 🔥'}
-                  </span>
-                )}
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                {isLoggedToday ? t.quests.streakLoggedToday : t.quests.streakNeedsLog}
-              </p>
+
+              <span className="text-xs bg-white/20 px-3 py-1 rounded-full font-extrabold flex items-center gap-1.5 backdrop-blur-sm">
+                <Flame className="h-3.5 w-3.5 fill-white text-white" />
+                <span>{totalPoints} {t.common.pts}</span>
+              </span>
+            </div>
+
+            {/* Level Progress Bar */}
+            <div className="space-y-1.5 pt-3">
+              <div className="flex justify-between items-center text-xs text-amber-100 font-semibold">
+                <span>{locale === 'th' ? 'ความคืบหน้าสู่ระดับถัดไป' : 'Progress to next level'}</span>
+                <span>{currentLevelPoints} / 50 pts</span>
+              </div>
+              <div className="w-full bg-black/15 backdrop-blur-md h-3 rounded-full overflow-hidden p-0.5">
+                <div
+                  className="bg-white h-full rounded-full transition-all duration-700 shadow-sm"
+                  style={{ width: `${levelProgressPercent}%` }}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="text-right">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold block">
-              {locale === 'th' ? 'สถิติสูงสุด' : 'Best Streak'}
-            </span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {streaks?.overall.best || currentOverallStreak} {t.quests.streakDays}
-            </span>
-          </div>
+          <p className="text-[11px] text-amber-100/90 leading-relaxed pt-2">
+            {t.quests.pointsInfo}
+          </p>
         </div>
 
-        {/* 3 Pillars Mini-Streak Chips */}
-        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
-          <div className="bg-slate-50/80 dark:bg-slate-800/40 p-2.5 rounded-2xl flex items-center gap-2">
-            <Droplets className="h-4 w-4 text-cyan-500 flex-shrink-0" />
-            <div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-tight">
-                {locale === 'th' ? 'ดื่มน้ำ' : 'Water'}
+        {/* Habit Consistency Streak Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-2xl ${
+                currentOverallStreak > 0
+                  ? 'bg-orange-500/15 text-orange-500 dark:bg-orange-950/60 dark:text-orange-400'
+                  : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
+              }`}>
+                <Flame className={`h-6 w-6 ${currentOverallStreak > 0 ? 'fill-orange-500 text-orange-500 animate-pulse' : ''}`} />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl font-black text-slate-900 dark:text-white">
+                    {currentOverallStreak} {locale === 'th' ? 'วันต่อเนื่อง' : 'Day Streak'}
+                  </span>
+                  {isLoggedToday && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 font-bold px-2 py-0.5 rounded-full">
+                      {locale === 'th' ? 'สถิติแอคทีฟ 🔥' : 'Active Today 🔥'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {isLoggedToday ? t.quests.streakLoggedToday : t.quests.streakNeedsLog}
+                </p>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold block">
+                {locale === 'th' ? 'สถิติสูงสุด' : 'Best Streak'}
               </span>
-              <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-                {streaks?.water.current || 0} {t.quests.streakDays}
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                {streaks?.overall.best || currentOverallStreak} {t.quests.streakDays}
               </span>
             </div>
           </div>
 
-          <div className="bg-slate-50/80 dark:bg-slate-800/40 p-2.5 rounded-2xl flex items-center gap-2">
-            <Utensils className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-            <div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-tight">
-                {locale === 'th' ? 'อาหาร' : 'Food'}
-              </span>
-              <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-                {streaks?.food.current || 0} {t.quests.streakDays}
-              </span>
+          {/* 3 Pillars Mini-Streak Chips */}
+          <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="bg-slate-50/80 dark:bg-slate-800/40 p-2.5 rounded-2xl flex items-center gap-2">
+              <Droplets className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+              <div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-tight">
+                  {locale === 'th' ? 'ดื่มน้ำ' : 'Water'}
+                </span>
+                <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                  {streaks?.water.current || 0} {t.quests.streakDays}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="bg-slate-50/80 dark:bg-slate-800/40 p-2.5 rounded-2xl flex items-center gap-2">
-            <Moon className="h-4 w-4 text-indigo-500 flex-shrink-0" />
-            <div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-tight">
-                {locale === 'th' ? 'การนอน' : 'Sleep'}
-              </span>
-              <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-                {streaks?.sleep.current || 0} {t.quests.streakDays}
-              </span>
+            <div className="bg-slate-50/80 dark:bg-slate-800/40 p-2.5 rounded-2xl flex items-center gap-2">
+              <Utensils className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+              <div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-tight">
+                  {locale === 'th' ? 'อาหาร' : 'Food'}
+                </span>
+                <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                  {streaks?.food.current || 0} {t.quests.streakDays}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-slate-50/80 dark:bg-slate-800/40 p-2.5 rounded-2xl flex items-center gap-2">
+              <Moon className="h-4 w-4 text-indigo-500 flex-shrink-0" />
+              <div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-tight">
+                  {locale === 'th' ? 'การนอน' : 'Sleep'}
+                </span>
+                <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                  {streaks?.sleep.current || 0} {t.quests.streakDays}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -477,7 +482,7 @@ export default function QuestsPage() {
           {loading ? (
             <p className="text-xs text-slate-400 py-6 text-center">{t.common.loading}</p>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {quests.map((q) => {
                 const isDone = completedQuestIds.includes(q.id);
                 return (
@@ -536,7 +541,7 @@ export default function QuestsPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {badges.map((badge) => {
               const title = locale === 'th' ? badge.titleTh : badge.titleEn;
               const desc = locale === 'th' ? badge.descriptionTh : badge.descriptionEn;

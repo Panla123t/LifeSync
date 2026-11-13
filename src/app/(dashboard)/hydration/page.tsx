@@ -136,8 +136,10 @@ export default function HydrationPage() {
         </div>
       </div>
 
-      {/* Aesthetic Hydration Visualizer Card */}
-      <div className="bg-gradient-to-br from-sky-500 via-sky-600 to-blue-600 text-white rounded-[32px] p-6 shadow-[0_12px_30px_rgba(14,165,233,0.3)] space-y-5 relative overflow-hidden">
+      {/* Responsive Grid: Visualizer & Water Logger (2-column on desktop) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+        {/* Aesthetic Hydration Visualizer Card */}
+        <div className="bg-gradient-to-br from-sky-500 via-sky-600 to-blue-600 text-white rounded-[32px] p-6 shadow-[0_12px_30px_rgba(14,165,233,0.3)] space-y-5 relative overflow-hidden flex flex-col justify-between">
         <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-36 h-36 bg-sky-300/20 rounded-full blur-2xl pointer-events-none" />
 
@@ -246,7 +248,7 @@ export default function HydrationPage() {
       </div>
 
       {/* Water Logging Section (Quick Presets + Plain Manual Input below) */}
-      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4 flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <Droplets className="h-4 w-4 text-sky-500" />
@@ -321,6 +323,7 @@ export default function HydrationPage() {
             </button>
           </form>
         </div>
+      </div>
       </div>
 
       {/* Today's Log History */}
