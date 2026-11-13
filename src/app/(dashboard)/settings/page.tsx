@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -689,87 +688,6 @@ export default function SettingsPage() {
             <ExternalLink className="h-4 w-4" />
           </button>
         )}
-      </div>
-
-      {/* LINE Bot Assets & Rich Menu Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs shadow-xs">
-            ☀️
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white">
-              {locale === 'th' ? 'ทรัพยากรบอทซันนี่ & LINE Rich Menu' : 'Sunny Bot PFP & Rich Menu Assets'}
-            </h2>
-            <div className="text-[10px] text-slate-400">LINE Official Account Resources</div>
-          </div>
-        </div>
-
-        <div className="space-y-3 pt-1">
-          {/* 1. Sunny Bot Profile Picture */}
-          <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-amber-100 border-2 border-amber-300 shrink-0 shadow-xs relative">
-                <Image
-                  src="/mascot/sunny-avatar.jpg"
-                  alt="Sunny Mascot PFP"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                  {locale === 'th' ? 'รูปโปรไฟล์บอทซันนี่ (PFP)' : 'Sunny Bot Profile Picture'}
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  {locale === 'th' ? 'ภาพ 3D สำหรับรูปโปรไฟล์ใน LINE OA Manager' : 'High-res 3D avatar for LINE Official Account'}
-                </div>
-              </div>
-            </div>
-
-            <a
-              href="/mascot/sunny-avatar.jpg"
-              download="sunny-bot-pfp.jpg"
-              className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs shrink-0 cursor-pointer"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>{locale === 'th' ? 'ดาวน์โหลด' : 'Download'}</span>
-            </a>
-          </div>
-
-          {/* 2. 6-Tile Rich Menu Graphic */}
-          <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-14 h-10 rounded-xl overflow-hidden bg-slate-200 border border-slate-300 dark:border-slate-700 shrink-0 shadow-xs relative">
-                <Image
-                  src="/line/rich-menu-6tiles.png"
-                  alt="Rich Menu Preview"
-                  width={56}
-                  height={40}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                  {locale === 'th' ? 'ริชเมนู 6 ช่อง (2500x1686 px)' : '6-Tile Rich Menu Graphic'}
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  {locale === 'th' ? 'ภาพเมนูลัดท้ายแชทตามมาตรฐาน LINE' : 'Standard 2500x1686 px chat bottom menu'}
-                </div>
-              </div>
-            </div>
-
-            <a
-              href="/line/rich-menu-6tiles.png"
-              download="lifesync-rich-menu-2500x1686.png"
-              className="px-3 py-2 rounded-xl bg-[#06C755] hover:bg-[#05b04b] active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs shrink-0 cursor-pointer"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>{locale === 'th' ? 'ดาวน์โหลด' : 'Download'}</span>
-            </a>
-          </div>
-        </div>
       </div>
 
       {/* Floating Glass Modal for LINE OA Linking */}
