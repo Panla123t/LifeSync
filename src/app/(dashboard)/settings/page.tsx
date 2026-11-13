@@ -24,6 +24,7 @@ import {
   Unlink,
   Clock,
   Droplets,
+  Utensils,
   Download,
   Trash2,
   AlertTriangle
@@ -192,7 +193,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSendTestReminder = async (type: 'hydration' | 'sleep' | 'weekly_summary' = 'hydration') => {
+  const handleSendTestReminder = async (type: 'hydration' | 'sleep' | 'morning' | 'meal' | 'weekly_summary' = 'hydration') => {
     setSendingTestReminder(true);
     setLineActionFeedback(null);
     try {
@@ -205,6 +206,8 @@ export default function SettingsPage() {
       if (data.success) {
         let label = 'ดื่มน้ำ';
         if (type === 'sleep') label = 'เข้านอน';
+        if (type === 'morning') label = 'ทักทายยามเช้า';
+        if (type === 'meal') label = 'มื้ออาหาร';
         if (type === 'weekly_summary') label = 'สรุปสุขภาพรอบสัปดาห์';
         setLineActionFeedback(data.message || (locale === 'th' ? `ส่งข้อความ${label}แล้ว! กรุณาตรวจสอบใน LINE` : `Test message sent! Check your LINE chat`));
         setTimeout(() => setLineActionFeedback(null), 4500);
@@ -507,6 +510,36 @@ export default function SettingsPage() {
                   <Moon className="h-3.5 w-3.5 text-indigo-500" />
                 )}
                 <span>{locale === 'th' ? 'ลองเตือนนอน' : 'Test Sleep'}</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={sendingTestReminder}
+                onClick={() => handleSendTestReminder('morning')}
+                className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {sendingTestReminder ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sun className="h-3.5 w-3.5 text-amber-500" />
+                )}
+                <span>{locale === 'th' ? 'ลองทักทายเช้า' : 'Test Morning'}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={sendingTestReminder}
+                onClick={() => handleSendTestReminder('meal')}
+                className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {sendingTestReminder ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Utensils className="h-3.5 w-3.5 text-emerald-500" />
+                )}
+                <span>{locale === 'th' ? 'ลองเตือนอาหาร' : 'Test Meal'}</span>
               </button>
             </div>
 
