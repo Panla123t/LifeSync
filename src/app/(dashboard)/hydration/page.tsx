@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import ThemeToggle from '@/components/shared/ThemeToggle';
-import { fireLevelUpCannons } from '@/lib/utils/confetti';
-import { playWaterSplash, playLevelUpFanfare } from '@/lib/utils/sound';
+import { fireConfettiBurst } from '@/lib/utils/confetti';
+import { playWaterSplash, playSuccessChime } from '@/lib/utils/sound';
 import { 
   Droplets, 
   Trash2, 
@@ -100,8 +98,8 @@ export default function HydrationPage() {
 
         // Celebration: if this sip hits 100% of daily goal!
         if (prevTotal < dailyGoal && newTotal >= dailyGoal) {
-          fireLevelUpCannons();
-          playLevelUpFanfare();
+          fireConfettiBurst();
+          playSuccessChime();
         } else {
           playWaterSplash();
         }
@@ -133,12 +131,8 @@ export default function HydrationPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.hydration.title}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.hydration.subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LanguageToggle />
-          <div className="bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 p-2.5 rounded-2xl shadow-xs">
-            <Droplets className="h-6 w-6" />
-          </div>
+        <div className="bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 p-2.5 rounded-2xl shadow-xs">
+          <Droplets className="h-6 w-6" />
         </div>
       </div>
 

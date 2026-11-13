@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import ThemeToggle from '@/components/shared/ThemeToggle';
 import { 
   Droplets, 
   Utensils, 
@@ -24,7 +22,7 @@ import {
 import type { Quest, UserQuest } from '@/types/database';
 import LevelUpModal, { getLevelFromPoints } from '@/components/gamification/LevelUpModal';
 import { fireConfettiBurst, fireLevelUpCannons } from '@/lib/utils/confetti';
-import { playWaterSplash, playLevelUpFanfare } from '@/lib/utils/sound';
+import { playWaterSplash, playLevelUpFanfare, playSuccessChime } from '@/lib/utils/sound';
 import WeeklyAnalytics, { 
   DailyHydration, 
   DailySleep, 
@@ -145,8 +143,13 @@ export default function DashboardPage() {
             const nextPts = syncData.totalPoints;
             setPoints(nextPts);
             const lvl = getLevelFromPoints(nextPts);
-            if (lvl.level > currentLevelNumber && currentLevelNumber > 0) {
-              setCurrentLevelNumber(lvl.level);
+            setCurrentLevelNumber(lvl.level);
+            // Only celebrate if level genuinely increased during an active user session
+            const lastCelebrated = parseInt(localStorage.getItem('lifesync_celebrated_level') || '0', 10);
+            if (lastCelebrated === 0) {
+              localStorage.setItem('lifesync_celebrated_level', lvl.level.toString());
+            } else if (lvl.level > lastCelebrated) {
+              localStorage.setItem('lifesync_celebrated_level', lvl.level.toString());
               setShowLevelUp(true);
             }
           }
@@ -317,8 +320,8 @@ export default function DashboardPage() {
         setWaterTotal(newTotal);
 
         if (prevTotal < waterGoal && newTotal >= waterGoal) {
-          fireLevelUpCannons();
-          playLevelUpFanfare();
+          fireConfettiBurst();
+          playSuccessChime();
         } else {
           playWaterSplash();
         }
@@ -339,7 +342,9 @@ export default function DashboardPage() {
           setPoints((p) => {
             const nextPoints = p + 10;
             const newLvl = getLevelFromPoints(nextPoints);
-            if (newLvl.level > currentLevelNumber) {
+            const lastCelebrated = parseInt(localStorage.getItem('lifesync_celebrated_level') || '0', 10);
+            if (lastCelebrated > 0 && newLvl.level > lastCelebrated) {
+              localStorage.setItem('lifesync_celebrated_level', newLvl.level.toString());
               setCurrentLevelNumber(newLvl.level);
               setShowLevelUp(true);
             }
@@ -373,8 +378,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LanguageToggle />
           <Link
             href="/quests"
             className="flex items-center gap-1.5 bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 text-amber-900 dark:text-amber-300 px-3 py-1.5 rounded-full shadow-xs active:scale-95 transition-all"
