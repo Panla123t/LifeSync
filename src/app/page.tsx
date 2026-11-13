@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import ThemeToggle from '@/components/shared/ThemeToggle';
@@ -19,6 +21,24 @@ import {
 
 export default function HomePage() {
   const { t, locale } = useLanguage();
+
+  // If user lands with Supabase access_token hash (e.g. from magic link), consume session and route to /dashboard
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+      const supabase = createClient();
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          window.location.href = '/dashboard';
+        }
+      });
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session) {
+          window.location.href = '/dashboard';
+        }
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F8FAF8] dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-white transition-colors duration-200">
