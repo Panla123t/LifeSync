@@ -8,14 +8,15 @@ HEIGHT = 1686
 canvas = Image.new('RGB', (WIDTH, HEIGHT), color=(243, 245, 248))
 draw = ImageDraw.Draw(canvas)
 
-# Fonts
-font_thai_bold = r'C:\Windows\Fonts\leelawdb.ttf'
-font_thai_reg = r'C:\Windows\Fonts\leelawad.ttf'
+# Modern Thai Sans-Serif Fonts (Google Fonts Prompt: clean, loopless, sans-serif)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+font_thai_bold = os.path.join(SCRIPT_DIR, 'fonts', 'Prompt-Bold.ttf')
+font_thai_reg = os.path.join(SCRIPT_DIR, 'fonts', 'Prompt-Regular.ttf')
 font_segoe_emoji = r'C:\Windows\Fonts\seguiemj.ttf'
 
-title_font = ImageFont.truetype(font_thai_bold, 62)
+title_font = ImageFont.truetype(font_thai_bold, 60)
 sub_font = ImageFont.truetype(font_thai_reg, 36)
-emoji_font = ImageFont.truetype(font_segoe_emoji, 120) if os.path.exists(font_segoe_emoji) else title_font
+emoji_font = ImageFont.truetype(font_segoe_emoji, 115) if os.path.exists(font_segoe_emoji) else title_font
 
 # 6 Tiles Configuration
 tiles = [
