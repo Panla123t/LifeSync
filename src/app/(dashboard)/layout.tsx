@@ -1,4 +1,5 @@
 import BottomNav from '@/components/shared/BottomNav';
+import SunnyChatDrawer from '@/components/coach/SunnyChatDrawer';
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function DashboardLayout({
         <main className="w-full px-4 pt-5 pb-6 flex-1">
           {children}
         </main>
+        <SunnyChatDrawer />
         <BottomNav />
       </div>
     </div>
