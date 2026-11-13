@@ -175,6 +175,25 @@ async function handleReminders(req: NextRequest) {
         ]);
         if (res.success) sentCount++;
       }
+    } else if (reminderType === 'meal') {
+      const { data: users } = await admin
+        .from('notification_settings')
+        .select('user_id, line_user_id')
+        .not('line_user_id', 'is', null);
+
+      for (const u of (users || [])) {
+        if (!u.line_user_id) continue;
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('display_name')
+          .eq('id', u.user_id)
+          .maybeSingle();
+
+        const res = await sendLinePush(u.line_user_id, [
+          createMealReminderMessage(prof?.display_name || 'เพื่อนคนเก่ง'),
+        ]);
+        if (res.success) sentCount++;
+      }
     }
 
     return NextResponse.json({ success: true, type: reminderType, sentCount });

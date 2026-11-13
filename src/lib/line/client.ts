@@ -147,17 +147,27 @@ export async function sendLineReply(replyToken: string, messages: LineMessage[])
 // Humanized & Warm Message Builders for Sunny (ซันนี่) ☀️
 // ---------------------------------------------------------------------------
 
-export function createWelcomeMessage(appUrl: string = 'https://life-sync-panla123ts-projects.vercel.app'): LineMessage {
+const DEFAULT_APP_URL = 'https://life-sync-panla123ts-projects.vercel.app';
+
+export function getAppUrl(): string {
+  const envUrl = process.env.APP_BASE_URL;
+  if (!envUrl) return DEFAULT_APP_URL;
+  let clean = envUrl.trim();
+  if (clean.endsWith('/')) clean = clean.slice(0, -1);
+  return clean;
+}
+
+export function createWelcomeMessage(appUrl: string = getAppUrl()): LineMessage {
   return {
     type: 'text',
-    text: `สวัสดีครับ! ผม "ซันนี่" (Sunny) เพื่อนคู่คิดดูแลสุขภาพของคุณจาก LifeSync นะครับ ☀️🌿\n\nดีใจมากๆ ที่ได้เป็นเพื่อนกันครับ! ผมจะคอยแวะมาสะกิดเตือนให้จิบน้ำ ทานอาหารให้อร่อย และพักผ่อนให้เพียงพอแบบเป็นกันเอง ไม่มีกดดันเลยครับ 😊\n\n🔗 เพื่อให้ผมรู้จักคุณและช่วยบันทึกแต้มสุขภาพ:\n• เข้าแอป LifeSync > เมนู Settings > กด "เชื่อมต่อ LINE" แล้วนำรหัส 6 หลักมาส่งให้ผม\n• หรือพิมพ์ "อีเมล" ที่คุณใช้สมัครในห้องแชทนี้ได้เลยครับ!`,
+    text: `สวัสดีครับ! ผม "ซันนี่" (Sunny) เพื่อนคู่คิดดูแลสุขภาพของคุณจาก LifeSync นะครับ ☀️🌿\n\nดีใจมากๆ ที่ได้เป็นเพื่อนกันครับ! ผมจะคอยแวะมาสะกิดเตือนให้จิบน้ำ ทานอาหารให้อร่อย และพักผ่อนให้เพียงพอแบบเป็นกันเอง ไม่มีกดดันเลยครับ 😊\n\n🔗 เพื่อให้ผมรู้จักคุณและช่วยบันทึกแต้มสุขภาพ:\n• เข้าเว็บแอป LifeSync > เมนู Settings > กด "เชื่อมต่อ LINE" แล้วนำรหัส 6 หลักมาส่งให้ผม\n• หรือพิมพ์ "อีเมล" ที่คุณใช้สมัครในห้องแชทนี้ได้เลยครับ!`,
     quickReply: {
       items: [
         {
           type: 'action',
           action: {
             type: 'uri',
-            label: 'เปิดแอป LifeSync',
+            label: '🔗 เปิดเว็บแอป LifeSync',
             uri: `${appUrl}/settings`,
           },
         },
@@ -175,11 +185,28 @@ export function createWelcomeMessage(appUrl: string = 'https://life-sync-panla12
 }
 
 export function createLinkSuccessMessage(userName: string): LineMessage {
+  const appUrl = getAppUrl();
   return {
     type: 'text',
-    text: `เย้! เชื่อมต่อสำเร็จแล้วครับคุณ ${userName} 🎉✨\n\nซันนี่พร้อมดูแลคุณเต็มที่แล้วนะ! มอบโบนัสตั้งต้นให้เลย +20 แต้ม 🌟\n\nจากนี้อยากบันทึกอะไร พิมพ์คุยกับซันนี่ได้ตลอดเลยน้า:\n💧 จิบน้ำเสร็จ พิมพ์ "น้ำ 250" หรือ "น้ำ 500"\n📊 อยากดูความคืบหน้า พิมพ์ "สรุป"\n🌙 จะนอนแล้ว พิมพ์ "เข้านอนแล้ว"\n\nเรามาสร้างสุขภาพที่ดีและชีวิตที่สดใสไปด้วยกันนะครับ 🩵`,
+    text: `เย้! เชื่อมต่อสำเร็จแล้วครับคุณ ${userName} 🎉✨\n\nซันนี่พร้อมดูแลคุณเต็มที่แล้วนะ! มอบโบนัสตั้งต้นให้เลย +20 แต้ม 🌟\n\nจากนี้อยากบันทึกอะไร พิมพ์คุยกับซันนี่ได้ตลอดเลยน้า:\n💧 จิบน้ำเสร็จ พิมพ์ "น้ำ 250" หรือ "น้ำ 500"\n🥗 กินข้าวเสร็จ แตะลิงก์เพื่อถ่ายรูปอาหาร\n📊 อยากดูความคืบหน้า พิมพ์ "สรุป"\n🌙 จะนอนแล้ว พิมพ์ "เข้านอนแล้ว"\n\n👉 เข้าใช้งานเว็บแอปได้ทันที:\n${appUrl}/dashboard\n\nเรามาสร้างสุขภาพที่ดีและชีวิตที่สดใสไปด้วยกันนะครับ 🩵`,
     quickReply: {
       items: [
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '📱 เปิดแดชบอร์ด',
+            uri: `${appUrl}/dashboard`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '🥗 บันทึกมื้ออาหาร',
+            uri: `${appUrl}/nutrition`,
+          },
+        },
         {
           type: 'action',
           action: {
@@ -192,15 +219,7 @@ export function createLinkSuccessMessage(userName: string): LineMessage {
           type: 'action',
           action: {
             type: 'message',
-            label: '💧 ดื่มน้ำ +500ml',
-            text: 'น้ำ 500',
-          },
-        },
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: '📊 สรุปสุขภาพวันนี้',
+            label: '📊 สรุปวันนี้',
             text: 'สรุป',
           },
         },
@@ -210,6 +229,7 @@ export function createLinkSuccessMessage(userName: string): LineMessage {
 }
 
 export function createWaterLoggedMessage(amountMl: number, currentTotal: number, goalMl: number, userName: string = 'เพื่อนคนเก่ง'): LineMessage {
+  const appUrl = getAppUrl();
   const percent = Math.min(100, Math.round((currentTotal / goalMl) * 100));
   const remaining = Math.max(0, goalMl - currentTotal);
   
@@ -226,7 +246,7 @@ export function createWaterLoggedMessage(amountMl: number, currentTotal: number,
 
   return {
     type: 'text',
-    text: `ชื่นใจจัง! 💧 ซันนี่จดให้แล้วน้า +${amountMl} ml ✨\n\nวันนี้คุณ ${userName} เติมน้ำไปแล้ว: ${currentTotal.toLocaleString()} / ${goalMl.toLocaleString()} ml (${percent}%)\n\n${cheer}`,
+    text: `ชื่นใจจัง! 💧 ซันนี่จดให้แล้วน้า +${amountMl} ml ✨\n\nวันนี้คุณ ${userName} เติมน้ำไปแล้ว: ${currentTotal.toLocaleString()} / ${goalMl.toLocaleString()} ml (${percent}%)\n\n${cheer}\n\n👉 ดูกราฟน้ำดื่มในเว็บแอป: ${appUrl}/hydration`,
     quickReply: {
       items: [
         {
@@ -235,6 +255,14 @@ export function createWaterLoggedMessage(amountMl: number, currentTotal: number,
             type: 'message',
             label: '💧 ดื่มอีกแก้ว (+250ml)',
             text: 'น้ำ 250',
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '💧 เปิดหน้าดื่มน้ำ',
+            uri: `${appUrl}/hydration`,
           },
         },
         {
@@ -258,6 +286,7 @@ export function createDailySummaryMessage(
   sleepText: string,
   points: number
 ): LineMessage {
+  const appUrl = getAppUrl();
   const waterPercent = Math.min(100, Math.round((waterMl / waterGoal) * 100));
 
   let motivationalNote = '';
@@ -269,9 +298,25 @@ export function createDailySummaryMessage(
 
   return {
     type: 'text',
-    text: `🌈 บันทึกสุขภาพวันนี้ของคุณ ${userName} ✨\nซันนี่สรุปความพยายามที่น่าชื่นชมมาให้ดูครับ:\n\n💧 ดื่มน้ำชื่นใจ: ${waterMl.toLocaleString()} / ${waterGoal.toLocaleString()} ml (${waterPercent}%)\n🥗 มื้ออร่อยเติมพลัง: ${mealsCount} มื้อ\n🌙 พักผ่อนหลับสบาย: ${sleepText}\n🔥 แต้มสุขภาพสะสม: ${points} แต้ม\n\n${motivationalNote}`,
+    text: `🌈 บันทึกสุขภาพวันนี้ของคุณ ${userName} ✨\nซันนี่สรุปความพยายามที่น่าชื่นชมมาให้ดูครับ:\n\n💧 ดื่มน้ำชื่นใจ: ${waterMl.toLocaleString()} / ${waterGoal.toLocaleString()} ml (${waterPercent}%)\n🥗 มื้ออร่อยเติมพลัง: ${mealsCount} มื้อ\n🌙 พักผ่อนหลับสบาย: ${sleepText}\n🔥 แต้มสุขภาพสะสม: ${points} แต้ม\n\n${motivationalNote}\n\n👉 ดูกราฟสถิติ 7 วันและคำแนะนำ AI ฉบับเต็ม:\n${appUrl}/dashboard`,
     quickReply: {
       items: [
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '📊 ดูกราฟเต็มในเว็บแอป',
+            uri: `${appUrl}/dashboard`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '🥗 บันทึกมื้ออาหาร',
+            uri: `${appUrl}/nutrition`,
+          },
+        },
         {
           type: 'action',
           action: {
@@ -294,6 +339,7 @@ export function createDailySummaryMessage(
 }
 
 export function createHydrationReminderMessage(userName: string, currentMl: number, goalMl: number): LineMessage {
+  const appUrl = getAppUrl();
   const remaining = Math.max(0, goalMl - currentMl);
   const nowHour = new Date().getHours();
 
@@ -304,7 +350,7 @@ export function createHydrationReminderMessage(userName: string, currentMl: numb
 
   return {
     type: 'text',
-    text: `ก๊อกๆ! ซันนี่แวะมาสะกิดเบาๆ ครับ 💧\n${timeGreeting} คุณ ${userName} ทำงานหรือเรียนเหนื่อยไหมครับ? 🩵\n\nพักสายตาสักครู่ แล้วจิบน้ำสักแก้วให้ร่างกายสดชื่น สมองแล่นฉิวกันหน่อยน้า 🧊\n\nวันนี้ดื่มไปแล้ว: ${currentMl.toLocaleString()} / ${goalMl.toLocaleString()} ml (เหลืออีก ${remaining.toLocaleString()} ml)\n\nจิบเสร็จแล้วแตะบอกซันนี่ตรงปุ่มด้านล่างได้เลยนะครับ 👇`,
+    text: `ก๊อกๆ! ซันนี่แวะมาสะกิดเบาๆ ครับ 💧\n${timeGreeting} คุณ ${userName} ทำงานหรือเรียนเหนื่อยไหมครับ? 🩵\n\nพักสายตาสักครู่ แล้วจิบน้ำสักแก้วให้ร่างกายสดชื่น สมองแล่นฉิวกันหน่อยน้า 🧊\n\nวันนี้ดื่มไปแล้ว: ${currentMl.toLocaleString()} / ${goalMl.toLocaleString()} ml (เหลืออีก ${remaining.toLocaleString()} ml)\n\n👉 หรือแตะเปิดเว็บแอปเพื่อบันทึกแบบละเอียด:\n${appUrl}/hydration`,
     quickReply: {
       items: [
         {
@@ -326,8 +372,16 @@ export function createHydrationReminderMessage(userName: string, currentMl: numb
         {
           type: 'action',
           action: {
+            type: 'uri',
+            label: '📱 เปิดหน้าดื่มน้ำ',
+            uri: `${appUrl}/hydration`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
             type: 'message',
-            label: '📊 ดูสถิติวันนี้',
+            label: '📊 สรุปวันนี้',
             text: 'สรุป',
           },
         },
@@ -337,11 +391,20 @@ export function createHydrationReminderMessage(userName: string, currentMl: numb
 }
 
 export function createSleepReminderMessage(userName: string): LineMessage {
+  const appUrl = getAppUrl();
   return {
     type: 'text',
-    text: `ดึกแล้วนะคนเก่ง 🌙✨\nวันนี้คุณ ${userName} ใช้พลังและตั้งใจทำสิ่งต่างๆ มาทั้งวันแล้วนะ เหนื่อยไหมครับ?\n\nซันนี่อยากชวนคุณวางมือถือลง หลับตา และปล่อยวางเรื่องหนักๆ ให้ร่างกายและจิตใจได้พักผ่อนอย่างเต็มที่ 💤\n\nขอให้คืนนี้หลับฝันดี ตื่นมาด้วยความสดใสและพลังบวกเต็มเปี่ยมนะครับ ราตรีสวัสดิ์ครับผม 🌟🛌`,
+    text: `ดึกแล้วนะคนเก่ง 🌙✨\nวันนี้คุณ ${userName} ใช้พลังและตั้งใจทำสิ่งต่างๆ มาทั้งวันแล้วนะ เหนื่อยไหมครับ?\n\nซันนี่อยากชวนคุณวางมือถือลง หลับตา และปล่อยวางเรื่องหนักๆ ให้ร่างกายและจิตใจได้พักผ่อนอย่างเต็มที่ 💤\n\n👉 แตะเพื่อบันทึกเวลานอนในเว็บแอป:\n${appUrl}/sleep\n\nขอให้คืนนี้หลับฝันดี ตื่นมาด้วยความสดใสและพลังบวกเต็มเปี่ยมนะครับ ราตรีสวัสดิ์ครับผม 🌟🛌`,
     quickReply: {
       items: [
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '🌙 บันทึกการนอนในเว็บแอป',
+            uri: `${appUrl}/sleep`,
+          },
+        },
         {
           type: 'action',
           action: {
@@ -356,9 +419,10 @@ export function createSleepReminderMessage(userName: string): LineMessage {
 }
 
 export function createMorningGreetingMessage(userName: string): LineMessage {
+  const appUrl = getAppUrl();
   return {
     type: 'text',
-    text: `อรุณสวัสดิ์ครับคุณ ${userName}! ☀️🌈\nเช้าวันใหม่เริ่มต้นขึ้นแล้วนะ ซันนี่แวะมาส่งพลังบวกให้คุณลุยวันใหม่อย่างสดใสครับ!\n\n💡 ทิปเพื่อความสดชื่น:\nลองจิบน้ำอุณหภูมิห้องแก้วแรกสัก 250ml เพื่อปลุกระบบย่อยอาหารและคืนความชุ่มชื่นให้ร่างกายกันน้า 🩵\n\nวันนี้พร้อมลุยไปด้วยกันไหมครับ? แตะบันทึกน้ำแก้วแรกได้เลย! 👇`,
+    text: `อรุณสวัสดิ์ครับคุณ ${userName}! ☀️🌈\nเช้าวันใหม่เริ่มต้นขึ้นแล้วนะ ซันนี่แวะมาส่งพลังบวกให้คุณลุยวันใหม่อย่างสดใสครับ!\n\n💡 ทิปเพื่อความสดชื่น:\nลองจิบน้ำอุณหภูมิห้องแก้วแรกสัก 250ml เพื่อปลุกระบบย่อยอาหารและคืนความชุ่มชื่นให้ร่างกายกันน้า 🩵\n\n👉 เปิดดูภารกิจและเริ่มวันใหม่ในเว็บแอป:\n${appUrl}/dashboard`,
     quickReply: {
       items: [
         {
@@ -372,9 +436,17 @@ export function createMorningGreetingMessage(userName: string): LineMessage {
         {
           type: 'action',
           action: {
-            type: 'message',
-            label: '📊 สรุปสุขภาพ',
-            text: 'สรุป',
+            type: 'uri',
+            label: '🥗 บันทึกมื้อเช้า',
+            uri: `${appUrl}/nutrition`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '📱 เปิดแดชบอร์ด',
+            uri: `${appUrl}/dashboard`,
           },
         },
       ],
@@ -383,17 +455,18 @@ export function createMorningGreetingMessage(userName: string): LineMessage {
 }
 
 export function createMealReminderMessage(userName: string): LineMessage {
+  const appUrl = getAppUrl();
   return {
     type: 'text',
-    text: `ได้เวลาเติมพลังแล้วครับคุณ ${userName}! 🥗🍲\nทำงานเพลินจนลืมเวลาหรือเปล่าเอ่ย? แวะทานอาหารที่มีประโยชน์ให้อิ่มอร่อยและมีพลังกันน้า 😋\n\nทานมื้อนี้แล้ว เข้าแอป LifeSync ไปสแกนรูปอาหารหรือพิมพ์บันทึกเก็บแต้มเควสต์ประจำวันได้เลยนะครับ 📸✨`,
+    text: `ได้เวลาเติมพลังแล้วครับคุณ ${userName}! 🥗🍲\nทำงานเพลินจนลืมเวลาหรือเปล่าเอ่ย? แวะทานอาหารที่มีประโยชน์ให้อิ่มอร่อยและมีพลังกันน้า 😋\n\nทานมื้อนี้แล้ว แตะลิงก์เพื่อเข้าเว็บแอป LifeSync ไปถ่ายรูปอาหารให้ AI ช่วยคำนวณแคลอรี่ หรือพิมพ์จดเก็บแต้มเควสต์ได้เลยนะครับ 📸✨\n\n👉 บันทึกอาหาร:\n${appUrl}/nutrition`,
     quickReply: {
       items: [
         {
           type: 'action',
           action: {
             type: 'uri',
-            label: '📸 บันทึกอาหารในแอป',
-            uri: 'https://life-sync-panla123ts-projects.vercel.app/nutrition',
+            label: '📸 บันทึกอาหารในเว็บแอป',
+            uri: `${appUrl}/nutrition`,
           },
         },
         {
@@ -402,6 +475,114 @@ export function createMealReminderMessage(userName: string): LineMessage {
             type: 'message',
             label: '💧 ดื่มน้ำหลังอาหาร (+250ml)',
             text: 'น้ำ 250',
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: '📊 ดูสรุปวันนี้',
+            text: 'สรุป',
+          },
+        },
+      ],
+    },
+  };
+}
+
+export function createFoodLinkMessage(userName: string): LineMessage {
+  const appUrl = getAppUrl();
+  return {
+    type: 'text',
+    text: `หิวแล้วใช่ไหมครับคุณ ${userName}! 🥗🍲\nซันนี่พร้อมช่วยบันทึกมื้ออร่อยแล้ว แตะลิงก์ด้านล่างเพื่อเปิดเว็บแอป ถ่ายรูปอาหารให้ AI Vision สแกนประเมินแคลอรี่และสารอาหาร หรือพิมพ์เลือกประเภทมื้อได้ทันทีเลยครับ ✨\n\n👉 บันทึกมื้ออาหาร:\n${appUrl}/nutrition`,
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '📸 ถ่ายรูป/บันทึกอาหาร',
+            uri: `${appUrl}/nutrition`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: '💧 จิบน้ำก่อนอาหาร (+250ml)',
+            text: 'น้ำ 250',
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: '📊 สรุปวันนี้',
+            text: 'สรุป',
+          },
+        },
+      ],
+    },
+  };
+}
+
+export function createSleepLinkMessage(userName: string): LineMessage {
+  const appUrl = getAppUrl();
+  return {
+    type: 'text',
+    text: `พักผ่อนให้สบายใจนะครับคุณ ${userName} 🌙💤\nไม่ว่าจะเข้านอนรอบดึก หรือแวะงีบชาร์จพลังสั้นๆ (Power Nap) 20-30 นาที แตะลิงก์เพื่อบันทึกในเว็บแอปได้เลยครับ:\n\n👉 บันทึกการนอนและงีบหลับ:\n${appUrl}/sleep`,
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '🌙 เปิดหน้าบันทึกการนอน',
+            uri: `${appUrl}/sleep`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: 'เข้านอนแล้ว 😴',
+            text: 'เข้านอนแล้ว',
+          },
+        },
+      ],
+    },
+  };
+}
+
+export function createQuestLinkMessage(userName: string, points: number, completedCount: number): LineMessage {
+  const appUrl = getAppUrl();
+  return {
+    type: 'text',
+    text: `🏆 ภารกิจและแต้มสุขภาพของคุณ ${userName} ✨\n\n🔥 แต้มสะสมปัจจุบัน: ${points} แต้ม\n🎯 ภารกิจวันนี้ทำเสร็จแล้ว: ${completedCount} / 4 ภารกิจ\n\nแตะเข้าไปดูรายการภารกิจประจำวันเพื่อพิชิตแต้มและอัปเลเวลในเว็บแอปได้เลยครับ:\n👉 ${appUrl}/quests`,
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '🏆 เปิดดูภารกิจ & เลเวล',
+            uri: `${appUrl}/quests`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: '💧 ดื่มน้ำทำเควส (+250ml)',
+            text: 'น้ำ 250',
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: '📊 สรุปวันนี้',
+            text: 'สรุป',
           },
         },
       ],

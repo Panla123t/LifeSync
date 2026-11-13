@@ -5,10 +5,14 @@ import {
   sendLineReply, 
   createWelcomeMessage, 
   createLinkSuccessMessage, 
-  createWaterLoggedMessage,
-  createDailySummaryMessage,
-  createHydrationReminderMessage,
-  createSleepReminderMessage
+  createWaterLoggedMessage, 
+  createDailySummaryMessage, 
+  createHydrationReminderMessage, 
+  createSleepReminderMessage,
+  createFoodLinkMessage,
+  createSleepLinkMessage,
+  createQuestLinkMessage,
+  getAppUrl
 } from '@/lib/line/client';
 import { verifyAndConsumeMemoryToken } from '../link-token/route';
 
@@ -86,6 +90,29 @@ export async function POST(req: NextRequest) {
           .from('notification_settings')
           .update({ line_user_id: null, line_linked_at: null })
           .eq('line_user_id', lineUserId);
+        continue;
+      }
+
+      // Handle Image Message Event (e.g. user sends food photo directly in LINE)
+      if (event.type === 'message' && event.message?.type === 'image') {
+        const { data: notifRow } = await admin
+          .from('notification_settings')
+          .select('user_id')
+          .eq('line_user_id', lineUserId)
+          .maybeSingle();
+
+        if (notifRow?.user_id) {
+          const { data: profile } = await admin
+            .from('profiles')
+            .select('display_name')
+            .eq('id', notifRow.user_id)
+            .maybeSingle();
+
+          const userName = profile?.display_name || 'เพื่อนคนเก่ง';
+          await sendLineReply(event.replyToken, [createFoodLinkMessage(userName)]);
+        } else {
+          await sendLineReply(event.replyToken, [createWelcomeMessage(getAppUrl())]);
+        }
         continue;
       }
 
@@ -374,31 +401,36 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          // 3. Sleep prompt command: e.g. "นอน", "sleep", "เข้านอน", "เข้านอนแล้ว"
-          if (['นอน', 'sleep', 'เข้านอน', 'เข้านอนแล้ว', 'ง่วง', 'ไปนอนแล้ว'].includes(text.toLowerCase())) {
-            const appUrl = process.env.APP_BASE_URL || 'https://life-sync-panla123ts-projects.vercel.app';
+          // 2. Food & Meal Command: e.g. "อาหาร", "กินข้าว", "ข้าว", "มื้อเที่ยง", "มื้อเย็น", "food", "meal", "ถ่ายรูปอาหาร"
+          if (['อาหาร', 'ข้าว', 'กิน', 'กินข้าว', 'มื้อเช้า', 'มื้อเที่ยง', 'มื้อเย็น', 'ทานข้าว', 'food', 'meal', 'ถ่ายรูปอาหาร', 'แคลอรี่', 'สแกนอาหาร'].some(k => text.toLowerCase().includes(k))) {
+            await sendLineReply(event.replyToken, [createFoodLinkMessage(userName)]);
+            continue;
+          }
+
+          // 3. Sleep prompt command: e.g. "นอน", "sleep", "เข้านอน", "เข้านอนแล้ว", "ง่วง", "งีบ"
+          if (['นอน', 'sleep', 'เข้านอน', 'เข้านอนแล้ว', 'ง่วง', 'ไปนอนแล้ว', 'งีบ', 'ตื่น', 'nap'].some(k => text.toLowerCase().includes(k))) {
+            await sendLineReply(event.replyToken, [createSleepLinkMessage(userName)]);
+            continue;
+          }
+
+          // 4. Quests & Points Command: e.g. "เควส", "ภารกิจ", "แต้ม", "คะแนน", "quest", "level", "รางวัล"
+          if (['เควส', 'ภารกิจ', 'แต้ม', 'คะแนน', 'quest', 'quests', 'level', 'รางวัล'].some(k => text.toLowerCase().includes(k))) {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const [pointsRes, userQuestsRes] = await Promise.all([
+              admin.from('point_transactions').select('points_delta').eq('user_id', linkedUserId),
+              admin.from('user_quests').select('id').eq('user_id', linkedUserId).eq('quest_date', todayStr).eq('status', 'completed'),
+            ]);
+
+            const totalPoints = (pointsRes.data || []).reduce((sum, tx) => sum + tx.points_delta, 0);
+            const completedCount = userQuestsRes.data?.length || 0;
+
             await sendLineReply(event.replyToken, [
-              {
-                type: 'text',
-                text: `ขอให้คืนนี้เป็นค่ำคืนที่อบอุ่นและหลับสบายที่สุดนะครับคุณ ${userName} 🌙💤\n\nวางมือถือไว้ข้างเตียง หายใจเข้าลึกๆ ผ่อนคลายร่างกาย แล้วหลับตาให้สนิทน้า 🌟\n\nพรุ่งนี้ตื่นเช้ามา อย่าลืมแวะมาจิบน้ำแก้วแรกและบันทึกเวลาตื่นในแอป LifeSync นะครับ ราตรีสวัสดิ์ครับผม 🛌✨`,
-                quickReply: {
-                  items: [
-                    {
-                      type: 'action',
-                      action: {
-                        type: 'uri',
-                        label: '📱 เปิดแอป LifeSync',
-                        uri: `${appUrl}/sleep`,
-                      },
-                    },
-                  ],
-                },
-              },
+              createQuestLinkMessage(userName, totalPoints, completedCount),
             ]);
             continue;
           }
 
-          // 4. Reminder check & test command: e.g. "เตือน", "เตือนดื่มน้ำ", "เตือนนอน", "การแจ้งเตือน"
+          // 5. Reminder check & test command: e.g. "เตือน", "เตือนดื่มน้ำ", "เตือนนอน", "การแจ้งเตือน"
           if (['เตือน', 'เตือนดื่มน้ำ', 'เตือนนอน', 'ตั้งเตือน', 'การแจ้งเตือน', 'reminder'].some(k => text.toLowerCase().includes(k))) {
             const hydrationStatus = notifRow?.hydration_enabled ? '✅ เปิดอยู่' : '❌ ปิดอยู่';
             const sleepStatus = notifRow?.sleep_enabled ? '✅ เปิดอยู่' : '❌ ปิดอยู่';
@@ -406,7 +438,7 @@ export async function POST(req: NextRequest) {
             await sendLineReply(event.replyToken, [
               {
                 type: 'text',
-                text: `⏰ สถานะการแจ้งเตือนของคุณ ${userName} 🌿\n\n💧 เตือนจิบน้ำ: ${hydrationStatus}\n🌙 เตือนเข้านอน: ${sleepStatus}\n\nซันนี่มีตารางแวะมาสะกิดเบาๆ:\n• 08:00 น. อรุณสวัสดิ์ & น้ำแก้วแรก ☀️\n• 10:00, 14:00, 18:00 น. เตือนจิบน้ำระหว่างวัน 💧\n• 21:30 น. เตรียมตัวพักผ่อนเข้านอน 🌙\n\nอยากให้ซันนี่ลองส่งการแจ้งเตือนตัวอย่างให้ดู แตะปุ่มด้านล่างได้เลยนะครับ! 👇`,
+                text: `⏰ สถานะการแจ้งเตือนของคุณ ${userName} 🌿\n\n💧 เตือนจิบน้ำ: ${hydrationStatus}\n🌙 เตือนเข้านอน: ${sleepStatus}\n\nซันนี่มีตารางแวะมาสะกิดเบาๆ:\n• 08:00 น. อรุณสวัสดิ์ & น้ำแก้วแรก ☀️\n• 10:00 & 14:00 น. เตือนจิบน้ำระหว่างวัน 💧\n• 18:00 น. ชวนทานอาหารมื้อเย็น 🥗\n• 21:30 น. เตรียมตัวพักผ่อนเข้านอน 🌙\n\nอยากให้ซันนี่ลองส่งการแจ้งเตือนตัวอย่างให้ดู แตะปุ่มด้านล่างได้เลยนะครับ! 👇`,
                 quickReply: {
                   items: [
                     {
@@ -421,8 +453,24 @@ export async function POST(req: NextRequest) {
                       type: 'action',
                       action: {
                         type: 'message',
+                        label: '🥗 ลองเตือนมื้ออาหาร',
+                        text: 'ทดสอบเตือนอาหาร',
+                      },
+                    },
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'message',
                         label: '🌙 ลองเตือนเข้านอน',
                         text: 'ทดสอบเตือนนอน',
+                      },
+                    },
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'uri',
+                        label: '⚙️ ตั้งค่าในเว็บแอป',
+                        uri: `${getAppUrl()}/settings`,
                       },
                     },
                   ],
@@ -432,10 +480,17 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          // 5. Test Reminder Trigger from chat
+          // 6. Test Reminder Trigger from chat
           if (text === 'ทดสอบเตือนน้ำ') {
             await sendLineReply(event.replyToken, [
               createHydrationReminderMessage(userName, 750, 2000),
+            ]);
+            continue;
+          }
+
+          if (text === 'ทดสอบเตือนอาหาร') {
+            await sendLineReply(event.replyToken, [
+              createFoodLinkMessage(userName),
             ]);
             continue;
           }
@@ -447,7 +502,7 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          // 6. Conversational empathy: "เหนื่อย", "ขอบคุณ", "ซันนี่", "สวัสดี"
+          // 7. Conversational empathy: "เหนื่อย", "ขอบคุณ", "ซันนี่", "สวัสดี"
           if (text.includes('เหนื่อย') || text.includes('ท้อ') || text.includes('เพลีย')) {
             await sendLineReply(event.replyToken, [
               {
@@ -461,6 +516,14 @@ export async function POST(req: NextRequest) {
                         type: 'message',
                         label: '💧 จิบน้ำให้สดชื่น (+250ml)',
                         text: 'น้ำ 250',
+                      },
+                    },
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'uri',
+                        label: '🌙 พักผ่อน/บันทึกการนอน',
+                        uri: `${getAppUrl()}/sleep`,
                       },
                     },
                   ],
@@ -484,31 +547,39 @@ export async function POST(req: NextRequest) {
             await sendLineReply(event.replyToken, [
               {
                 type: 'text',
-                text: `สวัสดีครับคุณ ${userName}! วันนี้รู้สึกสดชื่นดีไหมครับ? ☀️🌿\n\nอยากให้ซันนี่ช่วยบันทึกหรือดูข้อมูลอะไร เลือกแตะปุ่มด้านล่างได้เลยนะครับผม 👇`,
+                text: `สวัสดีครับคุณ ${userName}! วันนี้รู้สึกสดชื่นดีไหมครับ? ☀️🌿\n\nอยากให้ซันนี่ช่วยบันทึกหรือเปิดดูข้อมูลอะไรในเว็บแอป เลือกแตะปุ่มด้านล่างได้เลยนะครับผม 👇`,
                 quickReply: {
                   items: [
                     {
                       type: 'action',
                       action: {
+                        type: 'uri',
+                        label: '🥗 บันทึกอาหาร',
+                        uri: `${getAppUrl()}/nutrition`,
+                      },
+                    },
+                    {
+                      type: 'action',
+                      action: {
                         type: 'message',
-                        label: '💧 บันทึกดื่มน้ำ +250ml',
+                        label: '💧 ดื่มน้ำ +250ml',
                         text: 'น้ำ 250',
                       },
                     },
                     {
                       type: 'action',
                       action: {
-                        type: 'message',
-                        label: '📊 สรุปสุขภาพวันนี้',
-                        text: 'สรุป',
+                        type: 'uri',
+                        label: '🌙 บันทึกการนอน',
+                        uri: `${getAppUrl()}/sleep`,
                       },
                     },
                     {
                       type: 'action',
                       action: {
-                        type: 'message',
-                        label: '⏰ เช็คการแจ้งเตือน',
-                        text: 'เตือน',
+                        type: 'uri',
+                        label: '📊 เปิดแดชบอร์ด',
+                        uri: `${getAppUrl()}/dashboard`,
                       },
                     },
                   ],
@@ -518,13 +589,21 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          // 7. Fallback friendly companion message for linked user
+          // 8. Fallback friendly companion message for linked user
           await sendLineReply(event.replyToken, [
             {
               type: 'text',
-              text: `ซันนี่อยู่นี่ครับคุณ ${userName}! ☀️🌿\n\nมีอะไรให้ซันนี่ช่วยดูแลไหมครับ? คุณสามารถพิมพ์คุยหรือสั่งการได้ง่ายๆ เลย:\n• "น้ำ 250" หรือ "น้ำ 500" เพื่อจดน้ำดื่ม 💧\n• "สรุป" เพื่อดูภาพรวมสุขภาพวันนี้ 📊\n• "เตือน" เพื่อดูเวลาแจ้งเตือน ⏰`,
+              text: `ซันนี่อยู่นี่ครับคุณ ${userName}! ☀️🌿\n\nมีอะไรให้ซันนี่ช่วยดูแลไหมครับ? คุณสามารถพิมพ์คุยหรือแตะเปิดเว็บแอป LifeSync ได้ทันทีเลย:\n• 💧 พิมพ์ "น้ำ 250" เพื่อจดน้ำดื่มทันที\n• 🥗 พิมพ์ "อาหาร" เพื่อเปิดหน้าถ่ายรูปสแกนแคลอรี่\n• 🌙 พิมพ์ "นอน" เพื่อเปิดหน้าบันทึกการนอน\n• 📊 พิมพ์ "สรุป" เพื่อดูภาพรวมสุขภาพ\n• 🏆 พิมพ์ "เควส" เพื่อเช็คภารกิจและแต้มสะสม`,
               quickReply: {
                 items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: '🥗 บันทึกอาหาร',
+                      uri: `${getAppUrl()}/nutrition`,
+                    },
+                  },
                   {
                     type: 'action',
                     action: {
@@ -536,17 +615,17 @@ export async function POST(req: NextRequest) {
                   {
                     type: 'action',
                     action: {
-                      type: 'message',
-                      label: '📊 ดูสรุปวันนี้',
-                      text: 'สรุป',
+                      type: 'uri',
+                      label: '🌙 บันทึกการนอน',
+                      uri: `${getAppUrl()}/sleep`,
                     },
                   },
                   {
                     type: 'action',
                     action: {
-                      type: 'message',
-                      label: '⏰ เช็คการแจ้งเตือน',
-                      text: 'เตือน',
+                      type: 'uri',
+                      label: '📊 ดูสถิติในเว็บแอป',
+                      uri: `${getAppUrl()}/dashboard`,
                     },
                   },
                 ],
@@ -555,8 +634,7 @@ export async function POST(req: NextRequest) {
           ]);
         } else {
           // Unlinked user sending messages
-          const appUrl = process.env.APP_BASE_URL || 'https://life-sync-panla123ts-projects.vercel.app';
-          await sendLineReply(event.replyToken, [createWelcomeMessage(appUrl)]);
+          await sendLineReply(event.replyToken, [createWelcomeMessage(getAppUrl())]);
         }
       }
     }
