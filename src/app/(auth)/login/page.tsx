@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [resetSuccess, setResetSuccess] = useState(false);
 
   // Check URL parameters for LINE OAuth callbacks or errors
-  useState(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlError = params.get('error');
@@ -28,7 +28,7 @@ export default function LoginPage() {
         setError(urlError);
       }
     }
-  });
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,6 +201,7 @@ export default function LoginPage() {
               <div className="space-y-3.5">
                 <a
                   href="/api/auth/line"
+                  rel="external"
                   className="w-full flex justify-center items-center gap-2.5 py-3 px-4 rounded-2xl shadow-[0_4px_14px_rgba(6,199,85,0.28)] text-xs sm:text-sm font-bold text-white bg-[#06C755] hover:bg-[#05b04b] active:scale-95 transition-all cursor-pointer"
                 >
                   <svg className="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24">
