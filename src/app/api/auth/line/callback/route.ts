@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { verifyOAuthState } from '@/lib/auth/lineState';
 
 function getBaseUrl(req: NextRequest): string {
   const forwardedHost = req.headers.get('x-forwarded-host');
@@ -28,9 +29,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(errorDescription || 'LINE login was cancelled')}`, req.url));
   }
 
-  // Verify state cookie
-  const storedState = req.cookies.get('line_oauth_state')?.value;
-  if (!storedState || storedState !== state) {
+  // Verify state with HMAC signature (works reliably across mobile/browser switches) and cookie fallback
+  const storedCookieState = req.cookies.get('line_oauth_state')?.value;
+  if (!verifyOAuthState(state, storedCookieState)) {
+    console.warn('[LINE Auth Callback] Invalid state received:', { state, hasCookie: Boolean(storedCookieState) });
     return NextResponse.redirect(new URL('/login?error=invalid_state', req.url));
   }
 
