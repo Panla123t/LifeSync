@@ -12,8 +12,10 @@ import {
   createFoodLinkMessage,
   createSleepLinkMessage,
   createQuestLinkMessage,
+  createWeeklyDigestMessage,
   getAppUrl
 } from '@/lib/line/client';
+import { generateWeeklySummary } from '@/lib/analytics/weeklySummary';
 import { verifyAndConsumeMemoryToken } from '../link-token/route';
 
 interface LineEventSource {
@@ -302,7 +304,7 @@ export async function POST(req: NextRequest) {
           // Fetch user profile for personal touch
           const { data: profile } = await admin
             .from('profiles')
-            .select('display_name')
+            .select('display_name, timezone')
             .eq('id', linkedUserId)
             .maybeSingle();
 
@@ -401,6 +403,15 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
+          // 2. Weekly Summary Digest Command: e.g. "สรุปสัปดาห์", "รายงานสัปดาห์", "weekly", "สัปดาห์นี้"
+          if (['สรุปสัปดาห์', 'รายงานสัปดาห์', 'weekly', 'สัปดาห์นี้', 'ภาพรวมสัปดาห์'].some(k => text.toLowerCase().includes(k))) {
+            const weeklyData = await generateWeeklySummary(linkedUserId, admin, profile?.timezone || 'Asia/Bangkok');
+            await sendLineReply(event.replyToken, [
+              createWeeklyDigestMessage(userName, weeklyData),
+            ]);
+            continue;
+          }
+
           // 2. Food & Meal Command: e.g. "อาหาร", "กินข้าว", "ข้าว", "มื้อเที่ยง", "มื้อเย็น", "food", "meal", "ถ่ายรูปอาหาร"
           if (['อาหาร', 'ข้าว', 'กิน', 'กินข้าว', 'มื้อเช้า', 'มื้อเที่ยง', 'มื้อเย็น', 'ทานข้าว', 'food', 'meal', 'ถ่ายรูปอาหาร', 'แคลอรี่', 'สแกนอาหาร'].some(k => text.toLowerCase().includes(k))) {
             await sendLineReply(event.replyToken, [createFoodLinkMessage(userName)]);
@@ -430,7 +441,7 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          // 5. Reminder check & test command: e.g. "เตือน", "เตือนดื่มน้ำ", "เตือนนอน", "การแจ้งเตือน"
+          // 6. Reminder check & test command: e.g. "เตือน", "เตือนดื่มน้ำ", "เตือนนอน", "การแจ้งเตือน"
           if (['เตือน', 'เตือนดื่มน้ำ', 'เตือนนอน', 'ตั้งเตือน', 'การแจ้งเตือน', 'reminder'].some(k => text.toLowerCase().includes(k))) {
             const hydrationStatus = notifRow?.hydration_enabled ? '✅ เปิดอยู่' : '❌ ปิดอยู่';
             const sleepStatus = notifRow?.sleep_enabled ? '✅ เปิดอยู่' : '❌ ปิดอยู่';
@@ -438,7 +449,7 @@ export async function POST(req: NextRequest) {
             await sendLineReply(event.replyToken, [
               {
                 type: 'text',
-                text: `⏰ สถานะการแจ้งเตือนของคุณ ${userName} 🌿\n\n💧 เตือนจิบน้ำ: ${hydrationStatus}\n🌙 เตือนเข้านอน: ${sleepStatus}\n\nซันนี่มีตารางแวะมาสะกิดเบาๆ:\n• 08:00 น. อรุณสวัสดิ์ & น้ำแก้วแรก ☀️\n• 10:00 & 14:00 น. เตือนจิบน้ำระหว่างวัน 💧\n• 18:00 น. ชวนทานอาหารมื้อเย็น 🥗\n• 21:30 น. เตรียมตัวพักผ่อนเข้านอน 🌙\n\nอยากให้ซันนี่ลองส่งการแจ้งเตือนตัวอย่างให้ดู แตะปุ่มด้านล่างได้เลยนะครับ! 👇`,
+                text: `⏰ สถานะการแจ้งเตือนของคุณ ${userName} 🌿\n\n💧 เตือนจิบน้ำ: ${hydrationStatus}\n🌙 เตือนเข้านอน: ${sleepStatus}\n\nซันนี่มีตารางแวะมาสะกิดเบาๆ:\n• 08:00 น. อรุณสวัสดิ์ & น้ำแก้วแรก ☀️\n• 10:00 & 14:00 น. เตือนจิบน้ำระหว่างวัน 💧\n• 18:00 น. ชวนทานอาหารมื้อเย็น 🥗\n• 21:30 น. เตรียมตัวพักผ่อนเข้านอน 🌙\n• ทุกวันอาทิตย์ 20:00 น. รายงานสุขภาพรอบสัปดาห์ 🌈\n\nอยากให้ซันนี่ลองส่งการแจ้งเตือนตัวอย่างให้ดู แตะปุ่มด้านล่างได้เลยนะครับ! 👇`,
                 quickReply: {
                   items: [
                     {
@@ -453,8 +464,8 @@ export async function POST(req: NextRequest) {
                       type: 'action',
                       action: {
                         type: 'message',
-                        label: '🥗 ลองเตือนมื้ออาหาร',
-                        text: 'ทดสอบเตือนอาหาร',
+                        label: '🌈 ดูสรุปสัปดาห์',
+                        text: 'สรุปสัปดาห์',
                       },
                     },
                     {

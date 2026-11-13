@@ -137,6 +137,16 @@ export interface TranslationSchema {
     todaysQuests: string;
     healthyFirst: string;
     healthyFirstDesc: string;
+    tabDaily: string;
+    tabBadges: string;
+    streakTitle: string;
+    streakActive: string;
+    streakDays: string;
+    streakLoggedToday: string;
+    streakNeedsLog: string;
+    unlockedBadges: string;
+    lockedBadge: string;
+    unlockedBadge: string;
   };
   settings: {
     title: string;
@@ -341,6 +351,16 @@ export const translations: Record<Locale, TranslationSchema> = {
       todaysQuests: 'ภารกิจวันนี้',
       healthyFirst: 'สุขภาพที่ดีต้องมาก่อนเสมอ',
       healthyFirstDesc: 'LifeSync ให้รางวัลกับความสม่ำเสมอในการบันทึก เราไม่สนับสนุนการอดอาหารรุนแรง การดื่มน้ำมากเกินไป หรือการอดนอนเพื่อทำภารกิจ',
+      tabDaily: '🎯 ภารกิจประจำวัน',
+      tabBadges: '🏆 เหรียญความสำเร็จ',
+      streakTitle: 'สถิติวินัยสะสม',
+      streakActive: 'วินัยต่อเนื่อง',
+      streakDays: 'วัน',
+      streakLoggedToday: 'บันทึกวันนี้แล้ว ยอดเยี่ยมมาก! 🔥',
+      streakNeedsLog: 'บันทึกวันนี้เพื่อรักษา Streak! ⏳',
+      unlockedBadges: 'เหรียญที่ปลดล็อกแล้ว',
+      lockedBadge: 'ยังไม่ปลดล็อก',
+      unlockedBadge: 'ปลดล็อกแล้ว',
     },
     settings: {
       title: 'ตั้งค่า',
@@ -543,6 +563,16 @@ export const translations: Record<Locale, TranslationSchema> = {
       todaysQuests: "Today's Quests",
       healthyFirst: 'Healthy Habits First',
       healthyFirstDesc: 'LifeSync rewards consistent logging and healthy lifestyle self-awareness. We never incentivize restrictive eating, excessive water intake, or lost sleep.',
+      tabDaily: '🎯 Daily Quests',
+      tabBadges: '🏆 Milestone Badges',
+      streakTitle: 'Habit Streak',
+      streakActive: 'Day Streak',
+      streakDays: 'days',
+      streakLoggedToday: 'Logged today, streak active! 🔥',
+      streakNeedsLog: 'Log a habit today to keep your streak! ⏳',
+      unlockedBadges: 'Unlocked Badges',
+      lockedBadge: 'In Progress',
+      unlockedBadge: 'Unlocked',
     },
     settings: {
       title: 'Settings',

@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [sleepHours, setSleepHours] = useState<string>('0h');
   const [sleepDurationMins, setSleepDurationMins] = useState<number>(0);
   const [points, setPoints] = useState<number>(0);
+  const [streakDays, setStreakDays] = useState<number>(0);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [completedQuestIds, setCompletedQuestIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,6 +137,9 @@ export default function DashboardPage() {
           }
           if (typeof syncData.totalPoints === 'number') {
             setPoints(syncData.totalPoints);
+          }
+          if (syncData.streaks?.overall?.current !== undefined) {
+            setStreakDays(syncData.streaks.overall.current);
           }
         }
       } catch (syncErr) {
@@ -345,7 +349,12 @@ export default function DashboardPage() {
             href="/quests"
             className="flex items-center gap-1.5 bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 text-amber-900 dark:text-amber-300 px-3 py-1.5 rounded-full shadow-xs active:scale-95 transition-all"
           >
-            <Flame className="h-4 w-4 text-amber-500 fill-amber-500 animate-pulse" />
+            <Flame className="h-4 w-4 text-orange-500 fill-orange-500 animate-pulse" />
+            {streakDays > 0 && (
+              <span className="text-xs font-black text-orange-600 dark:text-orange-400">
+                {streakDays}d
+              </span>
+            )}
             <span className="text-xs font-extrabold">{points}</span>
           </Link>
         </div>

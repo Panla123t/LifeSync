@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { calculateUserStreaks } from '@/lib/gamification/streaks';
+import { evaluateUserBadges } from '@/lib/gamification/badges';
 
 export async function POST() {
   try {
@@ -143,7 +145,11 @@ export async function POST() {
       }
     }
 
-    // 4. Calculate total points
+    // 4. Calculate Streaks & Evaluate Milestone Badges
+    const streaks = await calculateUserStreaks(user.id, admin, userTimezone);
+    const { badges, newlyUnlocked } = await evaluateUserBadges(user.id, admin, streaks);
+
+    // 5. Calculate total points (including any badge bonuses just awarded)
     const { data: allPoints } = await admin
       .from('point_transactions')
       .select('points_delta')
@@ -157,6 +163,9 @@ export async function POST() {
       completedQuestIds,
       totalPoints,
       newlyCompleted,
+      streaks,
+      badges,
+      newlyUnlockedBadges: newlyUnlocked,
     });
   } catch (err) {
     console.error('Error syncing quests:', err);

@@ -6,8 +6,10 @@ import {
   createHydrationReminderMessage, 
   createSleepReminderMessage,
   createMorningGreetingMessage,
-  createMealReminderMessage
+  createMealReminderMessage,
+  createWeeklyDigestMessage
 } from '@/lib/line/client';
+import { generateWeeklySummary } from '@/lib/analytics/weeklySummary';
 
 async function handleReminders(req: NextRequest) {
   try {
@@ -77,6 +79,9 @@ async function handleReminders(req: NextRequest) {
         message = createMorningGreetingMessage(userName);
       } else if (reminderType === 'meal') {
         message = createMealReminderMessage(userName);
+      } else if (reminderType === 'weekly_summary') {
+        const weeklyData = await generateWeeklySummary(targetUserId, admin);
+        message = createWeeklyDigestMessage(userName, weeklyData);
       } else {
         // Default hydration reminder
         const startOfDay = new Date();
@@ -191,6 +196,26 @@ async function handleReminders(req: NextRequest) {
 
         const res = await sendLinePush(u.line_user_id, [
           createMealReminderMessage(prof?.display_name || 'เพื่อนคนเก่ง'),
+        ]);
+        if (res.success) sentCount++;
+      }
+    } else if (reminderType === 'weekly_summary') {
+      const { data: users } = await admin
+        .from('notification_settings')
+        .select('user_id, line_user_id')
+        .not('line_user_id', 'is', null);
+
+      for (const u of (users || [])) {
+        if (!u.line_user_id) continue;
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('display_name, timezone')
+          .eq('id', u.user_id)
+          .maybeSingle();
+
+        const weeklyData = await generateWeeklySummary(u.user_id, admin, prof?.timezone || 'Asia/Bangkok');
+        const res = await sendLinePush(u.line_user_id, [
+          createWeeklyDigestMessage(prof?.display_name || 'เพื่อนคนเก่ง', weeklyData),
         ]);
         if (res.success) sentCount++;
       }

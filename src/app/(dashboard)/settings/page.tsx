@@ -183,7 +183,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSendTestReminder = async (type: 'hydration' | 'sleep' = 'hydration') => {
+  const handleSendTestReminder = async (type: 'hydration' | 'sleep' | 'weekly_summary' = 'hydration') => {
     setSendingTestReminder(true);
     setLineActionFeedback(null);
     try {
@@ -194,7 +194,10 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setLineActionFeedback(data.message || (locale === 'th' ? `ส่งการแจ้งเตือน${type === 'sleep' ? 'เข้านอน' : 'ดื่มน้ำ'}แล้ว! กรุณาตรวจสอบใน LINE` : `Test reminder sent! Check your LINE chat`));
+        let label = 'ดื่มน้ำ';
+        if (type === 'sleep') label = 'เข้านอน';
+        if (type === 'weekly_summary') label = 'สรุปสุขภาพรอบสัปดาห์';
+        setLineActionFeedback(data.message || (locale === 'th' ? `ส่งข้อความ${label}แล้ว! กรุณาตรวจสอบใน LINE` : `Test message sent! Check your LINE chat`));
         setTimeout(() => setLineActionFeedback(null), 4500);
       } else {
         setLineActionFeedback(data.error || 'Failed to send reminder');
@@ -461,6 +464,16 @@ export default function SettingsPage() {
               </button>
             </div>
 
+            <button
+              type="button"
+              disabled={sendingTestReminder}
+              onClick={() => handleSendTestReminder('weekly_summary')}
+              className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-800/80 hover:from-amber-100 hover:to-orange-100 dark:hover:bg-slate-700/70 active:scale-95 text-amber-900 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <span>{locale === 'th' ? '🌈 ทดสอบส่งสรุปสุขภาพประจำสัปดาห์' : '🌈 Test Weekly Digest'}</span>
+            </button>
+
             {/* Daily Schedule Card */}
             <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 text-xs space-y-2">
               <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 text-[11px]">
@@ -474,14 +487,24 @@ export default function SettingsPage() {
                   <span>{locale === 'th' ? 'อรุณสวัสดิ์ & น้ำแก้วแรก' : 'Morning Greeting & Wake-up Water'}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-slate-600 dark:text-slate-300">💧 10:00, 14:00, 18:00 น.</span>
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">💧 10:00 & 14:00 น.</span>
                   <span className="text-slate-400">•</span>
                   <span>{locale === 'th' ? 'เตือนจิบน้ำระหว่างวัน' : 'Hydration Check-ins'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">🥗 18:00 น.</span>
+                  <span className="text-slate-400">•</span>
+                  <span>{locale === 'th' ? 'ชวนทานอาหารมื้อเย็น' : 'Dinner Nudge'}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold text-slate-600 dark:text-slate-300">🌙 21:30 น.</span>
                   <span className="text-slate-400">•</span>
                   <span>{locale === 'th' ? 'เตรียมตัวผ่อนคลายเข้านอน' : 'Bedtime Wind-down'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">🌈 อาทิตย์ 20:00 น.</span>
+                  <span className="text-slate-400">•</span>
+                  <span>{locale === 'th' ? 'สรุปสุขภาพและคำแนะนำ AI ประจำสัปดาห์' : 'Sunday Weekly AI Digest'}</span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import type { WeeklySummaryData } from '@/lib/analytics/weeklySummary';
 
 export interface LineTextMessage {
   type: 'text';
@@ -583,6 +584,48 @@ export function createQuestLinkMessage(userName: string, points: number, complet
             type: 'message',
             label: '📊 สรุปวันนี้',
             text: 'สรุป',
+          },
+        },
+      ],
+    },
+  };
+}
+
+export function createWeeklyDigestMessage(userName: string, data: WeeklySummaryData): LineMessage {
+  const appUrl = getAppUrl();
+  const sleepText = data.sleepAvgHours > 0 || data.sleepAvgMins > 0
+    ? `${data.sleepAvgHours} ชม. ${data.sleepAvgMins} นาที/คืน`
+    : 'ยังไม่มีข้อมูล';
+
+  const napText = data.sleepNapsCount > 0 ? ` (งีบชาร์จพลัง ${data.sleepNapsCount} ครั้ง ⚡)` : '';
+
+  return {
+    type: 'text',
+    text: `🌈 สรุปสุขภาพรอบสัปดาห์ของคุณ ${userName} ✨\nซันนี่รวบรวมความสม่ำเสมอและสถิติที่ดีตลอด 7 วันที่ผ่านมาให้แล้วครับ:\n\n💧 ดื่มน้ำรวม: ${data.waterTotalMl.toLocaleString()} ml (เฉลี่ย ${data.waterDailyAvgMl.toLocaleString()} ml/วัน)\n🎯 วันที่ดื่มน้ำถึงเป้า: ${data.waterGoalDays} / 7 วัน\n🥗 อาหารที่บันทึก: ${data.mealsTotalCount} มื้อ\n🌙 การนอนเฉลี่ย: ${sleepText}${napText}\n🔥 สถิติวินัยสะสม: ${data.overallStreak} วันต่อเนื่อง\n🌟 แต้มที่ได้รับสัปดาห์นี้: +${data.pointsEarned} แต้ม\n\n💡 คำแนะนำสุขภาพจากซันนี่:\n"${data.aiTipTh}"\n\n👉 ดูกราฟแนวโน้มสุขภาพ 7 วันฉบับเต็มในเว็บแอป:\n${appUrl}/dashboard`,
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '📊 ดูกราฟในเว็บแอป',
+            uri: `${appUrl}/dashboard`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '🏆 ดูภารกิจ & เหรียญ',
+            uri: `${appUrl}/quests`,
+          },
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: '💧 ดื่มน้ำแก้วใหม่ (+250ml)',
+            text: 'น้ำ 250',
           },
         },
       ],
