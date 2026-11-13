@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { generateOAuthState } from '@/lib/auth/lineState';
 
 function getBaseUrl(req: NextRequest): string {
   const forwardedHost = req.headers.get('x-forwarded-host');
@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=line_login_unconfigured', req.url));
   }
 
-  // Generate random state for CSRF protection
-  const state = crypto.randomBytes(16).toString('hex');
+  // Generate cryptographic tamper-proof state for CSRF protection
+  const state = generateOAuthState();
 
   // LINE OAuth 2.1 authorization endpoint
   const authUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
