@@ -23,7 +23,10 @@ import {
   Sparkles,
   Unlink,
   Clock,
-  Droplets
+  Droplets,
+  Download,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import type { NotificationSettings, Profile } from '@/types/database';
 import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
@@ -53,6 +56,12 @@ export default function SettingsPage() {
   const [sendingTestReminder, setSendingTestReminder] = useState(false);
   const [lineActionFeedback, setLineActionFeedback] = useState<string | null>(null);
   const [unlinkingLine, setUnlinkingLine] = useState(false);
+
+  // Data Export & Account Privacy State
+  const [exportingData, setExportingData] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   useEffect(() => {
     async function loadSettings() {
@@ -219,6 +228,43 @@ export default function SettingsPage() {
       }
     } finally {
       setUnlinkingLine(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      setExportingData(true);
+      const res = await fetch('/api/user/export');
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lifesync-health-data-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error(err);
+      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการดาวน์โหลดข้อมูล' : 'Failed to export data');
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') return;
+    try {
+      setDeletingAccount(true);
+      const res = await fetch('/api/user/delete', { method: 'POST' });
+      if (!res.ok) throw new Error('Delete failed');
+      await supabase.auth.signOut();
+      router.push('/login');
+    } catch (err) {
+      console.error(err);
+      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการลบบัญชี' : 'Failed to delete account');
+      setDeletingAccount(false);
     }
   };
 
@@ -629,6 +675,105 @@ export default function SettingsPage() {
             >
               {checkingLineStatus && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
               <span>{t.settings.checkStatus}</span>
+            </button>
+          </div>
+        </div>
+      </FloatingGlassModal>
+
+      {/* Data Export & Privacy Controls (PDPA / GDPR) */}
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+            {locale === 'th' ? 'ข้อมูลส่วนบุคคลและความเป็นส่วนตัว' : 'Data & Privacy (PDPA / GDPR)'}
+          </h2>
+        </div>
+
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          {locale === 'th'
+            ? 'คุณสามารถดาวน์โหลดสำเนาบันทึกสุขภาพทั้งหมดของคุณ หรือขอลบบัญชีและข้อมูลทั้งหมดออกจากระบบได้อย่างสมบูรณ์'
+            : 'Download a complete copy of all your health logs, or permanently delete your account and all associated data.'}
+        </p>
+
+        <div className="space-y-2.5 pt-1">
+          {/* Export Button */}
+          <button
+            type="button"
+            disabled={exportingData}
+            onClick={handleExportData}
+            className="w-full py-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            <Download className={`h-4 w-4 ${exportingData ? 'animate-bounce' : ''}`} />
+            <span>
+              {exportingData
+                ? (locale === 'th' ? 'กำลังเตรียมไฟล์ดาวน์โหลด...' : 'Preparing export...')
+                : (locale === 'th' ? 'ดาวน์โหลดข้อมูลสุขภาพของฉัน (JSON)' : 'Export My Health Data (JSON)')}
+            </span>
+          </button>
+
+          {/* Delete Account Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 active:scale-95 rounded-2xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>{locale === 'th' ? 'ลบบัญชีและข้อมูลทั้งหมด' : 'Delete Account & All Data'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Delete Account Confirmation Modal */}
+      <FloatingGlassModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteConfirmText('');
+        }}
+        title={locale === 'th' ? 'ยืนยันการลบบัญชีผู้ใช้' : 'Confirm Account Deletion'}
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/60 rounded-2xl flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-rose-700 dark:text-rose-300 leading-relaxed">
+              {locale === 'th'
+                ? 'การกระทำนี้ไม่สามารถย้อนกลับได้ ข้อมูลการดื่มน้ำ อาหาร การนอน เควส และแต้มสะสมทั้งหมดจะถูกลบถาวรทันที'
+                : 'This action is irreversible. All your hydration, food, sleep logs, quests, and points will be permanently deleted.'}
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              {locale === 'th' ? 'พิมพ์คำว่า DELETE เพื่อยืนยัน' : 'Type DELETE to confirm'}
+            </label>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold tracking-wider text-slate-900 dark:text-white uppercase focus:outline-none focus:ring-2 focus:ring-rose-500"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirmText('');
+              }}
+              className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+            >
+              {locale === 'th' ? 'ยกเลิก' : 'Cancel'}
+            </button>
+            <button
+              type="button"
+              disabled={deleteConfirmText.trim().toUpperCase() !== 'DELETE' || deletingAccount}
+              onClick={handleDeleteAccount}
+              className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-[0_4px_12px_rgba(225,29,72,0.3)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              {deletingAccount && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+              <span>{locale === 'th' ? 'ยืนยันลบบัญชี' : 'Delete Permanently'}</span>
             </button>
           </div>
         </div>

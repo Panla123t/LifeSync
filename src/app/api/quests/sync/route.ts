@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { calculateUserStreaks } from '@/lib/gamification/streaks';
 import { evaluateUserBadges } from '@/lib/gamification/badges';
+import { getLocalDateStr, getStartOfDayISO } from '@/lib/utils/date';
 
 export async function POST() {
   try {
@@ -24,23 +25,9 @@ export async function POST() {
 
     const userTimezone = profile?.timezone || 'Asia/Bangkok';
 
-    // Calculate today's date in user's timezone
-    let todayDateStr: string;
-    try {
-      const formatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: userTimezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-      todayDateStr = formatter.format(new Date()); // Returns "YYYY-MM-DD"
-    } catch {
-      todayDateStr = new Date().toISOString().slice(0, 10);
-    }
-
-    // Start of day in ISO string (approximate for query range)
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Calculate today's date & start of day in user's timezone
+    const todayDateStr = getLocalDateStr(userTimezone);
+    const startOfDayISO = getStartOfDayISO(todayDateStr, userTimezone);
 
     // 2. Fetch logs for today in parallel
     const [waterRes, foodRes, sleepRes, questsRes, userQuestsRes] = await Promise.all([
@@ -48,17 +35,17 @@ export async function POST() {
         .from('water_logs')
         .select('id, amount_ml, logged_at')
         .eq('user_id', user.id)
-        .gte('logged_at', startOfDay.toISOString()),
+        .gte('logged_at', startOfDayISO),
       admin
         .from('food_logs')
         .select('id, logged_at')
         .eq('user_id', user.id)
-        .gte('logged_at', startOfDay.toISOString()),
+        .gte('logged_at', startOfDayISO),
       admin
         .from('sleep_logs')
         .select('id, wake_time, created_at')
         .eq('user_id', user.id)
-        .or(`created_at.gte.${startOfDay.toISOString()},wake_time.gte.${startOfDay.toISOString()}`),
+        .or(`created_at.gte.${startOfDayISO},wake_time.gte.${startOfDayISO}`),
       admin
         .from('quests')
         .select('*')

@@ -70,7 +70,27 @@ export default function QuestsPage() {
 
         if (allQuests) setQuests(allQuests as Quest[]);
 
-        // 3. Fallback to point_transactions if points not already set
+        // 3. Direct DB fallback for today's user_quests in case sync endpoint had a network hiccup
+        try {
+          const today = new Intl.DateTimeFormat('en-CA').format(new Date());
+          const { data: directUq } = await supabase
+            .from('user_quests')
+            .select('quest_id')
+            .eq('user_id', user.id)
+            .eq('quest_date', today)
+            .eq('status', 'completed');
+
+          if (directUq && directUq.length > 0) {
+            setCompletedQuestIds((prev) => {
+              const merged = new Set([...prev, ...directUq.map((u) => u.quest_id)]);
+              return Array.from(merged);
+            });
+          }
+        } catch (uqErr) {
+          console.warn('[Quests] Fallback user_quests fetch error:', uqErr);
+        }
+
+        // 4. Fallback to point_transactions if points not already set
         const { data: pointTxs } = await supabase
           .from('point_transactions')
           .select('points_delta')
