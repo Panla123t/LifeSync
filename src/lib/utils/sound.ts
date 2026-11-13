@@ -38,12 +38,33 @@ function getAudioContext(): AudioContext | null {
   }
 }
 
+export function getSoundSetting(): boolean {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem('lifesync_sound_enabled') !== 'false';
+}
+
+export function setSoundSetting(enabled: boolean): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('lifesync_sound_enabled', enabled ? 'true' : 'false');
+}
+
+export function getHapticsSetting(): boolean {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem('lifesync_haptics_enabled') !== 'false';
+}
+
+export function setHapticsSetting(enabled: boolean): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('lifesync_haptics_enabled', enabled ? 'true' : 'false');
+}
+
 /**
  * Mobile haptic vibration helper
  */
 export function triggerHaptic(pattern: number | number[] = 50) {
   if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
     try {
+      if (!getHapticsSetting()) return;
       navigator.vibrate(pattern);
     } catch {
       // Haptics not allowed or supported

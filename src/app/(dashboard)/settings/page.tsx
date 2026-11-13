@@ -27,10 +27,20 @@ import {
   Utensils,
   Download,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Volume2,
+  VolumeX,
+  Vibrate
 } from 'lucide-react';
 import type { NotificationSettings, Profile } from '@/types/database';
 import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
+import { 
+  getSoundSetting, 
+  setSoundSetting, 
+  getHapticsSetting, 
+  setHapticsSetting, 
+  playSuccessChime 
+} from '@/lib/utils/sound';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -64,6 +74,10 @@ export default function SettingsPage() {
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
+  // Sound & Haptic Preferences
+  const [soundEnabled, setSoundEnabledState] = useState(true);
+  const [hapticsEnabled, setHapticsEnabledState] = useState(true);
+
   useEffect(() => {
     async function loadSettings() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -91,10 +105,26 @@ export default function SettingsPage() {
         setHydrationEnabled(notif.hydration_enabled);
         setSleepEnabled(notif.sleep_enabled);
       }
+
+      setSoundEnabledState(getSoundSetting());
+      setHapticsEnabledState(getHapticsSetting());
     }
 
     loadSettings();
   }, []);
+
+  const handleToggleSound = (enabled: boolean) => {
+    setSoundEnabledState(enabled);
+    setSoundSetting(enabled);
+    if (enabled) {
+      playSuccessChime();
+    }
+  };
+
+  const handleToggleHaptics = (enabled: boolean) => {
+    setHapticsEnabledState(enabled);
+    setHapticsSetting(enabled);
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -361,6 +391,56 @@ export default function SettingsPage() {
             <span className="text-base">🇬🇧</span>
             <span>{t.settings.english}</span>
           </button>
+        </div>
+      </div>
+
+      {/* Sound & Haptics Feedback Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">
+        <div className="flex items-center gap-2">
+          {soundEnabled ? (
+            <Volume2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          ) : (
+            <VolumeX className="h-4 w-4 text-slate-400" />
+          )}
+          <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+            {locale === 'th' ? 'เสียงและระบบสั่นตอบสนอง' : 'Sound & Haptic Feedback'}
+          </h2>
+        </div>
+
+        <div className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
+            <div className="space-y-0.5 pr-3">
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                {locale === 'th' ? 'เสียงเอฟเฟกต์ฉลองความสำเร็จ' : 'Celebration Sound Effects'}
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                {locale === 'th' ? 'เสียงชิมเบาๆ เมื่อดื่มน้ำครบเป้าหมาย หรือปลดล็อกเลเวลใหม่' : 'Soft chimes when hitting daily goals or unlocking new levels'}
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={soundEnabled}
+              onChange={(e) => handleToggleSound(e.target.checked)}
+              className="h-5 w-5 text-emerald-600 rounded-md focus:ring-emerald-500 cursor-pointer shrink-0"
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
+            <div className="space-y-0.5 pr-3">
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                {locale === 'th' ? 'ระบบสั่นตอบสนอง (Haptic Vibration)' : 'Haptic Vibration'}
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                {locale === 'th' ? 'สั่นตอบสนองเบาๆ บนสมาร์ตโฟนเมื่อกดบันทึกน้ำและกิจกรรม' : 'Subtle vibration pulse on mobile devices when tapping actions'}
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={hapticsEnabled}
+              onChange={(e) => handleToggleHaptics(e.target.checked)}
+              className="h-5 w-5 text-emerald-600 rounded-md focus:ring-emerald-500 cursor-pointer shrink-0"
+            />
+          </div>
         </div>
       </div>
 
