@@ -48,36 +48,13 @@ Respond STRICTLY with a raw JSON object (no markdown, no backticks, no code fenc
   "nutrition_note": "คำแนะนำสั้นๆ เกี่ยวกับสารอาหาร"
 }`;
 
-        // Attempt Gemini 2.0 Flash first, fallback to 1.5 Flash
-        let apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
-        let response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: promptText },
-                  {
-                    inline_data: {
-                      mime_type: mimeType,
-                      data: base64Data,
-                    },
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              responseMimeType: 'application/json',
-              temperature: 0.2,
-            },
-          }),
-        });
+        // Attempt gemini-3.5-flash first, fallback to gemini-flash-lite-latest
+        const candidateModels = ['gemini-3.5-flash', 'gemini-flash-lite-latest'];
+        let response: Response | null = null;
 
-        if (!response.ok) {
-          // Fallback to gemini-1.5-flash
-          apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
-          response = await fetch(apiUrl, {
+        for (const model of candidateModels) {
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+          const res = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -100,9 +77,16 @@ Respond STRICTLY with a raw JSON object (no markdown, no backticks, no code fenc
               },
             }),
           });
+
+          if (res.ok) {
+            response = res;
+            break;
+          } else {
+            console.warn(`[Nutrition Vision API] ${model} returned status:`, res.status);
+          }
         }
 
-        if (response.ok) {
+        if (response && response.ok) {
           const apiData = await response.json();
           const rawText = apiData?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (rawText) {

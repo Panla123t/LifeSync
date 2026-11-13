@@ -50,54 +50,39 @@ export async function askSunnyCoach(question: string, context: CoachContext): Pr
 
 กรุณาตอบคำถามในฐานะน้องซันนี่ (Sunny) ตามบุคลิกและแนวทางที่กำหนด`;
 
-    let apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
-    let res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: SUNNY_SYSTEM_PROMPT },
-              { text: userPrompt }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 600,
-        }
-      })
-    });
-
-    if (!res.ok) {
-      // Fallback to gemini-1.5-flash
-      apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
-      res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: SUNNY_SYSTEM_PROMPT },
-                { text: userPrompt }
-              ]
+    // Attempt gemini-3.5-flash first, fallback to gemini-flash-lite-latest
+    const candidateModels = ['gemini-3.5-flash', 'gemini-flash-lite-latest'];
+    for (const model of candidateModels) {
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: SUNNY_SYSTEM_PROMPT },
+                  { text: userPrompt }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 600,
             }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 600,
-          }
-        })
-      });
-    }
+          })
+        });
 
-    if (res.ok) {
-      const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text && typeof text === 'string' && text.trim().length > 0) {
-        return text.trim();
+        if (res.ok) {
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text && typeof text === 'string' && text.trim().length > 0) {
+            return text.trim();
+          }
+        }
+      } catch (callErr) {
+        console.warn(`[Sunny Coach ${model} Error]:`, callErr);
       }
     }
 
