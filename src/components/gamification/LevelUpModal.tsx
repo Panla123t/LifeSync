@@ -48,10 +48,13 @@ export default function LevelUpModal({
 }: LevelUpModalProps) {
   useEffect(() => {
     if (isOpen) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lifesync_celebrated_level', levelInfo.level.toString());
+      }
       fireLevelUpCannons();
       playLevelUpFanfare();
     }
-  }, [isOpen]);
+  }, [isOpen, levelInfo.level]);
 
   if (!isOpen) return null;
 

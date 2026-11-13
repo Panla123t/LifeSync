@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import ThemeToggle from '@/components/shared/ThemeToggle';
 import { 
   Trophy, 
   Flame, 
@@ -50,23 +48,19 @@ export default function QuestsPage() {
           const syncRes = await fetch('/api/quests/sync', { method: 'POST' });
           if (syncRes.ok) {
             const syncData = await syncRes.json();
-            if (syncData.completedQuestIds && syncData.completedQuestIds.length > 0) {
-              setCompletedQuestIds((prev) => {
-                const hadNone = prev.length === 0;
-                const newOnes = syncData.completedQuestIds.filter((id: string) => !prev.includes(id));
-                if (!hadNone && newOnes.length > 0) {
-                  fireConfettiBurst();
-                  playSuccessChime();
-                }
-                return syncData.completedQuestIds;
-              });
+            if (syncData.completedQuestIds) {
+              setCompletedQuestIds(syncData.completedQuestIds);
             }
             if (typeof syncData.totalPoints === 'number') {
               const pts = syncData.totalPoints;
               setTotalPoints(pts);
               const lvl = getLevelFromPoints(pts);
-              if (lvl.level > currentLevelNumber && currentLevelNumber > 0) {
-                setCurrentLevelNumber(lvl.level);
+              setCurrentLevelNumber(lvl.level);
+              const lastCelebrated = parseInt(localStorage.getItem('lifesync_celebrated_level') || '0', 10);
+              if (lastCelebrated === 0) {
+                localStorage.setItem('lifesync_celebrated_level', lvl.level.toString());
+              } else if (lvl.level > lastCelebrated) {
+                localStorage.setItem('lifesync_celebrated_level', lvl.level.toString());
                 setShowLevelUp(true);
               }
             }
@@ -143,12 +137,8 @@ export default function QuestsPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.quests.title}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.quests.subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LanguageToggle />
-          <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
-            <Trophy className="h-6 w-6" />
-          </div>
+        <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
+          <Trophy className="h-6 w-6" />
         </div>
       </div>
 

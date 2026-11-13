@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import ThemeToggle from '@/components/shared/ThemeToggle';
 import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
 import { 
   Utensils, 
@@ -208,12 +206,8 @@ export default function NutritionPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.nutrition.title}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.nutrition.subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LanguageToggle />
-          <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
-            <Utensils className="h-6 w-6" />
-          </div>
+        <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
+          <Utensils className="h-6 w-6" />
         </div>
       </div>
 

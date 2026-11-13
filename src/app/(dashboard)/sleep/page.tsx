@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import LanguageToggle from '@/components/shared/LanguageToggle';
-import ThemeToggle from '@/components/shared/ThemeToggle';
 import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
 import { 
   Moon, 
@@ -201,12 +199,8 @@ export default function SleepPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.sleep.title}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.sleep.subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LanguageToggle />
-          <div className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-2xl shadow-xs">
-            <Moon className="h-6 w-6" />
-          </div>
+        <div className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-2xl shadow-xs">
+          <Moon className="h-6 w-6" />
         </div>
       </div>
 
