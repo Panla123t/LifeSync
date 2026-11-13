@@ -50,8 +50,8 @@ export async function askSunnyCoach(question: string, context: CoachContext): Pr
 
 กรุณาตอบคำถามในฐานะน้องซันนี่ (Sunny) ตามบุคลิกและแนวทางที่กำหนด`;
 
-    // Attempt gemini-3.5-flash first, fallback to gemini-flash-lite-latest
-    const candidateModels = ['gemini-3.5-flash', 'gemini-flash-lite-latest'];
+    // Attempt gemini-flash-lite-latest first (fast, complete), fallback to gemini-3.5-flash
+    const candidateModels = ['gemini-flash-lite-latest', 'gemini-3.5-flash'];
     for (const model of candidateModels) {
       try {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
@@ -69,7 +69,7 @@ export async function askSunnyCoach(question: string, context: CoachContext): Pr
             ],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 600,
+              maxOutputTokens: 2048,
             }
           })
         });

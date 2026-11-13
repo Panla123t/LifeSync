@@ -48,8 +48,8 @@ Respond STRICTLY with a raw JSON object (no markdown, no backticks, no code fenc
   "nutrition_note": "คำแนะนำสั้นๆ เกี่ยวกับสารอาหาร"
 }`;
 
-        // Attempt gemini-3.5-flash first, fallback to gemini-flash-lite-latest
-        const candidateModels = ['gemini-3.5-flash', 'gemini-flash-lite-latest'];
+        // Attempt gemini-flash-lite-latest first, fallback to gemini-3.5-flash
+        const candidateModels = ['gemini-flash-lite-latest', 'gemini-3.5-flash'];
         let response: Response | null = null;
 
         for (const model of candidateModels) {
@@ -74,6 +74,7 @@ Respond STRICTLY with a raw JSON object (no markdown, no backticks, no code fenc
               generationConfig: {
                 responseMimeType: 'application/json',
                 temperature: 0.2,
+                maxOutputTokens: 2048,
               },
             }),
           });

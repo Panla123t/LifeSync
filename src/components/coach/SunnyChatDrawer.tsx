@@ -62,6 +62,37 @@ export default function SunnyChatDrawer() {
         '😴 Tips to fall asleep faster tonight',
       ];
 
+  const renderFormattedText = (text: string) => {
+    return text.split('\n').map((line, lIdx) => {
+      if (!line.trim()) {
+        return <span key={lIdx} className="block h-1.5" />;
+      }
+      const isBullet = line.trim().startsWith('* ') || line.trim().startsWith('- ');
+      const cleanLine = isBullet ? line.trim().replace(/^[*\-]\s+/, '') : line;
+      const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
+
+      return (
+        <span
+          key={lIdx}
+          className={`block leading-relaxed ${
+            isBullet ? 'pl-3 relative before:content-["•"] before:absolute before:left-0 before:text-amber-500 font-normal' : ''
+          }`}
+        >
+          {parts.map((part, pIdx) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return (
+                <strong key={pIdx} className="font-bold text-slate-900 dark:text-white">
+                  {part.slice(2, -2)}
+                </strong>
+              );
+            }
+            return part;
+          })}
+        </span>
+      );
+    });
+  };
+
   const handleSend = async (textToSend?: string) => {
     const query = textToSend || input;
     if (!query.trim() || loading) return;
@@ -240,7 +271,7 @@ export default function SunnyChatDrawer() {
                       : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 rounded-bl-xs'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{m.content}</p>
+                  <div className="space-y-0.5">{renderFormattedText(m.content)}</div>
                   <span
                     className={`text-[9px] block text-right font-medium ${
                       m.role === 'user' ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'
