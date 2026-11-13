@@ -121,25 +121,31 @@ ${userContextStr}`;
           parts: [{ text: message }],
         });
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
-        const aiRes = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemInstruction }] },
-            contents,
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 500,
-            },
-          }),
-        });
+        // Attempt gemini-3.5-flash first, fallback to gemini-flash-lite-latest
+        const candidateModels = ['gemini-3.5-flash', 'gemini-flash-lite-latest'];
+        for (const model of candidateModels) {
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+          const aiRes = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: systemInstruction }] },
+              contents,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 500,
+              },
+            }),
+          });
 
-        if (aiRes.ok) {
-          const aiData = await aiRes.json();
-          const replyText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (replyText) {
-            return NextResponse.json({ success: true, reply: replyText.trim() });
+          if (aiRes.ok) {
+            const aiData = await aiRes.json();
+            const replyText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (replyText) {
+              return NextResponse.json({ success: true, reply: replyText.trim() });
+            }
+          } else {
+            console.warn(`[Coach API] ${model} returned status:`, aiRes.status);
           }
         }
       } catch (geminiErr) {
