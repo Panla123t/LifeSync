@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+function getBaseUrl(req: NextRequest): string {
+  const forwardedHost = req.headers.get('x-forwarded-host');
+  const host = forwardedHost || req.headers.get('host');
+  const proto = req.headers.get('x-forwarded-proto') || (req.url.startsWith('https') ? 'https' : 'http');
+
+  if (host) {
+    return `${proto}://${host}`;
+  }
+
+  return process.env.APP_BASE_URL?.replace(/\/$/, '') || 'https://life-sync-panla123ts-projects.vercel.app';
+}
+
 export async function GET(req: NextRequest) {
   const lineClientId = process.env.LINE_LOGIN_CHANNEL_ID || process.env.LINE_CHANNEL_ID;
-  const baseUrl = process.env.APP_BASE_URL?.replace(/\/$/, '') || 'https://life-sync-panla123ts-projects.vercel.app';
+  const baseUrl = getBaseUrl(req);
   const callbackUrl = `${baseUrl}/api/auth/line/callback`;
 
   // If LINE Login Channel is not configured yet, redirect with helpful prompt
