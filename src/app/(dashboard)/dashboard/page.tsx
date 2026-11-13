@@ -22,6 +22,9 @@ import {
   Calendar
 } from 'lucide-react';
 import type { Quest, UserQuest } from '@/types/database';
+import LevelUpModal, { getLevelFromPoints } from '@/components/gamification/LevelUpModal';
+import { fireConfettiBurst, fireLevelUpCannons } from '@/lib/utils/confetti';
+import { playWaterSplash, playLevelUpFanfare } from '@/lib/utils/sound';
 import WeeklyAnalytics, { 
   DailyHydration, 
   DailySleep, 
@@ -47,6 +50,8 @@ export default function DashboardPage() {
   const [weeklyHydration, setWeeklyHydration] = useState<DailyHydration[]>([]);
   const [weeklySleep, setWeeklySleep] = useState<DailySleep[]>([]);
   const [weeklyNutrition, setWeeklyNutrition] = useState<DailyNutrition[]>([]);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [currentLevelNumber, setCurrentLevelNumber] = useState(1);
 
   const supabase = createClient();
 
@@ -114,6 +119,7 @@ export default function DashboardPage() {
       if (pointTxs) {
         const totalPoints = pointTxs.reduce((sum, tx) => sum + tx.points_delta, 0);
         setPoints(totalPoints);
+        setCurrentLevelNumber(getLevelFromPoints(totalPoints).level);
       }
 
       // 6. Get Active Quests
@@ -136,7 +142,13 @@ export default function DashboardPage() {
             setCompletedQuestIds(syncData.completedQuestIds);
           }
           if (typeof syncData.totalPoints === 'number') {
-            setPoints(syncData.totalPoints);
+            const nextPts = syncData.totalPoints;
+            setPoints(nextPts);
+            const lvl = getLevelFromPoints(nextPts);
+            if (lvl.level > currentLevelNumber && currentLevelNumber > 0) {
+              setCurrentLevelNumber(lvl.level);
+              setShowLevelUp(true);
+            }
           }
           if (syncData.streaks?.overall?.current !== undefined) {
             setStreakDays(syncData.streaks.overall.current);
@@ -300,7 +312,17 @@ export default function DashboardPage() {
       });
 
       if (!error) {
-        setWaterTotal((prev) => prev + amount);
+        const prevTotal = waterTotal;
+        const newTotal = prevTotal + amount;
+        setWaterTotal(newTotal);
+
+        if (prevTotal < waterGoal && newTotal >= waterGoal) {
+          fireLevelUpCannons();
+          playLevelUpFanfare();
+        } else {
+          playWaterSplash();
+        }
+
         setWeeklyHydration((prev) => {
           const todayStr = new Date().toISOString().slice(0, 10);
           return prev.map((item) =>
@@ -314,7 +336,15 @@ export default function DashboardPage() {
             reason: 'Logged water intake',
             idempotency_key: `water_${user.id}_${new Date().toISOString().slice(0, 10)}`,
           });
-          setPoints((p) => p + 10);
+          setPoints((p) => {
+            const nextPoints = p + 10;
+            const newLvl = getLevelFromPoints(nextPoints);
+            if (newLvl.level > currentLevelNumber) {
+              setCurrentLevelNumber(newLvl.level);
+              setShowLevelUp(true);
+            }
+            return nextPoints;
+          });
         }
       }
     } finally {
@@ -349,6 +379,7 @@ export default function DashboardPage() {
             href="/quests"
             className="flex items-center gap-1.5 bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 text-amber-900 dark:text-amber-300 px-3 py-1.5 rounded-full shadow-xs active:scale-95 transition-all"
           >
+            <span className="text-sm">{getLevelFromPoints(points).badgeEmoji}</span>
             <Flame className="h-4 w-4 text-orange-500 fill-orange-500 animate-pulse" />
             {streakDays > 0 && (
               <span className="text-xs font-black text-orange-600 dark:text-orange-400">
@@ -609,6 +640,14 @@ export default function DashboardPage() {
           {t.dashboard.connect} <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
+
+      <LevelUpModal
+        isOpen={showLevelUp}
+        onClose={() => setShowLevelUp(false)}
+        levelInfo={getLevelFromPoints(points)}
+        points={points}
+        locale={locale}
+      />
     </div>
   );
 }

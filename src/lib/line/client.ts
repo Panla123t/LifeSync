@@ -158,6 +158,15 @@ export function getAppUrl(): string {
   return clean;
 }
 
+export function getLiffUrl(subPath: string = ''): string {
+  const liffId = process.env.NEXT_PUBLIC_LINE_LIFF_ID;
+  const path = subPath ? (subPath.startsWith('/') ? subPath : `/${subPath}`) : '';
+  if (liffId && liffId !== 'your-line-liff-id') {
+    return `https://liff.line.me/${liffId}${path}`;
+  }
+  return `${getAppUrl()}${path}`;
+}
+
 export function createWelcomeMessage(appUrl: string = getAppUrl()): LineMessage {
   return {
     type: 'text',
@@ -456,10 +465,10 @@ export function createMorningGreetingMessage(userName: string): LineMessage {
 }
 
 export function createMealReminderMessage(userName: string): LineMessage {
-  const appUrl = getAppUrl();
+  const nutritionUrl = getLiffUrl('/nutrition');
   return {
     type: 'text',
-    text: `ได้เวลาเติมพลังแล้วครับคุณ ${userName}! 🥗🍲\nทำงานเพลินจนลืมเวลาหรือเปล่าเอ่ย? แวะทานอาหารที่มีประโยชน์ให้อิ่มอร่อยและมีพลังกันน้า 😋\n\nทานมื้อนี้แล้ว แตะลิงก์เพื่อเข้าเว็บแอป LifeSync ไปถ่ายรูปอาหารให้ AI ช่วยคำนวณแคลอรี่ หรือพิมพ์จดเก็บแต้มเควสต์ได้เลยนะครับ 📸✨\n\n👉 บันทึกอาหาร:\n${appUrl}/nutrition`,
+    text: `ได้เวลาเติมพลังแล้วครับคุณ ${userName}! 🥗🍲\nทำงานเพลินจนลืมเวลาหรือเปล่าเอ่ย? แวะทานอาหารที่มีประโยชน์ให้อิ่มอร่อยและมีพลังกันน้า 😋\n\nทานมื้อนี้แล้ว แตะลิงก์เพื่อเข้าเว็บแอป LifeSync ไปถ่ายรูปอาหารให้ AI ช่วยคำนวณแคลอรี่ หรือพิมพ์จดเก็บแต้มเควสต์ได้เลยนะครับ 📸✨\n\n👉 บันทึกอาหาร:\n${nutritionUrl}`,
     quickReply: {
       items: [
         {
@@ -467,7 +476,7 @@ export function createMealReminderMessage(userName: string): LineMessage {
           action: {
             type: 'uri',
             label: '📸 บันทึกอาหารในเว็บแอป',
-            uri: `${appUrl}/nutrition`,
+            uri: nutritionUrl,
           },
         },
         {
@@ -492,10 +501,10 @@ export function createMealReminderMessage(userName: string): LineMessage {
 }
 
 export function createFoodLinkMessage(userName: string): LineMessage {
-  const appUrl = getAppUrl();
+  const nutritionUrl = getLiffUrl('/nutrition');
   return {
     type: 'text',
-    text: `หิวแล้วใช่ไหมครับคุณ ${userName}! 🥗🍲\nซันนี่พร้อมช่วยบันทึกมื้ออร่อยแล้ว แตะลิงก์ด้านล่างเพื่อเปิดเว็บแอป ถ่ายรูปอาหารให้ AI Vision สแกนประเมินแคลอรี่และสารอาหาร หรือพิมพ์เลือกประเภทมื้อได้ทันทีเลยครับ ✨\n\n👉 บันทึกมื้ออาหาร:\n${appUrl}/nutrition`,
+    text: `หิวแล้วใช่ไหมครับคุณ ${userName}! 🥗🍲\nซันนี่พร้อมช่วยบันทึกมื้ออร่อยแล้ว แตะลิงก์ด้านล่างเพื่อเปิดเว็บแอป ถ่ายรูปอาหารให้ AI Vision สแกนประเมินแคลอรี่และสารอาหาร หรือพิมพ์เลือกประเภทมื้อได้ทันทีเลยครับ ✨\n\n👉 บันทึกมื้ออาหาร:\n${nutritionUrl}`,
     quickReply: {
       items: [
         {
@@ -503,7 +512,7 @@ export function createFoodLinkMessage(userName: string): LineMessage {
           action: {
             type: 'uri',
             label: '📸 ถ่ายรูป/บันทึกอาหาร',
-            uri: `${appUrl}/nutrition`,
+            uri: nutritionUrl,
           },
         },
         {
@@ -528,10 +537,10 @@ export function createFoodLinkMessage(userName: string): LineMessage {
 }
 
 export function createSleepLinkMessage(userName: string): LineMessage {
-  const appUrl = getAppUrl();
+  const sleepUrl = getLiffUrl('/sleep');
   return {
     type: 'text',
-    text: `พักผ่อนให้สบายใจนะครับคุณ ${userName} 🌙💤\nไม่ว่าจะเข้านอนรอบดึก หรือแวะงีบชาร์จพลังสั้นๆ (Power Nap) 20-30 นาที แตะลิงก์เพื่อบันทึกในเว็บแอปได้เลยครับ:\n\n👉 บันทึกการนอนและงีบหลับ:\n${appUrl}/sleep`,
+    text: `พักผ่อนให้สบายใจนะครับคุณ ${userName} 🌙💤\nไม่ว่าจะเข้านอนรอบดึก หรือแวะงีบชาร์จพลังสั้นๆ (Power Nap) 20-30 นาที แตะลิงก์เพื่อบันทึกในเว็บแอปได้เลยครับ:\n\n👉 บันทึกการนอนและงีบหลับ:\n${sleepUrl}`,
     quickReply: {
       items: [
         {
@@ -539,7 +548,7 @@ export function createSleepLinkMessage(userName: string): LineMessage {
           action: {
             type: 'uri',
             label: '🌙 เปิดหน้าบันทึกการนอน',
-            uri: `${appUrl}/sleep`,
+            uri: sleepUrl,
           },
         },
         {
@@ -556,10 +565,10 @@ export function createSleepLinkMessage(userName: string): LineMessage {
 }
 
 export function createQuestLinkMessage(userName: string, points: number, completedCount: number): LineMessage {
-  const appUrl = getAppUrl();
+  const questsUrl = getLiffUrl('/quests');
   return {
     type: 'text',
-    text: `🏆 ภารกิจและแต้มสุขภาพของคุณ ${userName} ✨\n\n🔥 แต้มสะสมปัจจุบัน: ${points} แต้ม\n🎯 ภารกิจวันนี้ทำเสร็จแล้ว: ${completedCount} / 4 ภารกิจ\n\nแตะเข้าไปดูรายการภารกิจประจำวันเพื่อพิชิตแต้มและอัปเลเวลในเว็บแอปได้เลยครับ:\n👉 ${appUrl}/quests`,
+    text: `🏆 ภารกิจและแต้มสุขภาพของคุณ ${userName} ✨\n\n🔥 แต้มสะสมปัจจุบัน: ${points} แต้ม\n🎯 ภารกิจวันนี้ทำเสร็จแล้ว: ${completedCount} / 4 ภารกิจ\n\nแตะเข้าไปดูรายการภารกิจประจำวันเพื่อพิชิตแต้มและอัปเลเวลในเว็บแอปได้เลยครับ:\n👉 ${questsUrl}`,
     quickReply: {
       items: [
         {
@@ -567,7 +576,7 @@ export function createQuestLinkMessage(userName: string, points: number, complet
           action: {
             type: 'uri',
             label: '🏆 เปิดดูภารกิจ & เลเวล',
-            uri: `${appUrl}/quests`,
+            uri: questsUrl,
           },
         },
         {
@@ -592,7 +601,8 @@ export function createQuestLinkMessage(userName: string, points: number, complet
 }
 
 export function createWeeklyDigestMessage(userName: string, data: WeeklySummaryData): LineMessage {
-  const appUrl = getAppUrl();
+  const dashboardUrl = getLiffUrl('/dashboard');
+  const questsUrl = getLiffUrl('/quests');
   const sleepText = data.sleepAvgHours > 0 || data.sleepAvgMins > 0
     ? `${data.sleepAvgHours} ชม. ${data.sleepAvgMins} นาที/คืน`
     : 'ยังไม่มีข้อมูล';
@@ -601,7 +611,7 @@ export function createWeeklyDigestMessage(userName: string, data: WeeklySummaryD
 
   return {
     type: 'text',
-    text: `🌈 สรุปสุขภาพรอบสัปดาห์ของคุณ ${userName} ✨\nซันนี่รวบรวมความสม่ำเสมอและสถิติที่ดีตลอด 7 วันที่ผ่านมาให้แล้วครับ:\n\n💧 ดื่มน้ำรวม: ${data.waterTotalMl.toLocaleString()} ml (เฉลี่ย ${data.waterDailyAvgMl.toLocaleString()} ml/วัน)\n🎯 วันที่ดื่มน้ำถึงเป้า: ${data.waterGoalDays} / 7 วัน\n🥗 อาหารที่บันทึก: ${data.mealsTotalCount} มื้อ\n🌙 การนอนเฉลี่ย: ${sleepText}${napText}\n🔥 สถิติวินัยสะสม: ${data.overallStreak} วันต่อเนื่อง\n🌟 แต้มที่ได้รับสัปดาห์นี้: +${data.pointsEarned} แต้ม\n\n💡 คำแนะนำสุขภาพจากซันนี่:\n"${data.aiTipTh}"\n\n👉 ดูกราฟแนวโน้มสุขภาพ 7 วันฉบับเต็มในเว็บแอป:\n${appUrl}/dashboard`,
+    text: `🌈 สรุปสุขภาพรอบสัปดาห์ของคุณ ${userName} ✨\nซันนี่รวบรวมความสม่ำเสมอและสถิติที่ดีตลอด 7 วันที่ผ่านมาให้แล้วครับ:\n\n💧 ดื่มน้ำรวม: ${data.waterTotalMl.toLocaleString()} ml (เฉลี่ย ${data.waterDailyAvgMl.toLocaleString()} ml/วัน)\n🎯 วันที่ดื่มน้ำถึงเป้า: ${data.waterGoalDays} / 7 วัน\n🥗 อาหารที่บันทึก: ${data.mealsTotalCount} มื้อ\n🌙 การนอนเฉลี่ย: ${sleepText}${napText}\n🔥 สถิติวินัยสะสม: ${data.overallStreak} วันต่อเนื่อง\n🌟 แต้มที่ได้รับสัปดาห์นี้: +${data.pointsEarned} แต้ม\n\n💡 คำแนะนำสุขภาพจากซันนี่:\n"${data.aiTipTh}"\n\n👉 ดูกราฟแนวโน้มสุขภาพ 7 วันฉบับเต็มในเว็บแอป:\n${dashboardUrl}`,
     quickReply: {
       items: [
         {
@@ -609,7 +619,7 @@ export function createWeeklyDigestMessage(userName: string, data: WeeklySummaryD
           action: {
             type: 'uri',
             label: '📊 ดูกราฟในเว็บแอป',
-            uri: `${appUrl}/dashboard`,
+            uri: dashboardUrl,
           },
         },
         {
@@ -617,7 +627,7 @@ export function createWeeklyDigestMessage(userName: string, data: WeeklySummaryD
           action: {
             type: 'uri',
             label: '🏆 ดูภารกิจ & เหรียญ',
-            uri: `${appUrl}/quests`,
+            uri: questsUrl,
           },
         },
         {

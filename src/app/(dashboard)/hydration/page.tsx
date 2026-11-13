@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import ThemeToggle from '@/components/shared/ThemeToggle';
+import { fireLevelUpCannons } from '@/lib/utils/confetti';
+import { playWaterSplash, playLevelUpFanfare } from '@/lib/utils/sound';
 import { 
   Droplets, 
   Trash2, 
@@ -91,8 +93,18 @@ export default function HydrationPage() {
       });
 
       if (!error) {
+        const prevTotal = totalAmount;
+        const newTotal = prevTotal + amount;
         setCustomAmount('');
         await fetchLogs();
+
+        // Celebration: if this sip hits 100% of daily goal!
+        if (prevTotal < dailyGoal && newTotal >= dailyGoal) {
+          fireLevelUpCannons();
+          playLevelUpFanfare();
+        } else {
+          playWaterSplash();
+        }
 
         // Trigger quest sync to auto-award points and mark quests
         try {

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Prompt } from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ThemeProvider } from "@/lib/theme/ThemeContext";
+import { LiffProvider } from "@/lib/liff/LiffContext";
+import LiffHeader from "@/components/shared/LiffHeader";
 import "./globals.css";
 
 const promptFont = Prompt({
@@ -59,7 +61,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans selection:bg-emerald-500 selection:text-white bg-[#F8FAF8] dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 transition-colors duration-200">
         <ThemeProvider>
           <LanguageProvider>
-            {children}
+            <LiffProvider>
+              <LiffHeader />
+              {children}
+            </LiffProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

@@ -21,6 +21,9 @@ import {
 import type { Quest } from '@/types/database';
 import type { PillarStreaks } from '@/lib/gamification/streaks';
 import type { UserBadgeStatus } from '@/lib/gamification/badges';
+import LevelUpModal, { getLevelFromPoints } from '@/components/gamification/LevelUpModal';
+import { fireConfettiBurst } from '@/lib/utils/confetti';
+import { playSuccessChime } from '@/lib/utils/sound';
 
 export default function QuestsPage() {
   const { t, locale } = useLanguage();
@@ -31,6 +34,8 @@ export default function QuestsPage() {
   const [badges, setBadges] = useState<UserBadgeStatus[]>([]);
   const [activeTab, setActiveTab] = useState<'quests' | 'badges'>('quests');
   const [loading, setLoading] = useState(true);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [currentLevelNumber, setCurrentLevelNumber] = useState(1);
 
   const supabase = createClient();
 
@@ -45,11 +50,25 @@ export default function QuestsPage() {
           const syncRes = await fetch('/api/quests/sync', { method: 'POST' });
           if (syncRes.ok) {
             const syncData = await syncRes.json();
-            if (syncData.completedQuestIds) {
-              setCompletedQuestIds(syncData.completedQuestIds);
+            if (syncData.completedQuestIds && syncData.completedQuestIds.length > 0) {
+              setCompletedQuestIds((prev) => {
+                const hadNone = prev.length === 0;
+                const newOnes = syncData.completedQuestIds.filter((id: string) => !prev.includes(id));
+                if (!hadNone && newOnes.length > 0) {
+                  fireConfettiBurst();
+                  playSuccessChime();
+                }
+                return syncData.completedQuestIds;
+              });
             }
             if (typeof syncData.totalPoints === 'number') {
-              setTotalPoints(syncData.totalPoints);
+              const pts = syncData.totalPoints;
+              setTotalPoints(pts);
+              const lvl = getLevelFromPoints(pts);
+              if (lvl.level > currentLevelNumber && currentLevelNumber > 0) {
+                setCurrentLevelNumber(lvl.level);
+                setShowLevelUp(true);
+              }
             }
             if (syncData.streaks) {
               setStreaks(syncData.streaks);
@@ -456,6 +475,14 @@ export default function QuestsPage() {
           </p>
         </div>
       </div>
+
+      <LevelUpModal
+        isOpen={showLevelUp}
+        onClose={() => setShowLevelUp(false)}
+        levelInfo={getLevelFromPoints(totalPoints)}
+        points={totalPoints}
+        locale={locale}
+      />
     </div>
   );
 }
