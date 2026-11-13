@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+function getBaseUrl(req: NextRequest): string {
+  const forwardedHost = req.headers.get('x-forwarded-host');
+  const host = forwardedHost || req.headers.get('host');
+  const proto = req.headers.get('x-forwarded-proto') || (req.url.startsWith('https') ? 'https' : 'http');
+
+  if (host) {
+    return `${proto}://${host}`;
+  }
+
+  return process.env.APP_BASE_URL?.replace(/\/$/, '') || 'https://life-sync-panla123ts-projects.vercel.app';
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
@@ -8,7 +20,7 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
-  const baseUrl = process.env.APP_BASE_URL?.replace(/\/$/, '') || 'https://life-sync-panla123ts-projects.vercel.app';
+  const baseUrl = getBaseUrl(req);
 
   if (error || !code) {
     console.error('LINE OAuth Error:', error, errorDescription);
