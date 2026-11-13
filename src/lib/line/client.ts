@@ -18,7 +18,25 @@ export interface LineTextMessage {
   };
 }
 
-export type LineMessage = LineTextMessage;
+export interface LineFlexMessage {
+  type: 'flex';
+  altText: string;
+  contents: Record<string, unknown>;
+  quickReply?: {
+    items: Array<{
+      type: 'action';
+      action: {
+        type: 'message' | 'uri' | 'postback';
+        label: string;
+        text?: string;
+        uri?: string;
+        data?: string;
+      };
+    }>;
+  };
+}
+
+export type LineMessage = LineTextMessage | LineFlexMessage;
 
 const LINE_MESSAGING_API = 'https://api.line.me/v2/bot/message';
 
@@ -604,14 +622,337 @@ export function createWeeklyDigestMessage(userName: string, data: WeeklySummaryD
   const dashboardUrl = getLiffUrl('/dashboard');
   const questsUrl = getLiffUrl('/quests');
   const sleepText = data.sleepAvgHours > 0 || data.sleepAvgMins > 0
-    ? `${data.sleepAvgHours} ชม. ${data.sleepAvgMins} นาที/คืน`
-    : 'ยังไม่มีข้อมูล';
+    ? `${data.sleepAvgHours} ชม. ${data.sleepAvgMins} น./คืน`
+    : 'ไม่มีข้อมูล';
 
-  const napText = data.sleepNapsCount > 0 ? ` (งีบชาร์จพลัง ${data.sleepNapsCount} ครั้ง ⚡)` : '';
+  const napText = data.sleepNapsCount > 0 ? ` (+งีบ ${data.sleepNapsCount} ครั้ง)` : '';
+
+  // Determine weekly performance grade
+  let grade = 'B';
+  let gradeColor = '#F59E0B';
+  if (data.waterGoalDays >= 5 && data.overallStreak >= 5) {
+    grade = 'A+';
+    gradeColor = '#10B981';
+  } else if (data.waterGoalDays >= 4 || data.overallStreak >= 3) {
+    grade = 'A';
+    gradeColor = '#0D9488';
+  } else if (data.waterGoalDays >= 2) {
+    grade = 'B+';
+    gradeColor = '#0284C7';
+  }
+
+  const waterPct = Math.min(100, Math.max(10, Math.round((data.waterGoalDays / 7) * 100)));
+
+  const altText = `🌈 สรุปสุขภาพรอบสัปดาห์ของคุณ ${userName}: ดื่มน้ำ ${data.waterTotalMl.toLocaleString()}ml (ถึงเป้า ${data.waterGoalDays}/7 วัน), นอนเฉลี่ย ${sleepText}, บันทึก ${data.mealsTotalCount} มื้อ, วินัยต่อเนื่อง ${data.overallStreak} วัน (+${data.pointsEarned} แต้ม)`;
 
   return {
-    type: 'text',
-    text: `🌈 สรุปสุขภาพรอบสัปดาห์ของคุณ ${userName} ✨\nซันนี่รวบรวมความสม่ำเสมอและสถิติที่ดีตลอด 7 วันที่ผ่านมาให้แล้วครับ:\n\n💧 ดื่มน้ำรวม: ${data.waterTotalMl.toLocaleString()} ml (เฉลี่ย ${data.waterDailyAvgMl.toLocaleString()} ml/วัน)\n🎯 วันที่ดื่มน้ำถึงเป้า: ${data.waterGoalDays} / 7 วัน\n🥗 อาหารที่บันทึก: ${data.mealsTotalCount} มื้อ\n🌙 การนอนเฉลี่ย: ${sleepText}${napText}\n🔥 สถิติวินัยสะสม: ${data.overallStreak} วันต่อเนื่อง\n🌟 แต้มที่ได้รับสัปดาห์นี้: +${data.pointsEarned} แต้ม\n\n💡 คำแนะนำสุขภาพจากซันนี่:\n"${data.aiTipTh}"\n\n👉 ดูกราฟแนวโน้มสุขภาพ 7 วันฉบับเต็มในเว็บแอป:\n${dashboardUrl}`,
+    type: 'flex',
+    altText,
+    contents: {
+      type: 'bubble',
+      size: 'giga',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#059669',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '☀️ LIFESYNC WEEKLY REPORT',
+                    color: '#A7F3D0',
+                    weight: 'bold',
+                    size: 'xxs',
+                    letterSpacing: '1px',
+                  },
+                  {
+                    type: 'text',
+                    text: 'สรุปสุขภาพ 7 วัน',
+                    color: '#FFFFFF',
+                    weight: 'bold',
+                    size: 'xl',
+                    margin: 'xs',
+                  },
+                  {
+                    type: 'text',
+                    text: `ประจำสัปดาห์ • คุณ ${userName}`,
+                    color: '#E6FFFA',
+                    size: 'xs',
+                    margin: 'xs',
+                  },
+                ],
+              },
+              {
+                type: 'box',
+                layout: 'vertical',
+                cornerRadius: '16px',
+                backgroundColor: '#FFFFFF',
+                paddingAll: '6px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '68px',
+                height: '68px',
+                contents: [
+                  {
+                    type: 'text',
+                    text: 'GRADE',
+                    size: 'xxs',
+                    color: '#64748B',
+                    weight: 'bold',
+                  },
+                  {
+                    type: 'text',
+                    text: grade,
+                    size: 'xl',
+                    color: gradeColor,
+                    weight: 'bold',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        spacing: 'lg',
+        contents: [
+          // 1. Water Section
+          {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'xs',
+            contents: [
+              {
+                type: 'box',
+                layout: 'horizontal',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '💧 ดื่มน้ำรวม (Hydration)',
+                    size: 'xs',
+                    color: '#0284C7',
+                    weight: 'bold',
+                    flex: 1,
+                  },
+                  {
+                    type: 'text',
+                    text: `${data.waterTotalMl.toLocaleString()} ml`,
+                    size: 'xs',
+                    color: '#0F172A',
+                    weight: 'bold',
+                    align: 'end',
+                  },
+                ],
+              },
+              {
+                type: 'text',
+                text: `ถึงเป้า ${data.waterGoalDays} จาก 7 วัน (เฉลี่ย ${data.waterDailyAvgMl.toLocaleString()} ml/วัน)`,
+                size: 'xxs',
+                color: '#64748B',
+              },
+              {
+                type: 'box',
+                layout: 'vertical',
+                backgroundColor: '#E0F2FE',
+                height: '6px',
+                cornerRadius: '3px',
+                margin: 'sm',
+                contents: [
+                  {
+                    type: 'box',
+                    layout: 'vertical',
+                    backgroundColor: '#0284C7',
+                    width: `${waterPct}%`,
+                    height: '6px',
+                    cornerRadius: '3px',
+                    contents: [],
+                  },
+                ],
+              },
+            ],
+          },
+          // 2. Sleep Section
+          {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'xs',
+            contents: [
+              {
+                type: 'box',
+                layout: 'horizontal',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '🌙 การนอนหลับ (Sleep)',
+                    size: 'xs',
+                    color: '#6366F1',
+                    weight: 'bold',
+                    flex: 1,
+                  },
+                  {
+                    type: 'text',
+                    text: sleepText,
+                    size: 'xs',
+                    color: '#0F172A',
+                    weight: 'bold',
+                    align: 'end',
+                  },
+                ],
+              },
+              {
+                type: 'text',
+                text: `พักผ่อนอย่างสม่ำเสมอ${napText}`,
+                size: 'xxs',
+                color: '#64748B',
+              },
+            ],
+          },
+          // 3. Nutrition & Streak Section
+          {
+            type: 'box',
+            layout: 'horizontal',
+            spacing: 'md',
+            contents: [
+              {
+                type: 'box',
+                layout: 'vertical',
+                flex: 1,
+                backgroundColor: '#F8FAFC',
+                paddingAll: '10px',
+                cornerRadius: '12px',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '🥗 อาหารที่บันทึก',
+                    size: 'xxs',
+                    color: '#64748B',
+                  },
+                  {
+                    type: 'text',
+                    text: `${data.mealsTotalCount} มื้อ`,
+                    size: 'sm',
+                    color: '#059669',
+                    weight: 'bold',
+                    margin: 'xs',
+                  },
+                ],
+              },
+              {
+                type: 'box',
+                layout: 'vertical',
+                flex: 1,
+                backgroundColor: '#F8FAFC',
+                paddingAll: '10px',
+                cornerRadius: '12px',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '🔥 วินัยสะสมต่อเนื่อง',
+                    size: 'xxs',
+                    color: '#64748B',
+                  },
+                  {
+                    type: 'text',
+                    text: `${data.overallStreak} วัน`,
+                    size: 'sm',
+                    color: '#EA580C',
+                    weight: 'bold',
+                    margin: 'xs',
+                  },
+                ],
+              },
+              {
+                type: 'box',
+                layout: 'vertical',
+                flex: 1,
+                backgroundColor: '#F8FAFC',
+                paddingAll: '10px',
+                cornerRadius: '12px',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '🌟 แต้มสัปดาห์นี้',
+                    size: 'xxs',
+                    color: '#64748B',
+                  },
+                  {
+                    type: 'text',
+                    text: `+${data.pointsEarned}`,
+                    size: 'sm',
+                    color: '#D97706',
+                    weight: 'bold',
+                    margin: 'xs',
+                  },
+                ],
+              },
+            ],
+          },
+          // 4. AI Coach Sunny Tip
+          {
+            type: 'box',
+            layout: 'vertical',
+            backgroundColor: '#F0FDF4',
+            cornerRadius: '14px',
+            paddingAll: '12px',
+            borderColor: '#BBF7D0',
+            borderWidth: '1px',
+            spacing: 'xs',
+            contents: [
+              {
+                type: 'box',
+                layout: 'horizontal',
+                spacing: 'xs',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '💡 คำแนะนำจากซันนี่ (AI Coach):',
+                    size: 'xxs',
+                    color: '#15803D',
+                    weight: 'bold',
+                  },
+                ],
+              },
+              {
+                type: 'text',
+                text: `"${data.aiTipTh}"`,
+                size: 'xs',
+                color: '#166534',
+                wrap: true,
+              },
+            ],
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '16px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '📊 ดูกราฟแนวโน้มในเว็บแอป',
+              uri: dashboardUrl,
+            },
+            style: 'primary',
+            color: '#059669',
+            height: 'sm',
+          },
+        ],
+      },
+    },
     quickReply: {
       items: [
         {

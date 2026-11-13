@@ -139,6 +139,7 @@ export interface TranslationSchema {
     healthyFirstDesc: string;
     tabDaily: string;
     tabBadges: string;
+    tabCommunity: string;
     streakTitle: string;
     streakActive: string;
     streakDays: string;
@@ -355,6 +356,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       healthyFirstDesc: 'LifeSync ให้รางวัลกับความสม่ำเสมอในการบันทึก เราไม่สนับสนุนการอดอาหารรุนแรง การดื่มน้ำมากเกินไป หรือการอดนอนเพื่อทำภารกิจ',
       tabDaily: '🎯 ภารกิจประจำวัน',
       tabBadges: '🏆 เหรียญความสำเร็จ',
+      tabCommunity: '👥 เพื่อน & อันดับ',
       streakTitle: 'สถิติวินัยสะสม',
       streakActive: 'วินัยต่อเนื่อง',
       streakDays: 'วัน',
@@ -569,6 +571,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       healthyFirstDesc: 'LifeSync rewards consistent logging and healthy lifestyle self-awareness. We never incentivize restrictive eating, excessive water intake, or lost sleep.',
       tabDaily: '🎯 Daily Quests',
       tabBadges: '🏆 Milestone Badges',
+      tabCommunity: '👥 Friends & Rank',
       streakTitle: 'Habit Streak',
       streakActive: 'Day Streak',
       streakDays: 'days',
