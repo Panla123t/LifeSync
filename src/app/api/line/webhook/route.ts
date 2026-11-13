@@ -17,6 +17,8 @@ import {
 } from '@/lib/line/client';
 import { generateWeeklySummary } from '@/lib/analytics/weeklySummary';
 import { verifyAndConsumeMemoryToken } from '../link-token/route';
+import { getLocalDateStr, getStartOfDayISO } from '@/lib/utils/date';
+import { askSunnyCoach } from '@/lib/ai/coach';
 
 interface LineEventSource {
   userId: string;
@@ -309,6 +311,9 @@ export async function POST(req: NextRequest) {
             .maybeSingle();
 
           const userName = profile?.display_name || 'เพื่อนคนเก่ง';
+          const userTimezone = profile?.timezone || 'Asia/Bangkok';
+          const todayDateStr = getLocalDateStr(userTimezone);
+          const startOfDayISO = getStartOfDayISO(todayDateStr, userTimezone);
 
           // 1. Water Logging Command: e.g. "น้ำ 250", "ดื่มน้ำ 500", "+250", "250ml", "น้ำ"
           const waterMatch = text.match(/^(?:น้ำ|ดื่มน้ำ|water|\+)\s*(\d{2,4})?\s*(?:ml|มล)?$/i);
@@ -323,21 +328,17 @@ export async function POST(req: NextRequest) {
               logged_at: new Date().toISOString(),
             });
 
-            // Calculate today's sum
-            const startOfDay = new Date();
-            startOfDay.setHours(0, 0, 0, 0);
-
+            // Calculate today's sum in user's timezone
             const { data: waterLogs } = await admin
               .from('water_logs')
               .select('amount_ml')
               .eq('user_id', linkedUserId)
-              .gte('logged_at', startOfDay.toISOString());
+              .gte('logged_at', startOfDayISO);
 
             const todayTotal = (waterLogs || []).reduce((acc, curr) => acc + curr.amount_ml, 0);
             const waterGoal = 2000;
 
             // Complete water quest in real-time
-            const todayDateStr = new Date().toISOString().slice(0, 10);
             const { data: waterQuest } = await admin
               .from('quests')
               .select('id, points, title')
@@ -374,12 +375,9 @@ export async function POST(req: NextRequest) {
 
           // 2. Daily Summary Command: e.g. "สรุป", "summary", "status", "วันนี้", "คะแนน"
           if (['สรุป', 'summary', 'status', 'ภาพรวม', 'วันนี้', 'คะแนน'].includes(text.toLowerCase())) {
-            const startOfDay = new Date();
-            startOfDay.setHours(0, 0, 0, 0);
-
             const [waterRes, foodRes, sleepRes, pointsRes] = await Promise.all([
-              admin.from('water_logs').select('amount_ml').eq('user_id', linkedUserId).gte('logged_at', startOfDay.toISOString()),
-              admin.from('food_logs').select('id').eq('user_id', linkedUserId).gte('logged_at', startOfDay.toISOString()),
+              admin.from('water_logs').select('amount_ml').eq('user_id', linkedUserId).gte('logged_at', startOfDayISO),
+              admin.from('food_logs').select('id').eq('user_id', linkedUserId).gte('logged_at', startOfDayISO),
               admin.from('sleep_logs').select('duration_minutes').eq('user_id', linkedUserId).order('wake_time', { ascending: false }).limit(1),
               admin.from('point_transactions').select('points_delta').eq('user_id', linkedUserId),
             ]);
@@ -426,10 +424,9 @@ export async function POST(req: NextRequest) {
 
           // 4. Quests & Points Command: e.g. "เควส", "ภารกิจ", "แต้ม", "คะแนน", "quest", "level", "รางวัล"
           if (['เควส', 'ภารกิจ', 'แต้ม', 'คะแนน', 'quest', 'quests', 'level', 'รางวัล'].some(k => text.toLowerCase().includes(k))) {
-            const todayStr = new Date().toISOString().slice(0, 10);
             const [pointsRes, userQuestsRes] = await Promise.all([
               admin.from('point_transactions').select('points_delta').eq('user_id', linkedUserId),
-              admin.from('user_quests').select('id').eq('user_id', linkedUserId).eq('quest_date', todayStr).eq('status', 'completed'),
+              admin.from('user_quests').select('id').eq('user_id', linkedUserId).eq('quest_date', todayDateStr).eq('status', 'completed'),
             ]);
 
             const totalPoints = (pointsRes.data || []).reduce((sum, tx) => sum + tx.points_delta, 0);
@@ -600,27 +597,31 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          // 8. Fallback friendly companion message for linked user
+          // 8. AI Health Habit Coach for linked user (freeform wellness consultation)
+          const aiResponse = await askSunnyCoach(text, {
+            userName,
+          });
+
           await sendLineReply(event.replyToken, [
             {
               type: 'text',
-              text: `ซันนี่อยู่นี่ครับคุณ ${userName}! ☀️🌿\n\nมีอะไรให้ซันนี่ช่วยดูแลไหมครับ? คุณสามารถพิมพ์คุยหรือแตะเปิดเว็บแอป LifeSync ได้ทันทีเลย:\n• 💧 พิมพ์ "น้ำ 250" เพื่อจดน้ำดื่มทันที\n• 🥗 พิมพ์ "อาหาร" เพื่อเปิดหน้าถ่ายรูปสแกนแคลอรี่\n• 🌙 พิมพ์ "นอน" เพื่อเปิดหน้าบันทึกการนอน\n• 📊 พิมพ์ "สรุป" เพื่อดูภาพรวมสุขภาพ\n• 🏆 พิมพ์ "เควส" เพื่อเช็คภารกิจและแต้มสะสม`,
+              text: aiResponse,
               quickReply: {
                 items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'message',
+                      label: '💧 จิบน้ำ +250ml',
+                      text: 'น้ำ 250',
+                    },
+                  },
                   {
                     type: 'action',
                     action: {
                       type: 'uri',
                       label: '🥗 บันทึกอาหาร',
                       uri: `${getAppUrl()}/nutrition`,
-                    },
-                  },
-                  {
-                    type: 'action',
-                    action: {
-                      type: 'message',
-                      label: '💧 ดื่มน้ำ +250ml',
-                      text: 'น้ำ 250',
                     },
                   },
                   {
