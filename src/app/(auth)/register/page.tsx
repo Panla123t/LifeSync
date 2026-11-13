@@ -132,7 +132,29 @@ export default function RegisterPage() {
               </Link>
             </div>
           ) : (
-            <form className="space-y-4" onSubmit={handleRegister}>
+            <div className="space-y-4">
+              {/* LINE 1-Tap Login/Register */}
+              <div className="space-y-3.5">
+                <a
+                  href="/api/auth/line"
+                  className="w-full flex justify-center items-center gap-2.5 py-3 px-4 rounded-2xl shadow-[0_4px_14px_rgba(6,199,85,0.28)] text-xs sm:text-sm font-bold text-white bg-[#06C755] hover:bg-[#05b04b] active:scale-95 transition-all cursor-pointer"
+                >
+                  <svg className="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 5.92 2 10.75c0 4.31 3.59 7.92 8.44 8.62.33.07.78.22.89.5.1.26.07.66.03.92-.06.39-.24 1.4-.27 1.6-.05.29-.21 1.13.99.62 1.2-.52 6.47-3.81 8.84-6.52C21.73 14.93 22 12.92 22 10.75 22 5.92 17.52 2 12 2z" />
+                  </svg>
+                  <span>{t.auth.lineLogin}</span>
+                </a>
+
+                {/* Divider */}
+                <div className="relative flex items-center justify-center pt-1 pb-1">
+                  <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+                  <span className="absolute bg-white dark:bg-slate-900 px-3 text-[11px] font-semibold text-slate-400">
+                    {t.auth.orContinueWithEmail}
+                  </span>
+                </div>
+              </div>
+
+              <form className="space-y-4" onSubmit={handleRegister}>
               {error && (
                 <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5">
                   <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-500 mt-0.5" />
@@ -206,7 +228,8 @@ export default function RegisterPage() {
                 {!loading && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>
-          )}
+          </div>
+        )}
 
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-500 dark:text-slate-400">

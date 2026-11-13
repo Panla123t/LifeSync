@@ -277,7 +277,48 @@ export async function POST(req: NextRequest) {
               }
 
               console.log(`[LINE Webhook] Successfully linked user ${foundUser.id} via email ${targetEmail}`);
-              await sendLineReply(event.replyToken, [createLinkSuccessMessage(displayName)]);
+
+              // Generate instant magic login link for linked user
+              let magicLoginUrl = `${getAppUrl()}/dashboard`;
+              try {
+                const { data: linkData } = await admin.auth.admin.generateLink({
+                  type: 'magiclink',
+                  email: targetEmail,
+                  options: { redirectTo: `${getAppUrl()}/dashboard` },
+                });
+                if (linkData?.properties?.action_link) {
+                  magicLoginUrl = linkData.properties.action_link;
+                }
+              } catch (linkErr) {
+                console.warn('Error generating link on email connect:', linkErr);
+              }
+
+              await sendLineReply(event.replyToken, [
+                {
+                  type: 'text',
+                  text: `เย้! เชื่อมต่อสำเร็จแล้วครับคุณ ${displayName} 🎉✨\n\nซันนี่มอบโบนัสตั้งต้นให้เลย +20 แต้ม 🌟\n\nแตะปุ่มด้านล่างเพื่อเปิดเว็บแอป LifeSync เข้าสู่ระบบได้ทันทีโดยไม่ต้องใส่รหัสผ่านเลยครับผม 🚀`,
+                  quickReply: {
+                    items: [
+                      {
+                        type: 'action',
+                        action: {
+                          type: 'uri',
+                          label: '🚀 เข้าสู่ระบบทันที (1-Tap)',
+                          uri: magicLoginUrl,
+                        },
+                      },
+                      {
+                        type: 'action',
+                        action: {
+                          type: 'message',
+                          label: '💧 จิบน้ำ (+250ml)',
+                          text: 'น้ำ 250',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ]);
               continue;
             } else {
               await sendLineReply(event.replyToken, [
@@ -436,6 +477,56 @@ export async function POST(req: NextRequest) {
               createQuestLinkMessage(userName, totalPoints, completedCount),
             ]);
             continue;
+          }
+
+          // 5. Instant 1-Tap Magic Login Command: e.g. "เข้าสู่ระบบ", "login", "ล็อกอิน", "เข้าเว็บ", "เว็บแอป", "webapp", "signin"
+          if (['เข้าสู่ระบบ', 'login', 'ล็อกอิน', 'เข้าเว็บ', 'เว็บแอป', 'webapp', 'signin', 'ลงชื่อเข้าใช้'].some(k => text.toLowerCase().includes(k))) {
+            try {
+              const { data: userRes } = await admin.auth.admin.getUserById(linkedUserId);
+              const userEmail = userRes?.user?.email;
+
+              if (userEmail) {
+                const { data: linkData } = await admin.auth.admin.generateLink({
+                  type: 'magiclink',
+                  email: userEmail,
+                  options: {
+                    redirectTo: `${getAppUrl()}/dashboard`,
+                  },
+                });
+
+                if (linkData?.properties?.action_link) {
+                  await sendLineReply(event.replyToken, [
+                    {
+                      type: 'text',
+                      text: `☀️ ลิงก์เข้าสู่ระบบอัตโนมัติของคุณ ${userName} พร้อมแล้วครับ!\n\nแตะปุ่มด้านล่างเพื่อเปิดเว็บแอป LifeSync ได้ทันทีโดยไม่ต้องใส่รหัสผ่านเลยครับผม 🚀✨\n\n(ลิงก์นี้ใช้ได้ 1 ครั้งเพื่อความปลอดภัยของคุณครับ)`,
+                      quickReply: {
+                        items: [
+                          {
+                            type: 'action',
+                            action: {
+                              type: 'uri',
+                              label: '🚀 แตะเข้าสู่ระบบทันที',
+                              uri: linkData.properties.action_link,
+                            },
+                          },
+                          {
+                            type: 'action',
+                            action: {
+                              type: 'uri',
+                              label: '📊 แดชบอร์ด',
+                              uri: `${getAppUrl()}/dashboard`,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ]);
+                  continue;
+                }
+              }
+            } catch (loginErr) {
+              console.warn('[LINE Webhook] Error generating magic login link:', loginErr);
+            }
           }
 
           // 6. Reminder check & test command: e.g. "เตือน", "เตือนดื่มน้ำ", "เตือนนอน", "การแจ้งเตือน"
@@ -646,7 +737,28 @@ export async function POST(req: NextRequest) {
           ]);
         } else {
           // Unlinked user sending messages
-          await sendLineReply(event.replyToken, [createWelcomeMessage(getAppUrl())]);
+          if (['เข้าสู่ระบบ', 'login', 'ล็อกอิน', 'เข้าเว็บ', 'เว็บแอป', 'webapp', 'signin'].some(k => text.toLowerCase().includes(k))) {
+            await sendLineReply(event.replyToken, [
+              {
+                type: 'text',
+                text: `ยินดีต้อนรับครับ! ☀️ หากต้องการเข้าสู่ระบบเว็บแอป LifeSync ง่ายๆ:\n\n• เพียงพิมพ์ "อีเมล" ที่คุณใช้สมัครส่งมาในห้องแชทนี้ ซันนี่จะส่งลิงก์เข้าสู่ระบบอัตโนมัติให้ทันทีโดยไม่ต้องจำรหัสผ่าน!\n• หรือหากยังไม่มีบัญชี แตะปุ่มด้านล่างเพื่อเปิดหน้าเว็บ LifeSync ได้เลยครับ 😊`,
+                quickReply: {
+                  items: [
+                    {
+                      type: 'action',
+                      action: {
+                        type: 'uri',
+                        label: '✨ เปิดหน้าเว็บ LifeSync',
+                        uri: `${getAppUrl()}/login`,
+                      },
+                    },
+                  ],
+                },
+              },
+            ]);
+          } else {
+            await sendLineReply(event.replyToken, [createWelcomeMessage(getAppUrl())]);
+          }
         }
       }
     }

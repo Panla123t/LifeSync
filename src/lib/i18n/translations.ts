@@ -210,6 +210,8 @@ export interface TranslationSchema {
     newPassword: string;
     updatePassword: string;
     passwordUpdated: string;
+    lineLogin: string;
+    orContinueWithEmail: string;
   };
 }
 
@@ -424,6 +426,8 @@ export const translations: Record<Locale, TranslationSchema> = {
       newPassword: 'รหัสผ่านใหม่',
       updatePassword: 'บันทึกรหัสผ่านใหม่',
       passwordUpdated: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว',
+      lineLogin: 'เข้าสู่ระบบด้วย LINE',
+      orContinueWithEmail: 'หรือเข้าสู่ระบบด้วยอีเมล',
     },
   },
   en: {
@@ -636,6 +640,8 @@ export const translations: Record<Locale, TranslationSchema> = {
       newPassword: 'New Password',
       updatePassword: 'Update Password',
       passwordUpdated: 'Password updated successfully',
+      lineLogin: 'Log in with LINE',
+      orContinueWithEmail: 'or continue with email',
     },
   },
 };
