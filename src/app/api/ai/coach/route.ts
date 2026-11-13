@@ -121,8 +121,8 @@ ${userContextStr}`;
           parts: [{ text: message }],
         });
 
-        // Attempt gemini-3.5-flash first, fallback to gemini-flash-lite-latest
-        const candidateModels = ['gemini-3.5-flash', 'gemini-flash-lite-latest'];
+        // Attempt gemini-flash-lite-latest first (fast, no token budget exhaustion), fallback to gemini-3.5-flash
+        const candidateModels = ['gemini-flash-lite-latest', 'gemini-3.5-flash'];
         for (const model of candidateModels) {
           const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
           const aiRes = await fetch(apiUrl, {
@@ -133,7 +133,7 @@ ${userContextStr}`;
               contents,
               generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 500,
+                maxOutputTokens: 2048,
               },
             }),
           });
