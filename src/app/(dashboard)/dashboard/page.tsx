@@ -17,10 +17,12 @@ import {
   Plus,
   ArrowUpRight,
   BarChart3,
-  Calendar
+  Calendar,
+  Share2
 } from 'lucide-react';
 import type { Quest, UserQuest } from '@/types/database';
 import LevelUpModal, { getLevelFromPoints } from '@/components/gamification/LevelUpModal';
+import ShareStoryModal from '@/components/analytics/ShareStoryModal';
 import { fireConfettiBurst, fireLevelUpCannons } from '@/lib/utils/confetti';
 import { playWaterSplash, playLevelUpFanfare, playSuccessChime } from '@/lib/utils/sound';
 import WeeklyAnalytics, { 
@@ -50,6 +52,7 @@ export default function DashboardPage() {
   const [weeklyNutrition, setWeeklyNutrition] = useState<DailyNutrition[]>([]);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [currentLevelNumber, setCurrentLevelNumber] = useState(1);
+  const [showShareStory, setShowShareStory] = useState(false);
 
   const supabase = createClient();
 
@@ -378,6 +381,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowShareStory(true)}
+            className="p-2 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 shadow-2xs hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all cursor-pointer active:scale-95"
+            title={locale === 'th' ? 'แชร์การ์ดความสำเร็จ (Story)' : 'Share Health Story'}
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+
           <Link
             href="/quests"
             className="flex items-center gap-1.5 bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 text-amber-900 dark:text-amber-300 px-3 py-1.5 rounded-full shadow-xs active:scale-95 transition-all"
@@ -648,6 +660,20 @@ export default function DashboardPage() {
         isOpen={showLevelUp}
         onClose={() => setShowLevelUp(false)}
         levelInfo={getLevelFromPoints(points)}
+        points={points}
+        locale={locale}
+      />
+
+      <ShareStoryModal
+        isOpen={showShareStory}
+        onClose={() => setShowShareStory(false)}
+        userName={userName}
+        level={getLevelFromPoints(points).level}
+        streak={streakDays}
+        weeklyGrade={waterTotal >= 1800 && streakDays >= 3 ? 'A+' : waterTotal >= 1400 ? 'A' : 'B+'}
+        waterAvgMl={weeklyHydration.length > 0 ? Math.round(weeklyHydration.reduce((s, x) => s + x.amount_ml, 0) / weeklyHydration.length) : waterTotal}
+        mealsCount={weeklyNutrition.reduce((s, x) => s + x.meals_count, 0) || mealsCount}
+        sleepAvgHours={weeklySleep.length > 0 ? parseFloat((weeklySleep.reduce((s, x) => s + x.total_hours, 0) / weeklySleep.length).toFixed(1)) : parseFloat(sleepHours) || 7.0}
         points={points}
         locale={locale}
       />

@@ -3,169 +3,177 @@ from PIL import Image, ImageDraw, ImageFont
 
 WIDTH = 2500
 HEIGHT = 1686
+COLS = 3
+ROWS = 2
 
-# Create high-res canvas
-canvas = Image.new('RGB', (WIDTH, HEIGHT), color=(243, 245, 248))
-draw = ImageDraw.Draw(canvas)
+TILE_W = WIDTH // COLS  # 833
+TILE_H = HEIGHT // ROWS # 843
 
-# Modern Thai Sans-Serif Fonts (Google Fonts Prompt: clean, loopless, sans-serif)
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-font_thai_bold = os.path.join(SCRIPT_DIR, 'fonts', 'Prompt-Bold.ttf')
-font_thai_reg = os.path.join(SCRIPT_DIR, 'fonts', 'Prompt-Regular.ttf')
-font_segoe_emoji = r'C:\Windows\Fonts\seguiemj.ttf'
-
-title_font = ImageFont.truetype(font_thai_bold, 60)
-sub_font = ImageFont.truetype(font_thai_reg, 36)
-emoji_font = ImageFont.truetype(font_segoe_emoji, 115) if os.path.exists(font_segoe_emoji) else title_font
-
-# 6 Tiles Configuration
-tiles = [
+# Color palettes for each tile
+TILES_DATA = [
     # Row 0
     {
         "col": 0, "row": 0,
-        "emoji": "🥗",
-        "title": "บันทึกมื้ออาหาร",
-        "subtitle": "AI Food Diary • สแกนรูป",
-        "bg_top": (236, 253, 245), "bg_bot": (209, 250, 229), # Emerald pastel
-        "border": (110, 231, 183),
-        "icon_bg": (16, 185, 129),
-        "text_color": (6, 78, 59),
-        "sub_color": (15, 118, 110)
+        "bg_top": (2, 132, 199),     # sky-600
+        "bg_bot": (14, 165, 233),   # sky-500
+        "icon": "💧",
+        "title_th": "บันทึกดื่มน้ำ",
+        "sub_en": "HYDRATION LOG",
+        "badge": "แตะเพื่อเลือกปริมาณน้ำ",
+        "badge_bg": (255, 255, 255, 45)
     },
     {
         "col": 1, "row": 0,
-        "emoji": "💧",
-        "title": "จิบน้ำ +250ml",
-        "subtitle": "กดเพื่อบันทึกน้ำทันที",
-        "bg_top": (238, 248, 255), "bg_bot": (207, 235, 253), # Sky pastel
-        "border": (125, 211, 252),
-        "icon_bg": (14, 165, 233),
-        "text_color": (12, 74, 96),
-        "sub_color": (3, 105, 161)
+        "bg_top": (5, 150, 105),     # emerald-600
+        "bg_bot": (16, 185, 129),   # emerald-500
+        "icon": "📸",
+        "title_th": "ถ่ายรูปอาหาร",
+        "sub_en": "AI FOOD CAMERA",
+        "badge": "วิเคราะห์แคลอรีด้วย AI",
+        "badge_bg": (255, 255, 255, 55)
     },
     {
         "col": 2, "row": 0,
-        "emoji": "🌙",
-        "title": "บันทึกการนอน",
-        "subtitle": "Sleep & Power Naps",
-        "bg_top": (243, 242, 255), "bg_bot": (224, 220, 255), # Indigo/Violet pastel
-        "border": (196, 181, 253),
-        "icon_bg": (124, 58, 237),
-        "text_color": (59, 7, 100),
-        "sub_color": (109, 40, 217)
+        "bg_top": (79, 70, 229),     # indigo-600
+        "bg_bot": (99, 102, 241),   # indigo-500
+        "icon": "😴",
+        "title_th": "บันทึกการนอน",
+        "sub_en": "SLEEP ROUTINE",
+        "badge": "เวลานอนและงีบหลับ",
+        "badge_bg": (255, 255, 255, 45)
     },
     # Row 1
     {
         "col": 0, "row": 1,
-        "emoji": "📊",
-        "title": "สถิติ & กราฟ",
-        "subtitle": "7-Day Habits Analytics",
-        "bg_top": (240, 253, 250), "bg_bot": (204, 251, 241), # Teal pastel
-        "border": (94, 234, 212),
-        "icon_bg": (13, 148, 136),
-        "text_color": (19, 78, 74),
-        "sub_color": (15, 118, 110)
+        "bg_top": (217, 119, 6),    # amber-600
+        "bg_bot": (245, 158, 11),   # amber-500
+        "icon": "🎯",
+        "title_th": "ภารกิจ & เลเวล",
+        "sub_en": "QUESTS & REWARDS",
+        "badge": "ดูแต้มและเหรียญรางวัล",
+        "badge_bg": (255, 255, 255, 45)
     },
     {
         "col": 1, "row": 1,
-        "emoji": "🏆",
-        "title": "ภารกิจ & เหรียญ",
-        "subtitle": "Quests, Streaks & Badges",
-        "bg_top": (255, 251, 235), "bg_bot": (254, 243, 199), # Amber pastel
-        "border": (252, 211, 77),
-        "icon_bg": (245, 158, 11),
-        "text_color": (120, 53, 15),
-        "sub_color": (180, 83, 9)
+        "bg_top": (13, 148, 136),    # teal-600
+        "bg_bot": (20, 184, 166),   # teal-500
+        "icon": "📊",
+        "title_th": "สรุปสุขภาพ",
+        "sub_en": "WEEKLY SNAPSHOT",
+        "badge": "เปิดดูกราฟในเว็บแอป",
+        "badge_bg": (255, 255, 255, 55)
     },
     {
         "col": 2, "row": 1,
-        "emoji": "⚙️",
-        "title": "ตั้งค่าการเตือน",
-        "subtitle": "Reminder Preferences",
-        "bg_top": (248, 250, 252), "bg_bot": (226, 232, 240), # Slate pastel
-        "border": (203, 213, 225),
-        "icon_bg": (71, 85, 105),
-        "text_color": (30, 41, 59),
-        "sub_color": (71, 85, 105)
+        "bg_top": (51, 65, 85),      # slate-700
+        "bg_bot": (71, 85, 105),     # slate-600
+        "icon": "⚙️",
+        "title_th": "ตั้งค่า & บัญชี",
+        "sub_en": "SETTINGS & PREFS",
+        "badge": "เวลาเตือน & บัญชีผู้ใช้",
+        "badge_bg": (255, 255, 255, 45)
     }
 ]
 
-col_widths = [833, 834, 833]
-row_height = 843
-pad = 18
+def draw_vertical_gradient(draw, x0, y0, x1, y1, c1, c2):
+    height = y1 - y0
+    for y in range(y0, y1):
+        ratio = (y - y0) / max(1, height)
+        r = int(c1[0] * (1 - ratio) + c2[0] * ratio)
+        g = int(c1[1] * (1 - ratio) + c2[1] * ratio)
+        b = int(c1[2] * (1 - ratio) + c2[2] * ratio)
+        draw.line([(x0, y), (x1, y)], fill=(r, g, b))
 
-for t in tiles:
-    c = t["col"]
-    r = t["row"]
-    x1 = sum(col_widths[:c]) + pad
-    x2 = sum(col_widths[:c+1]) - pad
-    y1 = r * row_height + pad
-    y2 = (r + 1) * row_height - pad
+def main():
+    img = Image.new("RGB", (WIDTH, HEIGHT), (255, 255, 255))
+    draw = ImageDraw.Draw(img)
 
-    # Draw rounded card with subtle gradient
-    card_w = x2 - x1
-    card_h = y2 - y1
+    # Fonts
+    font_path_thai = r"C:\Windows\Fonts\leelawdb.ttf"
+    font_path_en = r"C:\Windows\Fonts\arialbd.ttf"
+    font_path_emoji = r"C:\Windows\Fonts\seguiemj.ttf"
 
-    card = Image.new('RGB', (card_w, card_h), t["bg_top"])
-    card_draw = ImageDraw.Draw(card)
+    font_title = ImageFont.truetype(font_path_thai, 72)
+    font_sub = ImageFont.truetype(font_path_en, 36)
+    font_badge = ImageFont.truetype(font_path_thai, 38)
+    font_icon = ImageFont.truetype(font_path_emoji, 140)
 
-    for i in range(card_h):
-        ratio = i / card_h
-        r_c = int(t["bg_top"][0] * (1 - ratio) + t["bg_bot"][0] * ratio)
-        g_c = int(t["bg_top"][1] * (1 - ratio) + t["bg_bot"][1] * ratio)
-        b_c = int(t["bg_top"][2] * (1 - ratio) + t["bg_bot"][2] * ratio)
-        card_draw.line([(0, i), (card_w, i)], fill=(r_c, g_c, b_c))
+    for item in TILES_DATA:
+        c = item["col"]
+        r = item["row"]
 
-    # Mask for rounded corners
-    mask = Image.new('L', (card_w, card_h), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.rounded_rectangle([(0, 0), (card_w, card_h)], radius=46, fill=255)
+        x0 = c * TILE_W
+        x1 = WIDTH if c == 2 else (c + 1) * TILE_W
+        y0 = r * TILE_H
+        y1 = HEIGHT if r == 1 else (r + 1) * TILE_H
 
-    # Paste rounded card
-    canvas.paste(card, (x1, y1), mask)
+        # Draw tile gradient
+        draw_vertical_gradient(draw, x0, y0, x1, y1, item["bg_top"], item["bg_bot"])
 
-    # Draw border
-    draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=46, outline=t["border"], width=5)
+        center_x = (x0 + x1) // 2
 
-    # Center coordinates of the tile
-    cx = (x1 + x2) // 2
-    cy = (y1 + y2) // 2
+        # Draw Icon (Emoji)
+        icon_str = item["icon"]
+        # In PIL, emoji positioning
+        icon_bbox = draw.textbbox((0, 0), icon_str, font=font_icon)
+        icon_w = icon_bbox[2] - icon_bbox[0]
+        icon_x = center_x - (icon_w // 2)
+        icon_y = y0 + 130
+        draw.text((icon_x, icon_y), icon_str, font=font_icon, fill=(255, 255, 255))
 
-    # Draw Icon Circle
-    circle_r = 100
-    icon_cy = cy - 100
-    draw.ellipse(
-        [(cx - circle_r, icon_cy - circle_r), (cx + circle_r, icon_cy + circle_r)],
-        fill=t["icon_bg"]
-    )
-    # Inner subtle glow
-    draw.ellipse(
-        [(cx - circle_r + 4, icon_cy - circle_r + 4), (cx + circle_r - 4, icon_cy + circle_r - 4)],
-        outline=(255, 255, 255),
-        width=4
-    )
+        # Draw Thai Title
+        title = item["title_th"]
+        title_bbox = draw.textbbox((0, 0), title, font=font_title)
+        title_w = title_bbox[2] - title_bbox[0]
+        title_x = center_x - (title_w // 2)
+        title_y = y0 + 380
+        draw.text((title_x, title_y), title, font=font_title, fill=(255, 255, 255))
 
-    # Draw Emoji in icon circle
-    try:
-        bbox = draw.textbbox((0, 0), t["emoji"], font=emoji_font)
-        ew = bbox[2] - bbox[0]
-        eh = bbox[3] - bbox[1]
-        draw.text((cx - ew // 2, icon_cy - eh // 2 - 12), t["emoji"], font=emoji_font, fill=(255, 255, 255))
-    except Exception:
-        pass
+        # Draw English Subtitle
+        sub = item["sub_en"]
+        sub_bbox = draw.textbbox((0, 0), sub, font=font_sub)
+        sub_w = sub_bbox[2] - sub_bbox[0]
+        sub_x = center_x - (sub_w // 2)
+        sub_y = y0 + 490
+        draw.text((sub_x, sub_y), sub, font=font_sub, fill=(255, 255, 255, 210))
 
-    # Draw Title
-    t_bbox = draw.textbbox((0, 0), t["title"], font=title_font)
-    tw = t_bbox[2] - t_bbox[0]
-    draw.text((cx - tw // 2, cy + 95), t["title"], font=title_font, fill=t["text_color"])
+        # Draw Badge Pill at bottom
+        badge = item["badge"]
+        badge_bbox = draw.textbbox((0, 0), badge, font=font_badge)
+        bw = badge_bbox[2] - badge_bbox[0]
+        bh = badge_bbox[3] - badge_bbox[1]
+        
+        pw = bw + 70
+        ph = 76
+        px0 = center_x - (pw // 2)
+        py0 = y0 + 610
+        px1 = px0 + pw
+        py1 = py0 + ph
 
-    # Draw Subtitle
-    s_bbox = draw.textbbox((0, 0), t["subtitle"], font=sub_font)
-    sw = s_bbox[2] - s_bbox[0]
-    draw.text((cx - sw // 2, cy + 190), t["subtitle"], font=sub_font, fill=t["sub_color"])
+        # Semi-transparent pill
+        pill_overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+        pdraw = ImageDraw.Draw(pill_overlay)
+        pdraw.rounded_rectangle([px0, py0, px1, py1], radius=38, fill=item["badge_bg"], outline=(255, 255, 255, 90), width=3)
+        img.paste(Image.alpha_composite(img.convert("RGBA"), pill_overlay).convert("RGB"))
+        draw = ImageDraw.Draw(img)
 
-# Save to public directory
-os.makedirs('public', exist_ok=True)
-out_path = 'public/richmenu.png'
-canvas.save(out_path, format='PNG', optimize=True)
-print(f"Rich Menu image generated successfully at {out_path} ({WIDTH}x{HEIGHT})")
+        # Draw text inside pill
+        bx = center_x - (bw // 2)
+        by = py0 + (ph - bh) // 2 - 4
+        draw.text((bx, by), badge, font=font_badge, fill=(255, 255, 255))
+
+    # Draw grid divider lines
+    line_color = (255, 255, 255, 120)
+    # Vertical lines
+    for c in range(1, 3):
+        x = c * TILE_W
+        draw.line([(x, 0), (x, HEIGHT)], fill=(255, 255, 255), width=4)
+    # Horizontal line
+    draw.line([(0, TILE_H), (WIDTH, TILE_H)], fill=(255, 255, 255), width=4)
+
+    out_path = os.path.join("public", "line", "rich-menu-6tiles.png")
+    img.save(out_path, "PNG", optimize=True)
+    print(f"Successfully generated 6-tile Rich Menu at: {out_path} ({os.path.getsize(out_path)} bytes)")
+
+if __name__ == "__main__":
+    main()

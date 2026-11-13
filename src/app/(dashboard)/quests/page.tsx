@@ -28,6 +28,7 @@ import type { Quest } from '@/types/database';
 import type { PillarStreaks } from '@/lib/gamification/streaks';
 import type { UserBadgeStatus } from '@/lib/gamification/badges';
 import LevelUpModal, { getLevelFromPoints } from '@/components/gamification/LevelUpModal';
+import ShareStoryModal from '@/components/analytics/ShareStoryModal';
 import { fireConfettiBurst } from '@/lib/utils/confetti';
 import { playSuccessChime } from '@/lib/utils/sound';
 
@@ -45,6 +46,7 @@ export default function QuestsPage() {
   const [userDisplayName, setUserDisplayName] = useState<string>('');
   const [cheeredIds, setCheeredIds] = useState<string[]>([]);
   const [copiedInvite, setCopiedInvite] = useState(false);
+  const [showShareStory, setShowShareStory] = useState(false);
 
   const supabase = createClient();
 
@@ -262,8 +264,19 @@ export default function QuestsPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.quests.title}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.quests.subtitle}</p>
         </div>
-        <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
-          <Trophy className="h-6 w-6" />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowShareStory(true)}
+            className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5 text-xs font-bold"
+            title={locale === 'th' ? 'แชร์การ์ดความสำเร็จ (Story)' : 'Share Health Story'}
+          >
+            <Share2 className="h-4 w-4" />
+            <span className="hidden sm:inline">{locale === 'th' ? 'แชร์ความสำเร็จ' : 'Share Story'}</span>
+          </button>
+          <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 p-2.5 rounded-2xl shadow-xs">
+            <Trophy className="h-6 w-6" />
+          </div>
         </div>
       </div>
 
@@ -792,6 +805,20 @@ export default function QuestsPage() {
         isOpen={showLevelUp}
         onClose={() => setShowLevelUp(false)}
         levelInfo={getLevelFromPoints(totalPoints)}
+        points={totalPoints}
+        locale={locale}
+      />
+
+      <ShareStoryModal
+        isOpen={showShareStory}
+        onClose={() => setShowShareStory(false)}
+        userName={userDisplayName || (locale === 'th' ? 'คุณ (You)' : 'You')}
+        level={userLevel}
+        streak={currentOverallStreak}
+        weeklyGrade={currentOverallStreak >= 7 ? 'A+' : currentOverallStreak >= 3 ? 'A' : 'B+'}
+        waterAvgMl={streaks?.water.current ? 2000 : 1500}
+        mealsCount={streaks?.food.current ? streaks.food.current * 3 : 6}
+        sleepAvgHours={7.5}
         points={totalPoints}
         locale={locale}
       />
