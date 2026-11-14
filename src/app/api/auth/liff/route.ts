@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createAdminClient } from '@/lib/supabase/admin';
+import type { User } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
     const admin = createAdminClient();
 
     // Find existing user linked to this LINE ID
-    let targetUser: any = null;
+    let targetUser: User | null = null;
     const { data: notifRow } = await admin
       .from('notification_settings')
       .select('user_id')

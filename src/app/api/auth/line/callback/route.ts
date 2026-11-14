@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyOAuthState } from '@/lib/auth/lineState';
+import type { User } from '@supabase/supabase-js';
 
 function getBaseUrl(req: NextRequest): string {
   const forwardedHost = req.headers.get('x-forwarded-host');
@@ -121,7 +122,7 @@ export async function GET(req: NextRequest) {
 
     // 3. Find or Create Supabase User
     // A. Check if already linked via notification_settings
-    let targetUser: any = null;
+    let targetUser: User | null = null;
     const { data: linkedNotif } = await admin
       .from('notification_settings')
       .select('user_id')
