@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
     let waterTodayMl = 0;
     let mealsTodayCount = 0;
     let sleepHours = 0;
-    let currentStreak = 0;
     let totalPoints = 0;
 
     try {
