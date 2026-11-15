@@ -184,6 +184,24 @@ export interface TranslationSchema {
     codeCopied: string;
     expiresIn: string;
     checkStatus: string;
+    accountEmail: string;
+    memberSince: string;
+    verifiedAccount: string;
+    healthGoalsTitle: string;
+    healthGoalsSubtitle: string;
+    dailyWaterGoal: string;
+    dailySleepGoal: string;
+    dailyCaloriesGoal: string;
+    systemInfoTitle: string;
+    appVersion: string;
+    aiEngine: string;
+    termsAndPrivacy: string;
+    lineStatusConnected: string;
+    lineStatusNotLinked: string;
+    lineGeneratingCode: string;
+    lineRegenerateCode: string;
+    lineEasyEmailTipTitle: string;
+    lineEasyEmailTipDesc: string;
   };
   auth: {
     welcomeBack: string;
@@ -408,6 +426,24 @@ export const translations: Record<Locale, TranslationSchema> = {
       codeCopied: 'คัดลอกรหัสเรียบร้อยแล้ว!',
       expiresIn: 'รหัสหมดอายุใน',
       checkStatus: 'ตรวจสอบสถานะ',
+      accountEmail: 'อีเมลบัญชีผู้ใช้',
+      memberSince: 'สมาชิกตั้งแต่',
+      verifiedAccount: 'ยืนยันตัวตนแล้ว',
+      healthGoalsTitle: 'เป้าหมายสุขภาพประจำวัน',
+      healthGoalsSubtitle: 'กำหนดค่าเป้าหมายเพื่อคำนวณความคืบหน้าและคะแนนภารกิจ',
+      dailyWaterGoal: 'เป้าหมายดื่มน้ำต่อวัน',
+      dailySleepGoal: 'เป้าหมายเวลานอนต่อวัน',
+      dailyCaloriesGoal: 'เป้าหมายพลังงานอาหาร',
+      systemInfoTitle: 'ข้อมูลระบบและแอปพลิเคชัน',
+      appVersion: 'เวอร์ชันระบบ',
+      aiEngine: 'โมเดลประมวลผล AI',
+      termsAndPrivacy: 'ข้อกำหนดและนโยบายความเป็นส่วนตัว',
+      lineStatusConnected: 'เชื่อมต่อแล้ว',
+      lineStatusNotLinked: 'ยังไม่ได้เชื่อมต่อ',
+      lineGeneratingCode: 'กำลังสร้างรหัสเชื่อมต่อ...',
+      lineRegenerateCode: 'สร้างรหัสใหม่',
+      lineEasyEmailTipTitle: 'วิธีเชื่อมต่อที่ง่ายที่สุด:',
+      lineEasyEmailTipDesc: 'คุณสามารถพิมพ์อีเมลที่ใช้สมัครของคุณ ส่งให้ Sunny ใน LINE ได้โดยตรง!',
     },
     auth: {
       welcomeBack: 'ยินดีต้อนรับกลับมา',
@@ -630,6 +666,24 @@ export const translations: Record<Locale, TranslationSchema> = {
       codeCopied: 'Code copied to clipboard!',
       expiresIn: 'Expires in',
       checkStatus: 'Check Status',
+      accountEmail: 'Account Email',
+      memberSince: 'Member Since',
+      verifiedAccount: 'Verified',
+      healthGoalsTitle: 'Daily Health Targets',
+      healthGoalsSubtitle: 'Set your daily targets for progress tracking and quest points',
+      dailyWaterGoal: 'Daily Hydration Target',
+      dailySleepGoal: 'Daily Sleep Target',
+      dailyCaloriesGoal: 'Daily Calorie Target',
+      systemInfoTitle: 'System & App Information',
+      appVersion: 'App Version',
+      aiEngine: 'AI Engine',
+      termsAndPrivacy: 'Terms & Privacy Policy',
+      lineStatusConnected: 'Connected',
+      lineStatusNotLinked: 'Not Linked',
+      lineGeneratingCode: 'Generating link code...',
+      lineRegenerateCode: 'Generate New Code',
+      lineEasyEmailTipTitle: 'Easiest way to connect:',
+      lineEasyEmailTipDesc: 'Simply send your registered email address to Sunny in LINE directly!',
     },
     auth: {
       welcomeBack: 'Welcome back',

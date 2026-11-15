@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
 import { 
   User, 
+  Mail,
   Bell, 
-  MessageSquare, 
   LogOut, 
   CheckCircle2, 
   ShieldCheck, 
@@ -18,7 +19,6 @@ import {
   ExternalLink,
   Copy,
   Check,
-  Send,
   RefreshCw,
   Sparkles,
   Unlink,
@@ -30,9 +30,12 @@ import {
   AlertTriangle,
   Volume2,
   VolumeX,
-  Vibrate
+  Target,
+  FileText,
+  BadgeCheck,
+  Info
 } from 'lucide-react';
-import type { NotificationSettings, Profile } from '@/types/database';
+import type { NotificationSettings } from '@/types/database';
 import FloatingGlassModal from '@/components/shared/FloatingGlassModal';
 import { 
   getSoundSetting, 
@@ -48,7 +51,11 @@ export default function SettingsPage() {
   const { t, locale, setLocale } = useLanguage();
   const { theme, setTheme } = useTheme();
 
+  // Profile & User State
   const [displayName, setDisplayName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userCreatedAt, setUserCreatedAt] = useState<string | null>(null);
+  const [authProvider, setAuthProvider] = useState('email');
   const [timezone, setTimezone] = useState('Asia/Bangkok');
   const [notifSettings, setNotifSettings] = useState<NotificationSettings | null>(null);
   const [hydrationEnabled, setHydrationEnabled] = useState(true);
@@ -56,10 +63,16 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState(false);
 
+  // Daily Health Targets
+  const [dailyWaterGoal, setDailyWaterGoalState] = useState(2000);
+  const [dailySleepGoal, setDailySleepGoalState] = useState(8);
+  const [dailyCalorieGoal, setDailyCalorieGoalState] = useState(2000);
+  const [savingGoals, setSavingGoals] = useState(false);
+  const [goalsSavedMessage, setGoalsSavedMessage] = useState(false);
+
   // LINE Connection State
   const [showLineModal, setShowLineModal] = useState(false);
   const [lineToken, setLineToken] = useState<string | null>(null);
-  const [lineExpiresAt, setLineExpiresAt] = useState<string | null>(null);
   const [lineOaUrl, setLineOaUrl] = useState<string>('https://line.me/R/ti/p/@lifesync');
   const [loadingToken, setLoadingToken] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
@@ -83,6 +96,10 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      if (user.email) setUserEmail(user.email);
+      if (user.created_at) setUserCreatedAt(user.created_at);
+      if (user.app_metadata?.provider) setAuthProvider(user.app_metadata.provider);
+
       const { data: prof } = await supabase
         .from('profiles')
         .select('*')
@@ -104,6 +121,25 @@ export default function SettingsPage() {
         setNotifSettings(notif as NotificationSettings);
         setHydrationEnabled(notif.hydration_enabled);
         setSleepEnabled(notif.sleep_enabled);
+      }
+
+      // Load health goals from localStorage
+      const savedWater = localStorage.getItem('lifesync_water_goal');
+      if (savedWater) {
+        const parsed = parseInt(savedWater, 10);
+        if (!isNaN(parsed) && parsed > 0) setDailyWaterGoalState(parsed);
+      }
+
+      const savedSleep = localStorage.getItem('lifesync_sleep_goal');
+      if (savedSleep) {
+        const parsed = parseFloat(savedSleep);
+        if (!isNaN(parsed) && parsed > 0) setDailySleepGoalState(parsed);
+      }
+
+      const savedCalories = localStorage.getItem('lifesync_calorie_goal');
+      if (savedCalories) {
+        const parsed = parseInt(savedCalories, 10);
+        if (!isNaN(parsed) && parsed > 0) setDailyCalorieGoalState(parsed);
       }
 
       setSoundEnabledState(getSoundSetting());
@@ -147,10 +183,26 @@ export default function SettingsPage() {
         updated_at: new Date().toISOString(),
       }).eq('user_id', user.id);
 
+      if (soundEnabled) playSuccessChime();
       setSavedMessage(true);
       setTimeout(() => setSavedMessage(false), 3000);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveGoals = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingGoals(true);
+    try {
+      localStorage.setItem('lifesync_water_goal', dailyWaterGoal.toString());
+      localStorage.setItem('lifesync_sleep_goal', dailySleepGoal.toString());
+      localStorage.setItem('lifesync_calorie_goal', dailyCalorieGoal.toString());
+      if (soundEnabled) playSuccessChime();
+      setGoalsSavedMessage(true);
+      setTimeout(() => setGoalsSavedMessage(false), 3000);
+    } finally {
+      setSavingGoals(false);
     }
   };
 
@@ -163,21 +215,20 @@ export default function SettingsPage() {
       const res = await fetch('/api/line/link-token', { method: 'POST' });
       if (!res.ok) {
         if (res.status === 401) {
-          setLineActionFeedback('กรุณาเข้าสู่ระบบก่อนสร้างรหัสเชื่อมต่อ LINE');
+          setLineActionFeedback(locale === 'th' ? 'กรุณาเข้าสู่ระบบก่อนสร้างรหัสเชื่อมต่อ LINE' : 'Please log in to generate a LINE link code');
         } else {
-          setLineActionFeedback('ไม่สามารถสร้างรหัสได้ กรุณาลองใหม่อีกครั้ง');
+          setLineActionFeedback(locale === 'th' ? 'ไม่สามารถสร้างรหัสได้ กรุณาลองใหม่อีกครั้ง' : 'Failed to generate link code. Please try again');
         }
         return;
       }
       const data = await res.json();
       if (data.token) {
         setLineToken(data.token);
-        setLineExpiresAt(data.expires_at);
         if (data.line_oa_url) setLineOaUrl(data.line_oa_url);
       }
     } catch (err) {
       console.error(err);
-      setLineActionFeedback('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+      setLineActionFeedback(locale === 'th' ? 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' : 'Server connection error');
     } finally {
       setLoadingToken(false);
     }
@@ -307,40 +358,62 @@ export default function SettingsPage() {
     router.refresh();
   };
 
+  // Format member since date
+  const memberSinceFormatted = userCreatedAt
+    ? new Intl.DateTimeFormat(locale === 'th' ? 'th-TH' : 'en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date(userCreatedAt))
+    : null;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-7 pb-10">
       {/* Header */}
-      <div className="text-center py-2 space-y-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{t.settings.title}</h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{t.settings.subtitle}</p>
+      <div className="text-center py-3 space-y-1.5">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          {t.settings.title}
+        </h1>
+        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
+          {t.settings.subtitle}
+        </p>
       </div>
 
       {savedMessage && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2 shadow-xs animate-in fade-in">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-          <span className="font-semibold">{t.settings.savedSuccess}</span>
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm sm:text-base flex items-center gap-3 shadow-xs animate-in fade-in">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+          <span className="font-bold">{t.settings.savedSuccess}</span>
+        </div>
+      )}
+
+      {goalsSavedMessage && (
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm sm:text-base flex items-center gap-3 shadow-xs animate-in fade-in">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+          <span className="font-bold">
+            {locale === 'th' ? 'บันทึกเป้าหมายสุขภาพประจำวันเรียบร้อยแล้ว!' : 'Daily health targets saved successfully!'}
+          </span>
         </div>
       )}
 
       {/* Responsive Settings Grid (2-column on desktop, 1-column on mobile) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-        {/* Left Column: Appearance, Preferences, Privacy, and Account Actions */}
-        <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        {/* Left Column: Appearance, Preferences, Health Targets, Privacy, Sign Out */}
+        <div className="space-y-6">
           {/* Theme / Appearance Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3">
-            <div className="flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-4">
+            <div className="flex items-center gap-2.5">
               {theme === 'dark' ? (
-                <Moon className="h-4 w-4 text-indigo-400" />
+                <Moon className="h-5 w-5 text-indigo-400" />
               ) : (
-                <Sun className="h-4 w-4 text-amber-500" />
+                <Sun className="h-5 w-5 text-amber-500" />
               )}
-              <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.settings.theme}</h2>
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.settings.theme}</h2>
             </div>
             <div className="grid grid-cols-2 gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setTheme('light')}
-                className={`py-3 px-4 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-3.5 px-4 rounded-2xl text-sm font-bold border transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
                   theme === 'light'
                     ? 'bg-amber-50 border-amber-500 text-amber-900 shadow-xs ring-2 ring-amber-500/20'
                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -352,7 +425,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => setTheme('dark')}
-                className={`py-3 px-4 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-3.5 px-4 rounded-2xl text-sm font-bold border transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
                   theme === 'dark'
                     ? 'bg-indigo-950/60 border-indigo-500 text-indigo-200 shadow-xs ring-2 ring-indigo-500/30'
                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -365,59 +438,172 @@ export default function SettingsPage() {
           </div>
 
           {/* Language Selector Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3">
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.settings.language}</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-4">
+            <div className="flex items-center gap-2.5">
+              <Globe className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.settings.language}</h2>
             </div>
             <div className="grid grid-cols-2 gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setLocale('th')}
-                className={`py-3 px-4 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-3.5 px-4 rounded-2xl text-sm font-bold border transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
                   locale === 'th'
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs ring-2 ring-emerald-500/20'
                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                <span className="text-base">🇹🇭</span>
+                <span className="text-lg">🇹🇭</span>
                 <span>{t.settings.thai}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setLocale('en')}
-                className={`py-3 px-4 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-3.5 px-4 rounded-2xl text-sm font-bold border transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
                   locale === 'en'
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs ring-2 ring-emerald-500/20'
                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                <span className="text-base">🇬🇧</span>
+                <span className="text-lg">🇬🇧</span>
                 <span>{t.settings.english}</span>
               </button>
             </div>
           </div>
 
+          {/* Daily Health Targets Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-4">
+            <div className="flex items-center gap-2.5">
+              <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
+                  {t.settings.healthGoalsTitle}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-snug">
+                  {t.settings.healthGoalsSubtitle}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveGoals} className="space-y-4 pt-1">
+              {/* Water Target */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                    <Droplets className="h-4 w-4 text-sky-500" />
+                    <span>{t.settings.dailyWaterGoal}</span>
+                  </label>
+                  <span className="text-sm font-extrabold text-sky-600 dark:text-sky-400 font-mono">
+                    {dailyWaterGoal.toLocaleString()} ml
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[1500, 2000, 2500, 3000].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setDailyWaterGoalState(val)}
+                      className={`py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                        dailyWaterGoal === val
+                          ? 'bg-sky-500 text-white border-sky-500 shadow-xs'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {val} ml
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sleep Target */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                    <Moon className="h-4 w-4 text-indigo-500" />
+                    <span>{t.settings.dailySleepGoal}</span>
+                  </label>
+                  <span className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400 font-mono">
+                    {dailySleepGoal} {locale === 'th' ? 'ชั่วโมง' : 'hours'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[7, 7.5, 8, 8.5].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setDailySleepGoalState(val)}
+                      className={`py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                        dailySleepGoal === val
+                          ? 'bg-indigo-500 text-white border-indigo-500 shadow-xs'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {val}h
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Calories Target */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                    <Utensils className="h-4 w-4 text-emerald-500" />
+                    <span>{t.settings.dailyCaloriesGoal}</span>
+                  </label>
+                  <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                    {dailyCalorieGoal.toLocaleString()} kcal
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[1600, 1800, 2000, 2200].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setDailyCalorieGoalState(val)}
+                      className={`py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                        dailyCalorieGoal === val
+                          ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingGoals}
+                className="w-full py-3 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 active:scale-95 text-white rounded-2xl text-sm font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2 mt-2"
+              >
+                <Check className="h-4 w-4 text-emerald-400" />
+                <span>{locale === 'th' ? 'บันทึกเป้าหมายสุขภาพ' : 'Save Health Targets'}</span>
+              </button>
+            </form>
+          </div>
+
           {/* Sound & Haptics Feedback Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">
-            <div className="flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-4">
+            <div className="flex items-center gap-2.5">
               {soundEnabled ? (
-                <Volume2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <Volume2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               ) : (
-                <VolumeX className="h-4 w-4 text-slate-400" />
+                <VolumeX className="h-5 w-5 text-slate-400" />
               )}
-              <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
                 {locale === 'th' ? 'เสียงและระบบสั่นตอบสนอง' : 'Sound & Haptic Feedback'}
               </h2>
             </div>
 
-            <div className="space-y-2.5 pt-1">
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-                <div className="space-y-0.5 pr-3">
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80">
+                <div className="space-y-1 pr-3">
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     {locale === 'th' ? 'เสียงเอฟเฟกต์ฉลองความสำเร็จ' : 'Celebration Sound Effects'}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                     {locale === 'th' ? 'เสียงชิมเบาๆ เมื่อดื่มน้ำครบเป้าหมาย หรือปลดล็อกเลเวลใหม่' : 'Soft chimes when hitting daily goals or unlocking new levels'}
                   </div>
                 </div>
@@ -429,12 +615,12 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-                <div className="space-y-0.5 pr-3">
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80">
+                <div className="space-y-1 pr-3">
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     {locale === 'th' ? 'ระบบสั่นตอบสนอง (Haptic Vibration)' : 'Haptic Vibration'}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                     {locale === 'th' ? 'สั่นตอบสนองเบาๆ บนสมาร์ตโฟนเมื่อกดบันทึกน้ำและกิจกรรม' : 'Subtle vibration pulse on mobile devices when tapping actions'}
                   </div>
                 </div>
@@ -449,26 +635,26 @@ export default function SettingsPage() {
           </div>
 
           {/* Data Export & Privacy Controls (PDPA / GDPR) */}
-          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
-            <div className="flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-4">
+            <div className="flex items-center gap-2.5">
               <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
                 {locale === 'th' ? 'ข้อมูลส่วนบุคคลและความเป็นส่วนตัว' : 'Data & Privacy (PDPA / GDPR)'}
               </h2>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {locale === 'th'
                 ? 'คุณสามารถดาวน์โหลดสำเนาบันทึกสุขภาพทั้งหมดของคุณ หรือขอลบบัญชีและข้อมูลทั้งหมดออกจากระบบได้อย่างสมบูรณ์'
                 : 'Download a complete copy of all your health logs, or permanently delete your account and all associated data.'}
             </p>
 
-            <div className="space-y-2.5 pt-1">
+            <div className="space-y-3 pt-1">
               <button
                 type="button"
                 disabled={exportingData}
                 onClick={handleExportData}
-                className="w-full py-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Download className={`h-4 w-4 ${exportingData ? 'animate-bounce' : ''}`} />
                 <span>
@@ -481,95 +667,122 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(true)}
-                className="w-full py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 active:scale-95 rounded-2xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-3 text-rose-600 dark:text-rose-400 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 active:scale-95 rounded-2xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
                 <span>{locale === 'th' ? 'ลบบัญชีและข้อมูลทั้งหมด' : 'Delete Account & All Data'}</span>
               </button>
             </div>
-          </div>
-
-          {/* Privacy Notice & Disclaimer */}
-          <div className="bg-slate-100/70 dark:bg-slate-900/60 rounded-[26px] p-4.5 text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5 border border-slate-200/50 dark:border-slate-800">
-            <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
-              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>{t.common.disclaimerTitle}</span>
-            </div>
-            <p className="leading-relaxed">{t.common.disclaimer}</p>
           </div>
 
           {/* Sign Out Button */}
           <button
             type="button"
             onClick={handleSignOut}
-            className="w-full py-3.5 border border-rose-200 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 hover:bg-rose-100/60 dark:hover:bg-rose-950/40 active:scale-95 text-rose-700 dark:text-rose-400 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-4 border border-rose-200 dark:border-rose-900/40 bg-rose-50/70 dark:bg-rose-950/20 hover:bg-rose-100/70 dark:hover:bg-rose-950/40 active:scale-95 text-rose-700 dark:text-rose-400 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-xs"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-5 w-5" />
             <span>{t.common.signOut}</span>
           </button>
         </div>
 
-        {/* Right Column: Profile Info & LINE Official Account Integration */}
-        <div className="space-y-5">
+        {/* Right Column: Profile Info, LINE Official Account, System Info, Disclaimer */}
+        <div className="space-y-6">
           {/* Profile Form */}
-          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-4">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-              <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.settings.profileInfo}</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-5">
+            <div className="flex items-center gap-2.5">
+              <User className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.settings.profileInfo}</h2>
+            </div>
+
+            {/* Account Email Banner */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>{t.settings.accountEmail}</span>
+                </span>
+                <span className="text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <BadgeCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>{t.settings.verifiedAccount}</span>
+                </span>
+              </div>
+              <div className="text-sm sm:text-base font-bold text-slate-800 dark:text-white font-mono break-all">
+                {userEmail || (authProvider === 'line' ? 'LINE User Account' : 'member@lifesync.app')}
+              </div>
+              {memberSinceFormatted && (
+                <div className="text-xs text-slate-400 dark:text-slate-500 pt-0.5">
+                  {t.settings.memberSince} {memberSinceFormatted}
+                </div>
+              )}
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">{t.settings.displayName}</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                  {t.settings.displayName}
+                </label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-3 text-sm sm:text-base border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">{t.settings.timezone}</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                  {t.settings.timezone}
+                </label>
                 <input
                   type="text"
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)}
                   placeholder="e.g. Asia/Bangkok"
-                  className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-3 text-sm sm:text-base border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white bg-white dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                 />
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{t.settings.timezoneHint}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                  {t.settings.timezoneHint}
+                </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3.5">
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
                 <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                  <h3 className="text-xs font-bold text-slate-800 dark:text-white">{t.settings.notifPrefs}</h3>
+                  <Bell className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t.settings.notifPrefs}</h3>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                  <div>
-                    <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t.settings.hydrationReminders}</div>
-                    <div className="text-[10px] text-slate-400 dark:text-slate-400">{t.settings.hydrationRemindersDesc}</div>
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                  <div className="space-y-0.5 pr-3">
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      {t.settings.hydrationReminders}
+                    </div>
+                    <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-snug">
+                      {t.settings.hydrationRemindersDesc}
+                    </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={hydrationEnabled}
                     onChange={(e) => setHydrationEnabled(e.target.checked)}
-                    className="h-5 w-5 text-emerald-600 rounded-md focus:ring-emerald-500"
+                    className="h-5 w-5 text-emerald-600 rounded-md focus:ring-emerald-500 cursor-pointer shrink-0"
                   />
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                  <div>
-                    <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t.settings.sleepReminders}</div>
-                    <div className="text-[10px] text-slate-400 dark:text-slate-400">{t.settings.sleepRemindersDesc}</div>
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                  <div className="space-y-0.5 pr-3">
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      {t.settings.sleepReminders}
+                    </div>
+                    <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-snug">
+                      {t.settings.sleepRemindersDesc}
+                    </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={sleepEnabled}
                     onChange={(e) => setSleepEnabled(e.target.checked)}
-                    className="h-5 w-5 text-emerald-600 rounded-md focus:ring-emerald-500"
+                    className="h-5 w-5 text-emerald-600 rounded-md focus:ring-emerald-500 cursor-pointer shrink-0"
                   />
                 </div>
               </div>
@@ -577,7 +790,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all disabled:opacity-50 shadow-xs cursor-pointer"
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-2xl text-sm sm:text-base font-bold transition-all disabled:opacity-50 shadow-xs cursor-pointer"
               >
                 {saving ? t.common.saving : t.settings.savePrefs}
               </button>
@@ -585,62 +798,62 @@ export default function SettingsPage() {
           </div>
 
           {/* LINE Official Account Integration Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-5 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] space-y-3.5">
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#06C755] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#06C755] text-white flex items-center justify-center font-black text-sm shadow-xs">
                   LINE
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800 dark:text-white">{t.settings.lineTitle}</h2>
-                  <div className="text-[10px] text-slate-400">LINE Messaging API</div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.settings.lineTitle}</h2>
+                  <div className="text-xs text-slate-400">LINE Messaging API</div>
                 </div>
               </div>
               {notifSettings?.line_user_id ? (
-                <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Connected
+                <span className="text-xs bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {t.settings.lineStatusConnected}
                 </span>
               ) : (
-                <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium px-2 py-0.5 rounded-full">
-                  Not linked
+                <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold px-3 py-1 rounded-full">
+                  {t.settings.lineStatusNotLinked}
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {t.settings.lineDesc}
             </p>
 
             {lineActionFeedback && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-2xl text-xs font-semibold animate-in fade-in">
+              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-2xl text-xs sm:text-sm font-semibold animate-in fade-in">
                 {lineActionFeedback}
               </div>
             )}
 
             {notifSettings?.line_user_id ? (
-              <div className="space-y-2.5">
-                <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/60 rounded-2xl text-xs text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
+              <div className="space-y-3">
+                <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/60 rounded-2xl text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                    <span className="font-semibold">{t.settings.lineConnected}</span>
+                    <span className="font-bold">{t.settings.lineConnected}</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className="text-xs text-slate-500 font-mono">
                     {notifSettings.line_user_id.slice(0, 10)}...
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   <button
                     type="button"
                     disabled={sendingTestReminder}
                     onClick={() => handleSendTestReminder('hydration')}
-                    className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="py-3 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     {sendingTestReminder ? (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Droplets className="h-3.5 w-3.5 text-sky-500" />
+                      <Droplets className="h-4 w-4 text-sky-500" />
                     )}
                     <span>{locale === 'th' ? 'ลองเตือนจิบน้ำ' : 'Test Water'}</span>
                   </button>
@@ -649,28 +862,28 @@ export default function SettingsPage() {
                     type="button"
                     disabled={sendingTestReminder}
                     onClick={() => handleSendTestReminder('sleep')}
-                    className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="py-3 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     {sendingTestReminder ? (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Moon className="h-3.5 w-3.5 text-indigo-500" />
+                      <Moon className="h-4 w-4 text-indigo-500" />
                     )}
                     <span>{locale === 'th' ? 'ลองเตือนนอน' : 'Test Sleep'}</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   <button
                     type="button"
                     disabled={sendingTestReminder}
                     onClick={() => handleSendTestReminder('morning')}
-                    className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="py-3 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     {sendingTestReminder ? (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Sun className="h-3.5 w-3.5 text-amber-500" />
+                      <Sun className="h-4 w-4 text-amber-500" />
                     )}
                     <span>{locale === 'th' ? 'ลองทักทายเช้า' : 'Test Morning'}</span>
                   </button>
@@ -679,12 +892,12 @@ export default function SettingsPage() {
                     type="button"
                     disabled={sendingTestReminder}
                     onClick={() => handleSendTestReminder('meal')}
-                    className="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="py-3 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/70 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     {sendingTestReminder ? (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Utensils className="h-3.5 w-3.5 text-emerald-500" />
+                      <Utensils className="h-4 w-4 text-emerald-500" />
                     )}
                     <span>{locale === 'th' ? 'ลองเตือนอาหาร' : 'Test Meal'}</span>
                   </button>
@@ -694,41 +907,51 @@ export default function SettingsPage() {
                   type="button"
                   disabled={sendingTestReminder}
                   onClick={() => handleSendTestReminder('weekly_summary')}
-                  className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-800/80 hover:from-amber-100 hover:to-orange-100 dark:hover:bg-slate-700/70 active:scale-95 text-amber-900 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3 px-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-800/80 hover:from-amber-100 hover:to-orange-100 dark:hover:bg-slate-700/70 active:scale-95 text-amber-900 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                  <Sparkles className="h-4 w-4 text-amber-500" />
                   <span>{locale === 'th' ? '🌈 ทดสอบส่งสรุปสุขภาพประจำสัปดาห์' : '🌈 Test Weekly Digest'}</span>
                 </button>
 
                 {/* Daily Schedule Card */}
-                <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 text-xs space-y-2">
-                  <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 text-[11px]">
-                    <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 space-y-2.5">
+                  <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-xs sm:text-sm">
+                    <Clock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     <span>{locale === 'th' ? 'รอบเวลาเตือนอัตโนมัติ (Sunny ☀️)' : 'Daily Automated Reminder Schedule'}</span>
                   </div>
-                  <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">☀️ 08:00 น.</span>
+                  <div className="space-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">
+                        ☀️ {locale === 'th' ? '08:00 น.' : '08:00 AM'}
+                      </span>
                       <span className="text-slate-400">•</span>
                       <span>{locale === 'th' ? 'อรุณสวัสดิ์ & น้ำแก้วแรก' : 'Morning Greeting & Wake-up Water'}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">💧 10:00 & 14:00 น.</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">
+                        💧 {locale === 'th' ? '10:00 & 14:00 น.' : '10:00 AM & 02:00 PM'}
+                      </span>
                       <span className="text-slate-400">•</span>
                       <span>{locale === 'th' ? 'เตือนจิบน้ำระหว่างวัน' : 'Hydration Check-ins'}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">🥗 18:00 น.</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">
+                        🥗 {locale === 'th' ? '18:00 น.' : '06:00 PM'}
+                      </span>
                       <span className="text-slate-400">•</span>
                       <span>{locale === 'th' ? 'ชวนทานอาหารมื้อเย็น' : 'Dinner Nudge'}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">🌙 21:30 น.</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">
+                        🌙 {locale === 'th' ? '21:30 น.' : '09:30 PM'}
+                      </span>
                       <span className="text-slate-400">•</span>
                       <span>{locale === 'th' ? 'เตรียมตัวผ่อนคลายเข้านอน' : 'Bedtime Wind-down'}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">🌈 อาทิตย์ 20:00 น.</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">
+                        🌈 {locale === 'th' ? 'อาทิตย์ 20:00 น.' : 'Sunday 08:00 PM'}
+                      </span>
                       <span className="text-slate-400">•</span>
                       <span>{locale === 'th' ? 'สรุปสุขภาพและคำแนะนำ AI ประจำสัปดาห์' : 'Sunday Weekly AI Digest'}</span>
                     </div>
@@ -739,9 +962,9 @@ export default function SettingsPage() {
                   type="button"
                   disabled={unlinkingLine}
                   onClick={handleUnlinkLine}
-                  className="w-full py-2.5 px-3 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-100/70 dark:hover:bg-rose-950/50 active:scale-95 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-900/40 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3 px-3 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-100/70 dark:hover:bg-rose-950/50 active:scale-95 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-900/40 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  <Unlink className="h-3.5 w-3.5" />
+                  <Unlink className="h-4 w-4" />
                   <span>{t.settings.disconnectLine}</span>
                 </button>
               </div>
@@ -749,12 +972,63 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={handleOpenConnectModal}
-                className="w-full py-3 bg-[#06C755] hover:bg-[#05b04b] active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-[0_4px_14px_rgba(6,199,85,0.3)] flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 bg-[#06C755] hover:bg-[#05b04b] active:scale-95 text-white rounded-2xl text-sm sm:text-base font-bold transition-all shadow-[0_4px_14px_rgba(6,199,85,0.3)] flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>{t.settings.connectLine}</span>
                 <ExternalLink className="h-4 w-4" />
               </button>
             )}
+          </div>
+
+          {/* System & Application Info Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-3.5">
+            <div className="flex items-center gap-2.5">
+              <Info className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
+                {t.settings.systemInfoTitle}
+              </h2>
+            </div>
+
+            <div className="space-y-2 text-xs sm:text-sm">
+              <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/80">
+                <span className="text-slate-500 dark:text-slate-400">{t.settings.appVersion}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">v1.0.0 (Production)</span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/80">
+                <span className="text-slate-500 dark:text-slate-400">{t.settings.aiEngine}</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">Google Gemini Flash</span>
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-slate-500 dark:text-slate-400">Backend & Database</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">Supabase Cloud</span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-between gap-4 text-xs sm:text-sm">
+              <Link 
+                href="/terms" 
+                className="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>{locale === 'th' ? 'ข้อกำหนดการใช้งาน' : 'Terms of Use'}</span>
+              </Link>
+              <Link 
+                href="/privacy" 
+                className="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>{locale === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Privacy Notice & Disclaimer */}
+          <div className="bg-slate-100/70 dark:bg-slate-900/60 rounded-[26px] p-5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 space-y-2 border border-slate-200/50 dark:border-slate-800">
+            <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-300">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span>{t.common.disclaimerTitle}</span>
+            </div>
+            <p className="leading-relaxed">{t.common.disclaimer}</p>
           </div>
         </div>
       </div>
@@ -765,7 +1039,7 @@ export default function SettingsPage() {
         onClose={() => setShowLineModal(false)}
         title={t.settings.linkModalTitle}
         icon={
-          <div className="w-8 h-8 rounded-xl bg-[#06C755] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-[#06C755] text-white flex items-center justify-center font-bold text-sm shadow-xs">
             LINE
           </div>
         }
@@ -773,23 +1047,23 @@ export default function SettingsPage() {
         glowColor="emerald"
       >
         <div className="space-y-4 pt-1">
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-center">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed text-center">
             {t.settings.linkCodeHint}
           </p>
 
           {/* 6-Digit Code Display */}
-          <div className="p-4 rounded-3xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-center space-y-2">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="p-5 rounded-3xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-center space-y-2.5">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {t.settings.linkCodeLabel}
             </div>
 
             {loadingToken ? (
-              <div className="py-2 flex items-center justify-center gap-2 text-xs text-slate-400">
+              <div className="py-3 flex items-center justify-center gap-2 text-sm text-slate-500">
                 <RefreshCw className="h-4 w-4 animate-spin text-emerald-500" />
-                <span>กำลังสร้างรหัสเชื่อมต่อ...</span>
+                <span>{t.settings.lineGeneratingCode}</span>
               </div>
             ) : (
-              <div className="text-3xl font-black tracking-widest text-emerald-600 dark:text-emerald-400 font-mono py-1">
+              <div className="text-3xl sm:text-4xl font-black tracking-widest text-emerald-600 dark:text-emerald-400 font-mono py-1">
                 {lineToken || '------'}
               </div>
             )}
@@ -799,16 +1073,16 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleCopyToken}
                 disabled={!lineToken}
-                className="py-1.5 px-3 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+                className="py-2 px-3.5 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
               >
                 {copiedToken ? (
                   <>
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <Check className="h-4 w-4 text-emerald-500" />
                     <span className="text-emerald-600 dark:text-emerald-400">{t.settings.codeCopied}</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="h-3.5 w-3.5" />
+                    <Copy className="h-4 w-4" />
                     <span>{t.settings.copyCode}</span>
                   </>
                 )}
@@ -817,33 +1091,34 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={handleOpenConnectModal}
-                className="p-2 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-slate-100 text-slate-400 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-slate-600 transition-all cursor-pointer"
-                title="สร้างรหัสใหม่"
+                className="p-2.5 rounded-xl bg-white dark:bg-slate-700/80 hover:bg-slate-100 text-slate-400 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-slate-600 transition-all cursor-pointer"
+                title={t.settings.lineRegenerateCode}
               >
-                <RefreshCw className="h-3.5 w-3.5" />
+                <RefreshCw className="h-4 w-4" />
               </button>
             </div>
           </div>
 
           {lineActionFeedback && (
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-2xl text-xs font-semibold text-center animate-in fade-in">
+            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-2xl text-xs sm:text-sm font-semibold text-center animate-in fade-in">
               {lineActionFeedback}
             </div>
           )}
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 text-center">
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              💡 <span className="font-semibold text-slate-700 dark:text-slate-300">วิธีเชื่อมต่อที่ง่ายที่สุด:</span> คุณสามารถพิมพ์อีเมลที่ใช้สมัครของคุณ (เช่น <span className="text-emerald-600 dark:text-emerald-400 font-mono">user@example.com</span>) ส่งให้ Sunny ใน LINE ได้โดยตรง!
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 text-center">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              💡 <span className="font-bold text-slate-800 dark:text-white">{t.settings.lineEasyEmailTipTitle}</span>{' '}
+              {t.settings.lineEasyEmailTipDesc}
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2 pt-1">
+          <div className="space-y-2.5 pt-1">
             <a
               href={lineOaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 bg-[#06C755] hover:bg-[#05b04b] active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-[0_4px_14px_rgba(6,199,85,0.3)] flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 bg-[#06C755] hover:bg-[#05b04b] active:scale-95 text-white rounded-2xl text-sm sm:text-base font-bold transition-all shadow-[0_4px_14px_rgba(6,199,85,0.3)] flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>{t.settings.openLineOa}</span>
               <ExternalLink className="h-4 w-4" />
@@ -853,9 +1128,9 @@ export default function SettingsPage() {
               type="button"
               disabled={checkingLineStatus}
               onClick={handleCheckLineStatus}
-              className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
-              {checkingLineStatus && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+              {checkingLineStatus && <RefreshCw className="h-4 w-4 animate-spin" />}
               <span>{t.settings.checkStatus}</span>
             </button>
           </div>
@@ -872,9 +1147,9 @@ export default function SettingsPage() {
         title={locale === 'th' ? 'ยืนยันการลบบัญชีผู้ใช้' : 'Confirm Account Deletion'}
       >
         <div className="space-y-4">
-          <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/60 rounded-2xl flex items-start gap-3">
+          <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/60 rounded-2xl flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-rose-700 dark:text-rose-300 leading-relaxed">
+            <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 leading-relaxed">
               {locale === 'th'
                 ? 'การกระทำนี้ไม่สามารถย้อนกลับได้ ข้อมูลการดื่มน้ำ อาหาร การนอน เควส และแต้มสะสมทั้งหมดจะถูกลบถาวรทันที'
                 : 'This action is irreversible. All your hydration, food, sleep logs, quests, and points will be permanently deleted.'}
@@ -882,7 +1157,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            <label className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
               {locale === 'th' ? 'พิมพ์คำว่า DELETE เพื่อยืนยัน' : 'Type DELETE to confirm'}
             </label>
             <input
@@ -890,18 +1165,18 @@ export default function SettingsPage() {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="DELETE"
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold tracking-wider text-slate-900 dark:text-white uppercase focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono font-bold tracking-wider text-slate-900 dark:text-white uppercase focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2.5 pt-2">
             <button
               type="button"
               onClick={() => {
                 setShowDeleteModal(false);
                 setDeleteConfirmText('');
               }}
-              className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+              className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold transition-all hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
             >
               {locale === 'th' ? 'ยกเลิก' : 'Cancel'}
             </button>
@@ -909,9 +1184,9 @@ export default function SettingsPage() {
               type="button"
               disabled={deleteConfirmText.trim().toUpperCase() !== 'DELETE' || deletingAccount}
               onClick={handleDeleteAccount}
-              className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-[0_4px_12px_rgba(225,29,72,0.3)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1.5"
+              className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all shadow-[0_4px_12px_rgba(225,29,72,0.3)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1.5"
             >
-              {deletingAccount && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+              {deletingAccount && <RefreshCw className="h-4 w-4 animate-spin" />}
               <span>{locale === 'th' ? 'ยืนยันลบบัญชี' : 'Delete Permanently'}</span>
             </button>
           </div>

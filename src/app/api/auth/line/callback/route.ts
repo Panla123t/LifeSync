@@ -131,13 +131,13 @@ export async function GET(req: NextRequest) {
 
     if (linkedNotif?.user_id) {
       const { data: userRes } = await admin.auth.admin.getUserById(linkedNotif.user_id);
-      targetUser = userRes?.user;
+      targetUser = userRes?.user || null;
     }
 
     // B. Check by email if provided
     if (!targetUser && email) {
       const { data: usersList } = await admin.auth.admin.listUsers();
-      targetUser = (usersList?.users || []).find((u) => u.email?.toLowerCase() === email.toLowerCase());
+      targetUser = (usersList?.users || []).find((u) => u.email?.toLowerCase() === email.toLowerCase()) || null;
     }
 
     // C. If still not found, create a new Supabase user
@@ -192,7 +192,7 @@ export async function GET(req: NextRequest) {
     // 4. Generate Supabase magic auth token
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: 'magiclink',
-      email: targetUser.email,
+      email: targetUser.email || '',
       options: {
         redirectTo: `${baseUrl}/dashboard`,
       },

@@ -54,13 +54,13 @@ export async function POST(req: NextRequest) {
 
     if (notifRow?.user_id) {
       const { data: userRes } = await admin.auth.admin.getUserById(notifRow.user_id);
-      targetUser = userRes?.user;
+      targetUser = userRes?.user || null;
     }
 
     // Check by email if provided
     if (!targetUser && email) {
       const { data: usersList } = await admin.auth.admin.listUsers();
-      targetUser = (usersList?.users || []).find((u) => u.email?.toLowerCase() === email.toLowerCase());
+      targetUser = (usersList?.users || []).find((u) => u.email?.toLowerCase() === email.toLowerCase()) || null;
     }
 
     // If still not found, create new user
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     // Generate magic link and verify OTP directly to set session cookies
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: 'magiclink',
-      email: targetUser.email,
+      email: targetUser.email || '',
     });
 
     if (linkErr || !linkData?.properties?.hashed_token) {

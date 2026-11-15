@@ -21,6 +21,13 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Ensure comfortable reading font size on tablet & desktop screens */
+@media (min-width: 768px) {
+  html {
+    font-size: 16.5px;
+  }
+}
+
 /* Custom smooth transitions & animations */
 @keyframes pulseSubtle {
   0%, 100% { opacity: 1; transform: scale(1); }
