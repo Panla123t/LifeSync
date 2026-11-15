@@ -1,10 +1,25 @@
 import os
+import sys
 import json
 import urllib.request
 import urllib.error
 
-TOKEN = 'REDACTED_LINE_CHANNEL_ACCESS_TOKEN'
-APP_URL = 'https://life-sync-panla123ts-projects.vercel.app'
+# Load TOKEN from environment or .env.local
+TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
+if not TOKEN and os.path.exists('.env.local'):
+    with open('.env.local', 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith('LINE_CHANNEL_ACCESS_TOKEN='):
+                TOKEN = line.split('=', 1)[1].strip().strip('"').strip("'")
+                break
+
+if not TOKEN:
+    print("❌ ERROR: LINE_CHANNEL_ACCESS_TOKEN environment variable is not set.")
+    print("Please set it in your environment or in .env.local")
+    sys.exit(1)
+
+APP_URL = os.environ.get('NEXT_PUBLIC_APP_URL', 'https://life-sync-panla123ts-projects.vercel.app')
 IMAGE_PATH = 'public/richmenu.png'
 
 # 1. Define Rich Menu Structure
