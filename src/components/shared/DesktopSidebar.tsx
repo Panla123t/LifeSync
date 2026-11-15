@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import ThemeToggle from '@/components/shared/ThemeToggle';
 import LanguageToggle from '@/components/shared/LanguageToggle';
+import FontSizeToggle from '@/components/shared/FontSizeToggle';
 import { 
   Activity,
   LayoutDashboard, 
@@ -167,7 +168,8 @@ export default function DesktopSidebar() {
           <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
             {isThai ? 'การแสดงผล' : 'Appearance'}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <FontSizeToggle />
             <ThemeToggle />
             <LanguageToggle />
           </div>

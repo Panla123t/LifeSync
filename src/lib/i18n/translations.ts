@@ -162,6 +162,12 @@ export interface TranslationSchema {
     theme: string;
     lightMode: string;
     darkMode: string;
+    fontSize: string;
+    fontSizeSubtitle: string;
+    fontSizeNormal: string;
+    fontSizeLarge: string;
+    fontSizeXl: string;
+    fontSizePreview: string;
     notifPrefs: string;
     hydrationReminders: string;
     hydrationRemindersDesc: string;
@@ -404,6 +410,12 @@ export const translations: Record<Locale, TranslationSchema> = {
       theme: 'ธีมการแสดงผล (Theme)',
       lightMode: 'สว่าง (Light)',
       darkMode: 'มืด (Dark)',
+      fontSize: 'ขนาดตัวอักษรสำหรับทุกวัย',
+      fontSizeSubtitle: 'ปรับขนาดตัวอักษรให้อ่านง่าย สบายตา เหมาะสำหรับผู้ใช้ทุกช่วงวัยและผู้สูงอายุ',
+      fontSizeNormal: 'ปกติ (100%)',
+      fontSizeLarge: 'ใหญ่ สบายตา (+30% แนะนำ)',
+      fontSizeXl: 'ใหญ่พิเศษ (+45% โหมดผู้สูงวัย)',
+      fontSizePreview: 'ตัวอย่างข้อความ: ซันนี่ AI โค้ชสุขภาพของคุณ ☀️ ดื่มน้ำครบ สุขภาพดีทุกวัน',
       notifPrefs: 'การแจ้งเตือน',
       hydrationReminders: 'เตือนดื่มน้ำ',
       hydrationRemindersDesc: 'รับการแจ้งเตือนดื่มน้ำเบาๆ ตลอดวัน',
@@ -644,6 +656,12 @@ export const translations: Record<Locale, TranslationSchema> = {
       theme: 'Appearance (Theme)',
       lightMode: 'Light',
       darkMode: 'Dark',
+      fontSize: 'Font Size for All Ages',
+      fontSizeSubtitle: 'Adjust text size for comfortable reading across all age groups and seniors',
+      fontSizeNormal: 'Standard (100%)',
+      fontSizeLarge: 'Large (+30% Recommended)',
+      fontSizeXl: 'Extra Large (+45% Senior Mode)',
+      fontSizePreview: 'Sample Text: Sunny AI Health Coach ☀️ Stay hydrated and live well every day',
       notifPrefs: 'Notification Preferences',
       hydrationReminders: 'Hydration Reminders',
       hydrationRemindersDesc: 'Periodic gentle nudges to drink water',

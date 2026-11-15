@@ -265,7 +265,7 @@ export default function SunnyChatDrawer() {
                 )}
 
                 <div
-                  className={`max-w-[80%] rounded-2xl p-3 text-xs leading-relaxed space-y-1 shadow-2xs ${
+                  className={`max-w-[82%] rounded-2xl p-3.5 text-sm sm:text-base leading-relaxed space-y-1 shadow-2xs ${
                     m.role === 'user'
                       ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-br-xs font-medium'
                       : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 rounded-bl-xs'
@@ -273,7 +273,7 @@ export default function SunnyChatDrawer() {
                 >
                   <div className="space-y-0.5">{renderFormattedText(m.content)}</div>
                   <span
-                    className={`text-[9px] block text-right font-medium ${
+                    className={`text-xs block text-right font-medium ${
                       m.role === 'user' ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'
                     }`}
                   >

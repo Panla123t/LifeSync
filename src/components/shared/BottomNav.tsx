@@ -39,7 +39,7 @@ export default function BottomNav() {
                 }`}
               >
                 <Icon className={`h-5 w-5 transition-transform duration-200 ${isActive ? 'scale-110 stroke-[2.5px]' : 'stroke-2'}`} />
-                <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+                <span className="text-xs mt-0.5 tracking-tight font-semibold text-center truncate max-w-[54px]">
                   {item.label}
                 </span>
 

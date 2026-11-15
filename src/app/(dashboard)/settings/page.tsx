@@ -91,6 +91,9 @@ export default function SettingsPage() {
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const [hapticsEnabled, setHapticsEnabledState] = useState(true);
 
+  // Font Size Accessibility Tier
+  const [fontSize, setFontSizeState] = useState<'normal' | 'large' | 'xl'>('large');
+
   useEffect(() => {
     async function loadSettings() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -144,10 +147,24 @@ export default function SettingsPage() {
 
       setSoundEnabledState(getSoundSetting());
       setHapticsEnabledState(getHapticsSetting());
+
+      const savedFontSize = localStorage.getItem('lifesync_font_size') as 'normal' | 'large' | 'xl' | null;
+      if (savedFontSize === 'normal' || savedFontSize === 'large' || savedFontSize === 'xl') {
+        setFontSizeState(savedFontSize);
+      } else {
+        setFontSizeState('large');
+      }
     }
 
     loadSettings();
   }, []);
+
+  const handleSetFontSize = (size: 'normal' | 'large' | 'xl') => {
+    setFontSizeState(size);
+    localStorage.setItem('lifesync_font_size', size);
+    document.documentElement.setAttribute('data-font-size', size);
+    if (soundEnabled) playSuccessChime();
+  };
 
   const handleToggleSound = (enabled: boolean) => {
     setSoundEnabledState(enabled);
@@ -468,6 +485,71 @@ export default function SettingsPage() {
                 <span className="text-lg">🇬🇧</span>
                 <span>{t.settings.english}</span>
               </button>
+            </div>
+          </div>
+
+          {/* Font Size Accessibility Card (For all age groups) */}
+          <div className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_25px_rgba(0,0,0,0.3)] space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-black text-sm">
+                A+
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
+                  {t.settings.fontSize}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-snug">
+                  {t.settings.fontSizeSubtitle}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => handleSetFontSize('normal')}
+                className={`py-3 px-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  fontSize === 'normal'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                <div className="text-base font-bold">A</div>
+                <div className="text-xs font-semibold mt-0.5">{t.settings.fontSizeNormal}</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSetFontSize('large')}
+                className={`py-3 px-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  fontSize === 'large'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                <div className="text-lg font-black text-emerald-600 dark:text-emerald-400">A+</div>
+                <div className="text-xs font-bold mt-0.5">{t.settings.fontSizeLarge}</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSetFontSize('xl')}
+                className={`py-3 px-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  fontSize === 'xl'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                <div className="text-xl font-black text-amber-600 dark:text-amber-400">A++</div>
+                <div className="text-xs font-bold mt-0.5">{t.settings.fontSizeXl}</div>
+              </button>
+            </div>
+
+            {/* Live Text Preview Box */}
+            <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60 text-center">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 leading-relaxed">
+                {t.settings.fontSizePreview}
+              </p>
             </div>
           </div>
 

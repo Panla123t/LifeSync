@@ -41,7 +41,7 @@ export default function RootLayout({
       className={`${promptFont.variable} h-full antialiased`}
     >
       <head>
-        {/* Anti-flash script for dark theme */}
+        {/* Anti-flash script for dark theme & font size */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -52,6 +52,13 @@ export default function RootLayout({
                   document.documentElement.classList.add('dark');
                 } else {
                   document.documentElement.classList.remove('dark');
+                }
+
+                const storedFontSize = localStorage.getItem('lifesync_font_size');
+                if (storedFontSize) {
+                  document.documentElement.setAttribute('data-font-size', storedFontSize);
+                } else {
+                  document.documentElement.setAttribute('data-font-size', 'large');
                 }
               } catch (_) {}
             `,

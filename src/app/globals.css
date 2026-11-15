@@ -21,11 +21,39 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Ensure comfortable reading font size on tablet & desktop screens */
+/* Accessibility Typography Sizing - Scaled +30% for all age groups */
+:root {
+  --base-font-size-mobile: 18.5px;
+  --base-font-size-desktop: 20.8px; /* +30% from 16px standard (16 * 1.30 = 20.8px) */
+}
+
+html {
+  font-size: var(--base-font-size-mobile);
+}
+
 @media (min-width: 768px) {
   html {
-    font-size: 16.5px;
+    font-size: var(--base-font-size-desktop);
   }
+}
+
+/* User-selectable accessibility tiers */
+html[data-font-size="normal"] {
+  --base-font-size-mobile: 16px;
+  --base-font-size-desktop: 16.5px;
+}
+
+html[data-font-size="large"],
+html:not([data-font-size]) {
+  /* Default: +30% larger for senior/all-ages accessibility */
+  --base-font-size-mobile: 18.5px;
+  --base-font-size-desktop: 20.8px;
+}
+
+html[data-font-size="xl"] {
+  /* Extra Large: +45% larger for low vision / senior readability */
+  --base-font-size-mobile: 21px;
+  --base-font-size-desktop: 23.5px;
 }
 
 /* Custom smooth transitions & animations */
