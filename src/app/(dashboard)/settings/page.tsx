@@ -482,7 +482,7 @@ export default function SettingsPage() {
                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                <span className="text-lg">🇬🇧</span>
+                <span className="text-lg">🇺🇸</span>
                 <span>{t.settings.english}</span>
               </button>
             </div>
