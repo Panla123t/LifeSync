@@ -16,8 +16,6 @@ import {
   Moon, 
   Trophy, 
   Settings,
-  Sparkles,
-  ExternalLink,
   ChevronRight
 } from 'lucide-react';
 
@@ -78,15 +76,15 @@ export default function DesktopSidebar() {
   ];
 
   return (
-    <aside className="hidden md:flex flex-col justify-between w-64 lg:w-72 shrink-0 h-screen sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-r border-slate-200/80 dark:border-slate-800/80 p-5 z-30 transition-colors duration-200 select-none">
-      {/* Top Brand Header */}
-      <div className="space-y-6">
-        <Link href="/dashboard" className="flex items-center gap-3 px-2 pt-1 group">
-          <div className="bg-gradient-to-tr from-emerald-600 to-teal-500 text-white p-2.5 rounded-2xl shadow-[0_4px_16px_rgba(16,185,129,0.35)] group-hover:scale-105 transition-transform">
-            <Activity className="h-6 w-6" />
+    <aside className="hidden md:flex flex-col w-64 lg:w-72 shrink-0 h-screen sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-r border-slate-200/80 dark:border-slate-800/80 p-3.5 lg:p-4 z-30 transition-colors duration-200 select-none overflow-y-auto no-scrollbar overscroll-contain">
+      {/* Top Brand Header & Navigation */}
+      <div className="space-y-3.5 lg:space-y-4 shrink-0">
+        <Link href="/dashboard" className="flex items-center gap-2.5 px-1.5 pt-0.5 group">
+          <div className="bg-gradient-to-tr from-emerald-600 to-teal-500 text-white p-2 rounded-2xl shadow-[0_4px_16px_rgba(16,185,129,0.35)] group-hover:scale-105 transition-transform shrink-0">
+            <Activity className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white block leading-tight">
+            <span className="text-lg lg:text-xl font-black tracking-tight text-slate-900 dark:text-white block leading-tight">
               {t.common.appName}
             </span>
             <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tracking-wider uppercase">
@@ -96,13 +94,13 @@ export default function DesktopSidebar() {
         </Link>
 
         {/* Mascot Coach Pill */}
-        <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 flex items-center gap-3 shadow-2xs">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-amber-100 border-2 border-amber-300 shrink-0 relative">
+        <div className="p-2.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 flex items-center gap-2.5 shadow-2xs">
+          <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full overflow-hidden bg-amber-100 border-2 border-amber-300 shrink-0 relative">
             <Image
               src="/mascot/sunny-avatar.jpg"
               alt="Coach Sunny"
-              width={40}
-              height={40}
+              width={36}
+              height={36}
               className="w-full h-full object-cover"
             />
           </div>
@@ -120,7 +118,7 @@ export default function DesktopSidebar() {
         </div>
 
         {/* Navigation Items */}
-        <nav className="space-y-1.5">
+        <nav className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -129,14 +127,14 @@ export default function DesktopSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between p-3 rounded-2xl transition-all duration-200 cursor-pointer ${
+                className={`flex items-center justify-between py-2 px-2.5 lg:px-3 rounded-2xl transition-all duration-200 cursor-pointer ${
                   isActive
                     ? `${item.activeBg} border font-bold shadow-xs`
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`p-2 rounded-xl shrink-0 transition-colors ${
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`p-1.5 rounded-xl shrink-0 transition-colors ${
                     isActive
                       ? 'bg-white/80 dark:bg-slate-800/80 shadow-2xs'
                       : 'bg-slate-100 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500'
@@ -163,8 +161,8 @@ export default function DesktopSidebar() {
       </div>
 
       {/* Bottom Footer Controls */}
-      <div className="pt-4 border-t border-slate-200/70 dark:border-slate-800/70 space-y-3">
-        <div className="flex items-center justify-between px-2">
+      <div className="mt-auto pt-3 border-t border-slate-200/70 dark:border-slate-800/70 space-y-2 shrink-0">
+        <div className="flex items-center justify-between px-1.5">
           <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
             {isThai ? 'การแสดงผล' : 'Appearance'}
           </span>
@@ -175,7 +173,7 @@ export default function DesktopSidebar() {
           </div>
         </div>
 
-        <div className="px-2 py-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="px-1.5 py-0.5 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
           <span>LifeSync Web • v1.2</span>
           <Link href="/terms" className="hover:text-emerald-600 hover:underline">
             {isThai ? 'ข้อกำหนด' : 'Terms'}

@@ -21,10 +21,10 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Accessibility Typography Sizing - Scaled +30% for all age groups */
+/* Accessibility Typography Sizing - Scaled for all age groups */
 :root {
-  --base-font-size-mobile: 18.5px;
-  --base-font-size-desktop: 20.8px; /* +30% from 16px standard (16 * 1.30 = 20.8px) */
+  --base-font-size-mobile: 17.5px;
+  --base-font-size-desktop: 18.5px; /* Comfortable +16% readability default */
 }
 
 html {
@@ -40,20 +40,20 @@ html {
 /* User-selectable accessibility tiers */
 html[data-font-size="normal"] {
   --base-font-size-mobile: 16px;
-  --base-font-size-desktop: 16.5px;
+  --base-font-size-desktop: 16px;
 }
 
 html[data-font-size="large"],
 html:not([data-font-size]) {
-  /* Default: +30% larger for senior/all-ages accessibility */
-  --base-font-size-mobile: 18.5px;
-  --base-font-size-desktop: 20.8px;
+  /* Default: +15-18% larger for all-ages readability */
+  --base-font-size-mobile: 17.5px;
+  --base-font-size-desktop: 18.5px;
 }
 
 html[data-font-size="xl"] {
-  /* Extra Large: +45% larger for low vision / senior readability */
-  --base-font-size-mobile: 21px;
-  --base-font-size-desktop: 23.5px;
+  /* Extra Large: +30% larger for senior readability */
+  --base-font-size-mobile: 19.5px;
+  --base-font-size-desktop: 21px;
 }
 
 /* Custom smooth transitions & animations */
