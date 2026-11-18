@@ -245,6 +245,15 @@ export interface TranslationSchema {
     lineTermsNotice: string;
     acceptAndClose: string;
   };
+  notFound: {
+    title: string;
+    badge: string;
+    heading: string;
+    description: string;
+    backHome: string;
+    goToDashboard: string;
+    quickLinksTitle: string;
+  };
 }
 
 export const translations: Record<Locale, TranslationSchema> = {
@@ -493,6 +502,15 @@ export const translations: Record<Locale, TranslationSchema> = {
       lineTermsNotice: 'การลงทะเบียนหรือเข้าสู่ระบบ ถือว่าคุณยอมรับ ข้อกำหนดการใช้งาน และ นโยบายความเป็นส่วนตัว ของ LifeSync',
       acceptAndClose: 'ยอมรับและปิด',
     },
+    notFound: {
+      title: '404 - ไม่พบหน้านี้',
+      badge: '404 Page Not Found',
+      heading: 'ขออภัย ไม่พบหน้าที่คุณค้นหา',
+      description: 'ดูเหมือนว่าหน้าที่คุณกำลังค้นหาอาจถูกย้าย ลิงก์ไม่ถูกต้อง หรือยังไม่ได้สร้างครับ แต่ไม่ต้องกังวล สุขภาพของคุณยังไปต่อได้เสมอ!',
+      backHome: 'กลับสู่หน้าหลัก',
+      goToDashboard: 'ไปที่แดชบอร์ด',
+      quickLinksTitle: 'เมนูลัดแนะนำสำหรับคุณ',
+    },
   },
   en: {
     common: {
@@ -738,6 +756,15 @@ export const translations: Record<Locale, TranslationSchema> = {
       mustAgreeTerms: 'Please accept the Terms of Use and Privacy Policy to continue',
       lineTermsNotice: 'By continuing with LINE or email, you agree to LifeSync\'s Terms of Use and Privacy Policy',
       acceptAndClose: 'Accept & Close',
+    },
+    notFound: {
+      title: '404 - Page Not Found',
+      badge: '404 Page Not Found',
+      heading: 'Oops! Page Not Found',
+      description: "The page you are looking for might have been moved, has an invalid link, or doesn't exist. Don't worry, your health journey continues!",
+      backHome: 'Return to Home',
+      goToDashboard: 'Go to Dashboard',
+      quickLinksTitle: 'Helpful Quick Links',
     },
   },
 };
