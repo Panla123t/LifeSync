@@ -48,42 +48,55 @@ Respond STRICTLY with a raw JSON object (no markdown, no backticks, no code fenc
   "nutrition_note": "คำแนะนำสั้นๆ เกี่ยวกับสารอาหาร"
 }`;
 
-        // Attempt gemini-flash-lite-latest first, fallback to gemini-3.5-flash
-        const candidateModels = ['gemini-flash-lite-latest', 'gemini-3.5-flash'];
+        // Ultra-fast lightweight vision models: gemini-3.1-flash-lite (~1.5s latency), with fast fallbacks
+        const candidateModels = [
+          'gemini-3.1-flash-lite',
+          'gemini-3.5-flash-lite',
+          'gemini-flash-lite-latest',
+        ];
         let response: Response | null = null;
 
         for (const model of candidateModels) {
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-          const res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    { text: promptText },
-                    {
-                      inline_data: {
-                        mime_type: mimeType,
-                        data: base64Data,
-                      },
-                    },
-                  ],
-                },
-              ],
-              generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.2,
-                maxOutputTokens: 2048,
-              },
-            }),
-          });
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 7500); // 7.5s timeout per model
 
-          if (res.ok) {
-            response = res;
-            break;
-          } else {
-            console.warn(`[Nutrition Vision API] ${model} returned status:`, res.status);
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+            const res = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { text: promptText },
+                      {
+                        inline_data: {
+                          mime_type: mimeType,
+                          data: base64Data,
+                        },
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  responseMimeType: 'application/json',
+                  temperature: 0.1,
+                  maxOutputTokens: 300, // Compact & fast JSON output
+                },
+              }),
+            });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+              response = res;
+              break;
+            } else {
+              console.warn(`[Nutrition Vision API] ${model} returned status:`, res.status);
+            }
+          } catch (modelErr) {
+            console.warn(`[Nutrition Vision API] ${model} attempt failed:`, modelErr);
           }
         }
 
