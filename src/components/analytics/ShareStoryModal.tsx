@@ -231,7 +231,7 @@ export default function ShareStoryModal({
       ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('LifeSync • เพื่อนร่วมทางดูแลสุขภาพ • LINE OA: @766iowmg', 540, 1750);
-      ctx.fillText('lifesync.vercel.app', 540, 1800);
+      ctx.fillText('life-sync-panla123ts-projects.vercel.app', 540, 1800);
       ctx.restore();
 
       // Trigger download
@@ -247,7 +247,7 @@ export default function ShareStoryModal({
   };
 
   const handleShareWeb = async () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://lifesync.vercel.app';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://life-sync-panla123ts-projects.vercel.app';
     const text = isThai
       ? `สัปดาห์นี้ฉันได้เกรดสุขภาพ ${weeklyGrade} และวินัยต่อเนื่อง ${streak} วันบน LifeSync! 🏃‍♂️💧 แอดซันนี่ @766iowmg หรือเข้าใช้งานได้ที่ ${origin}`
       : `I earned Health Grade ${weeklyGrade} and a ${streak}-day streak on LifeSync! 🏃‍♂️💧 Track habits together: ${origin}`;

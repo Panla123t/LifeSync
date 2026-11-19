@@ -170,7 +170,10 @@ const DEFAULT_APP_URL = 'https://life-sync-panla123ts-projects.vercel.app';
 
 export function getAppUrl(): string {
   const envUrl = process.env.APP_BASE_URL;
-  if (!envUrl) return DEFAULT_APP_URL;
+  // If not set or points to local development host, always use the real production Vercel URL
+  if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+    return DEFAULT_APP_URL;
+  }
   let clean = envUrl.trim();
   if (clean.endsWith('/')) clean = clean.slice(0, -1);
   return clean;

@@ -30,8 +30,8 @@ export default function TermsContent({ locale = 'th' }: TermsContentProps) {
         </h3>
         <p>
           {isThai
-            ? 'ยินดีต้อนรับสู่ LifeSync ("เรา" หรือ "บริการ") ข้อกำหนดการใช้งานนี้มีผลผูกพันทางกฎหมายระหว่างผู้ใช้งาน ("คุณ") กับ LifeSync ครอบคลุมการเข้าถึงและการใช้งานผ่านเว็บไซต์ lifesync.vercel.app รวมถึงระบบบอท LINE Official Account (ซันนี่ / Sunny ID: @766iowmg) การสร้างบัญชีหรือใช้บริการแสดงว่าคุณได้อ่าน เข้าใจ และยอมรับข้อกำหนดเหล่านี้ทั้งหมด'
-            : 'Welcome to LifeSync ("we", "us", or "Service"). These Terms of Use constitute a legally binding agreement between you and LifeSync regarding your access to and use of our web platform (lifesync.vercel.app) and the LINE Official Account bot (Sunny ID: @766iowmg). By registering or using the Service, you signify that you have read, understood, and agreed to these Terms.'}
+            ? 'ยินดีต้อนรับสู่ LifeSync ("เรา" หรือ "บริการ") ข้อกำหนดการใช้งานนี้มีผลผูกพันทางกฎหมายระหว่างผู้ใช้งาน ("คุณ") กับ LifeSync ครอบคลุมการเข้าถึงและการใช้งานผ่านเว็บไซต์ life-sync-panla123ts-projects.vercel.app รวมถึงระบบบอท LINE Official Account (ซันนี่ / Sunny ID: @766iowmg) การสร้างบัญชีหรือใช้บริการแสดงว่าคุณได้อ่าน เข้าใจ และยอมรับข้อกำหนดเหล่านี้ทั้งหมด'
+            : 'Welcome to LifeSync ("we", "us", or "Service"). These Terms of Use constitute a legally binding agreement between you and LifeSync regarding your access to and use of our web platform (life-sync-panla123ts-projects.vercel.app) and the LINE Official Account bot (Sunny ID: @766iowmg). By registering or using the Service, you signify that you have read, understood, and agreed to these Terms.'}
         </p>
       </section>
 

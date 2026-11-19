@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
       // Handle Follow / Add Friend Event
       if (event.type === 'follow') {
-        const appUrl = process.env.APP_BASE_URL || 'https://life-sync-panla123ts-projects.vercel.app';
+        const appUrl = getAppUrl();
         await sendLineReply(event.replyToken, [createWelcomeMessage(appUrl)]);
         continue;
       }

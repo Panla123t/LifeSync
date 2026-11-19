@@ -237,7 +237,7 @@ export default function QuestsPage() {
   };
 
   const handleShareLine = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://lifesync.vercel.app';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://life-sync-panla123ts-projects.vercel.app';
     const text = locale === 'th'
       ? `มาสร้างวินัยสุขภาพด้วยกันบน LifeSync! 🏃‍♂️💧 แข่งขันความสม่ำเสมอด้านน้ำ อาหาร และการนอน แอดซันนี่ @766iowmg หรือเข้าใช้งานได้ที่ ${origin}`
       : `Join me on LifeSync to build daily health habits! 🏃‍♂️💧 Track hydration, food, and sleep. Add Sunny @766iowmg or open: ${origin}`;
@@ -246,7 +246,7 @@ export default function QuestsPage() {
   };
 
   const handleCopyInviteLink = async () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://lifesync.vercel.app';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://life-sync-panla123ts-projects.vercel.app';
     try {
       await navigator.clipboard.writeText(origin);
       setCopiedInvite(true);
