@@ -44,6 +44,9 @@ export default function QuestsPage() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [currentLevelNumber, setCurrentLevelNumber] = useState(1);
   const [userDisplayName, setUserDisplayName] = useState<string>('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [realLeaderboard, setRealLeaderboard] = useState<LeaderboardMember[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
   const [cheeredIds, setCheeredIds] = useState<string[]>([]);
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [showShareStory, setShowShareStory] = useState(false);
@@ -140,6 +143,21 @@ export default function QuestsPage() {
           const sum = pointTxs.reduce((acc, curr) => acc + curr.points_delta, 0);
           setTotalPoints(sum);
         }
+
+        // 5. Fetch real community leaderboard (purely real data, no mocks)
+        try {
+          const lbRes = await fetch('/api/quests/leaderboard');
+          if (lbRes.ok) {
+            const lbData = await lbRes.json();
+            if (lbData.success && Array.isArray(lbData.leaderboard)) {
+              setRealLeaderboard(lbData.leaderboard);
+            }
+          }
+        } catch (lbErr) {
+          console.warn('[Leaderboard] Fetch error:', lbErr);
+        } finally {
+          setLoadingLeaderboard(false);
+        }
       } finally {
         setLoading(false);
       }
@@ -167,67 +185,39 @@ export default function QuestsPage() {
     isCurrentUser?: boolean;
   }
 
-  const communityBuddies: LeaderboardMember[] = [
-    {
-      id: 'user_sunny_coach',
-      name: 'Nong Sunny (ซันนี่ AI)',
-      roleTh: '🤖 AI โค้ชสุขภาพประจำตัว',
-      roleEn: '🤖 AI Health Companion',
-      streak: 30,
-      points: 750,
-      avatarColor: 'from-amber-400 to-orange-500',
-    },
-    {
-      id: 'user_tonkla',
-      name: 'ต้นกล้า (Tonkla)',
-      roleTh: '🏃‍♂️ สายวิ่งเช้า & ออกกำลังกาย',
-      roleEn: '🏃‍♂️ Morning Runner',
-      streak: 15,
-      points: 540,
-      avatarColor: 'from-emerald-400 to-teal-600',
-    },
-    {
-      id: 'user_ploy',
-      name: 'พลอย (Ploy)',
-      roleTh: '🥑 สายคลีน & ผักผลไม้',
-      roleEn: '🥑 Clean Food & Veggies',
-      streak: 12,
-      points: 460,
-      avatarColor: 'from-pink-400 to-rose-500',
-    },
-    {
-      id: 'user_kaopan',
-      name: 'ข้าวปั้น (Kaopan)',
-      roleTh: '💧 เน้นดื่มน้ำวันละ 2.5 ลิตร',
-      roleEn: '💧 2.5L Water Habit',
-      streak: 8,
-      points: 320,
-      avatarColor: 'from-cyan-400 to-blue-500',
-    },
-    {
-      id: 'user_nat',
-      name: 'ณัฐ (Nat)',
-      roleTh: '😴 นอนครบ 8 ชม. สม่ำเสมอ',
-      roleEn: '😴 Consistent 8h Sleeper',
-      streak: 6,
-      points: 270,
-      avatarColor: 'from-indigo-400 to-purple-600',
-    },
-  ];
+  // Purely REAL Leaderboard Members (NO mock data)
+  const allMembers: LeaderboardMember[] = realLeaderboard.map((m) => {
+    const isCurrent = currentUserId ? m.id === currentUserId : false;
+    return {
+      ...m,
+      isCurrentUser: isCurrent,
+      name: isCurrent ? (userDisplayName || m.name || (locale === 'th' ? 'คุณ (You)' : 'You')) : m.name,
+      points: isCurrent ? Math.max(m.points, totalPoints) : m.points,
+      streak: isCurrent ? Math.max(m.streak, currentOverallStreak) : m.streak,
+    };
+  });
 
-  const currentUserMember: LeaderboardMember = {
-    id: 'current_user',
-    name: userDisplayName || (locale === 'th' ? 'คุณ (You)' : 'You'),
-    roleTh: `🌟 ระดับ ${userLevel} • ผู้สร้างวินัย`,
-    roleEn: `🌟 Level ${userLevel} • Habit Builder`,
-    streak: currentOverallStreak,
-    points: totalPoints,
-    avatarColor: 'from-emerald-500 to-teal-600',
-    isCurrentUser: true,
-  };
+  // If current user is not in database list yet (e.g. brand new user)
+  if (currentUserId && !allMembers.some((m) => m.id === currentUserId)) {
+    allMembers.push({
+      id: currentUserId,
+      name: userDisplayName || (locale === 'th' ? 'คุณ (You)' : 'You'),
+      roleTh: `🌟 ระดับ ${userLevel} • ผู้สร้างวินัย`,
+      roleEn: `🌟 Level ${userLevel} • Habit Builder`,
+      streak: currentOverallStreak,
+      points: totalPoints,
+      avatarColor: 'from-emerald-500 to-teal-600',
+      isCurrentUser: true,
+    });
+  }
 
-  const allMembers = [...communityBuddies, currentUserMember].sort((a, b) => b.points - a.points);
-  const userRankIndex = allMembers.findIndex((m) => m.isCurrentUser) + 1;
+  // Sort descending by points, then by streak
+  allMembers.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    return b.streak - a.streak;
+  });
+
+  const userRankIndex = Math.max(1, allMembers.findIndex((m) => m.isCurrentUser) + 1);
 
   const handleCheer = (buddyId: string) => {
     if (cheeredIds.includes(buddyId)) return;
@@ -697,100 +687,118 @@ export default function QuestsPage() {
               </span>
             </div>
 
-            <div className="space-y-2.5 pt-1">
-              {allMembers.map((member, idx) => {
-                const rank = idx + 1;
-                const isCheered = cheeredIds.includes(member.id);
-                const role = locale === 'th' ? member.roleTh : member.roleEn;
+            {loadingLeaderboard ? (
+              <div className="py-8 flex flex-col items-center justify-center space-y-2 text-slate-400">
+                <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs">{locale === 'th' ? 'กำลังโหลดอันดับผู้ใช้งานจริง...' : 'Loading community leaderboard...'}</span>
+              </div>
+            ) : (
+              <div className="space-y-2.5 pt-1">
+                {allMembers.map((member, idx) => {
+                  const rank = idx + 1;
+                  const isCheered = cheeredIds.includes(member.id);
+                  const role = locale === 'th' ? member.roleTh : member.roleEn;
 
-                return (
-                  <div
-                    key={member.id}
-                    className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                      member.isCurrentUser
-                        ? 'bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-emerald-50/70 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-emerald-950/30 border-emerald-300 dark:border-emerald-700 shadow-sm'
-                        : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-800/60'
-                    }`}
-                  >
-                    {/* Left: Rank & Avatar & Info */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      {/* Rank Badge */}
-                      <div className="w-7 text-center shrink-0">
-                        {rank === 1 ? (
-                          <span className="text-xl" title="Gold">🥇</span>
-                        ) : rank === 2 ? (
-                          <span className="text-xl" title="Silver">🥈</span>
-                        ) : rank === 3 ? (
-                          <span className="text-xl" title="Bronze">🥉</span>
-                        ) : (
-                          <span className="text-xs font-black text-slate-400 dark:text-slate-500">
-                            #{rank}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Avatar Circle */}
-                      <div className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${member.avatarColor} text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs`}>
-                        {member.name.charAt(0)}
-                      </div>
-
-                      {/* Name & Role */}
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-xs font-black truncate ${member.isCurrentUser ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-800 dark:text-white'}`}>
-                            {member.name}
-                          </span>
-                          {member.isCurrentUser && (
-                            <span className="text-[9px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.2 rounded-md shrink-0">
-                              {locale === 'th' ? 'คุณ' : 'YOU'}
+                  return (
+                    <div
+                      key={member.id}
+                      className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                        member.isCurrentUser
+                          ? 'bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-emerald-50/70 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-emerald-950/30 border-emerald-300 dark:border-emerald-700 shadow-sm'
+                          : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-800/60'
+                      }`}
+                    >
+                      {/* Left: Rank & Avatar & Info */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Rank Badge */}
+                        <div className="w-7 text-center shrink-0">
+                          {rank === 1 ? (
+                            <span className="text-xl" title="Gold">🥇</span>
+                          ) : rank === 2 ? (
+                            <span className="text-xl" title="Silver">🥈</span>
+                          ) : rank === 3 ? (
+                            <span className="text-xl" title="Bronze">🥉</span>
+                          ) : (
+                            <span className="text-xs font-black text-slate-400 dark:text-slate-500">
+                              #{rank}
                             </span>
                           )}
                         </div>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                          {role}
-                        </p>
-                      </div>
-                    </div>
 
-                    {/* Right: Streak & Points & Cheer Button */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      {/* Streak Pill */}
-                      <div className="hidden sm:flex items-center gap-1 bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 px-2 py-1 rounded-xl text-[10px] font-bold">
-                        <Flame className="h-3 w-3 fill-orange-500 text-orange-500" />
-                        <span>{member.streak} {t.quests.streakDays}</span>
-                      </div>
-
-                      {/* Points */}
-                      <div className="text-right">
-                        <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-xl border border-amber-200/50 dark:border-amber-800/40 inline-block">
-                          {member.points} {t.common.pts}
-                        </span>
-                      </div>
-
-                      {/* Cheer / Action */}
-                      {member.isCurrentUser ? (
-                        <div className="w-18 text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 py-1">
-                          {locale === 'th' ? 'ตัวคุณเอง' : 'You'}
+                        {/* Avatar Circle */}
+                        <div className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${member.avatarColor} text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs`}>
+                          {member.name.charAt(0)}
                         </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleCheer(member.id)}
-                          className={`w-18 py-1 px-2 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 ${
-                            isCheered
-                              ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
-                              : 'bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 dark:bg-slate-800 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 dark:text-slate-300'
-                          }`}
-                        >
-                          <Heart className={`h-3 w-3 ${isCheered ? 'fill-rose-500 text-rose-500' : ''}`} />
-                          <span>{isCheered ? (locale === 'th' ? 'ส่งแล้ว' : 'Cheered') : (locale === 'th' ? 'ส่งใจ' : 'Cheer')}</span>
-                        </button>
-                      )}
+
+                        {/* Name & Role */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-xs font-black truncate ${member.isCurrentUser ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-800 dark:text-white'}`}>
+                              {member.name}
+                            </span>
+                            {member.isCurrentUser && (
+                              <span className="text-[9px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.2 rounded-md shrink-0">
+                                {locale === 'th' ? 'คุณ' : 'YOU'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                            {role}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Streak & Points & Cheer Button */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {/* Streak Pill */}
+                        <div className="hidden sm:flex items-center gap-1 bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 px-2 py-1 rounded-xl text-[10px] font-bold">
+                          <Flame className="h-3 w-3 fill-orange-500 text-orange-500" />
+                          <span>{member.streak} {t.quests.streakDays}</span>
+                        </div>
+
+                        {/* Points */}
+                        <div className="text-right">
+                          <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-xl border border-amber-200/50 dark:border-amber-800/40 inline-block">
+                            {member.points} {t.common.pts}
+                          </span>
+                        </div>
+
+                        {/* Cheer / Action */}
+                        {member.isCurrentUser ? (
+                          <div className="w-18 text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 py-1">
+                            {locale === 'th' ? 'ตัวคุณเอง' : 'You'}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleCheer(member.id)}
+                            className={`w-18 py-1 px-2 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 ${
+                              isCheered
+                                ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
+                                : 'bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 dark:bg-slate-800 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 dark:text-slate-300'
+                            }`}
+                          >
+                            <Heart className={`h-3 w-3 ${isCheered ? 'fill-rose-500 text-rose-500' : ''}`} />
+                            <span>{isCheered ? (locale === 'th' ? 'ส่งแล้ว' : 'Cheered') : (locale === 'th' ? 'ส่งใจ' : 'Cheer')}</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {!loadingLeaderboard && allMembers.length <= 1 && (
+              <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 text-center space-y-1">
+                <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                  {locale === 'th' ? '🎉 คุณกำลังครองอันดับ 1 ของระบบในขณะนี้!' : '🎉 You are currently holding the #1 spot!'}
+                </p>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                  {locale === 'th' ? 'แตะปุ่ม "ชวนเพื่อนทาง LINE" ด้านบน เพื่อชวนเพื่อนมาร่วมแข่งขันสะสมแต้มสุขภาพไปด้วยกันได้เลย' : 'Tap "Invite via LINE" above to invite friends and build healthy habits together!'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
