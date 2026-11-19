@@ -97,10 +97,14 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname === '/' ||
       isAuthRoute ||
       request.nextUrl.pathname.startsWith('/api/auth') ||
-      request.nextUrl.pathname.startsWith('/api/line');
+      request.nextUrl.pathname.startsWith('/api/line') ||
+      request.nextUrl.pathname.startsWith('/api/quests/leaderboard');
 
-    // If user is not logged in and accessing a private area, redirect to login
+    // If user is not logged in and accessing a private area
     if (!user && !isPublicRoute) {
+      if (request.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       return NextResponse.redirect(url);

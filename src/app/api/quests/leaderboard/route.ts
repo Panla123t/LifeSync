@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-export const dynamic = 'force-dynamic';
-
 const AVATAR_GRADIENTS = [
   'from-emerald-400 to-teal-600',
   'from-amber-400 to-orange-500',
